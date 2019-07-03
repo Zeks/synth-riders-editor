@@ -1,0 +1,13 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1045 &1
+EditorBuildSettings:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Scenes:
+  - enabled: 1
+    path: Assets/MikuEditor/_Scenes/Menu.unity
+    guid: 0c2dfcb893db0b94b9d7f49233e5f380
+  - enabled: 1
+    path: Assets/MikuEditor/_Scenes/Editor.unity
+    guid: ae1e45a63ef6a4a42b5566f5060343ab
