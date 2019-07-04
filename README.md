@@ -1,4 +1,4 @@
-# MiKu -SynthRiders Level Editor-
+# SynthRiders Editor
 
 Level Editor for the Game Synth Riders. It allows the creation and edition of the .synth files used by SynthRiders to load the music track data.
 
