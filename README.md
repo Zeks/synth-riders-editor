@@ -33,19 +33,6 @@ For deployment is only necessary to build the project on Unity.
 * [DotNetZip for Unity](https://github.com/r2d2rigo/dotnetzip-for-unity/)
 * [UnityWindowsFileDrag&Drop](https://github.com/Bunny83/UnityWindowsFileDrag-Drop)
 
-## TODO
-* Allow edition of Line segments and notes
-* Migrate synth files to net 4.x. Currently we had the option to export the .synth file to JSON, so one way to do it is adding function to read all the .synth files on a folder, transform them to JSON and repack them to .synth
-* Add a video in sync with the audio to check dance routines while mapping
-* Live mapping
-* VR mapping
-* Undo action
-* More robust clipboard management
-* Patterns management 
-* Auto mapper
-* Multiple BPM
-
-
 ## Versioning
 
 We use [SemVer](http://semver.org/) for versioning. For the versions available, see the [tags on this repository](https://github.com/klugeinteractive/synth-riders-editor/tags). 
