@@ -48,8 +48,9 @@ public class Miku_DialogManager : MonoBehaviour {
 
 		// Set dialog data
 		// TODO
-		Material selectedSprite = (type == DialogType.Info) ? s_instance.m_InfoColor : s_instance.m_AlertColor;
-		s_instance.m_DialogBG.material = selectedSprite;
+		// Not workin on 2018, save for later
+		/* Material selectedSprite = (type == DialogType.Info) ? s_instance.m_InfoColor : s_instance.m_AlertColor;
+		s_instance.m_DialogBG.material = selectedSprite; */
 
 		s_instance.m_DialogMessage.SetText(message);
 

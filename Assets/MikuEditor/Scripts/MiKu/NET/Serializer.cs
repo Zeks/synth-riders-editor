@@ -50,6 +50,8 @@ namespace MiKu.NET {
 
 		public static AudioClip ExtractedClip { get; set; }
 
+		public static bool BachComplete { get; set; }
+
 		// Use this for initialization
 		void Start () {
 			if(s_instance != null) {
@@ -188,17 +190,20 @@ namespace MiKu.NET {
 					);
 				}
 
-				MemoryStream memStream = new MemoryStream();
+
+				// Deprecated, now using JSON
+				/* MemoryStream memStream = new MemoryStream();
 				BinaryFormatter bf = new BinaryFormatter();
 				bf.Serialize(memStream, ChartData);
-				memStream.Seek(0, SeekOrigin.Begin);
+				memStream.Seek(0, SeekOrigin.Begin); */
 				
-				using (memStream)
+				// using (memStream)
 				{			
 					if(isUpdate) {
 						using (ZipFile zip = ZipFile.Read(destination))
 						{	
-							zip.UpdateEntry(meta_field_name, memStream);
+							// zip.UpdateEntry(meta_field_name, memStream);
+							zip.UpdateEntry(meta_field_name, JsonConvert.SerializeObject(ChartData, Formatting.Indented));
 							if(CurrentAudioFileToCompress != null && !CurrentAudioFileToCompress.Equals(string.Empty)) {
 								ZipEntry toDelete = null;
 								//foreach (ZipEntry e in zip.Where(x => !x.FileName.EndsWith(".bin")))
@@ -245,7 +250,8 @@ namespace MiKu.NET {
 					} else {
 						using (ZipFile zip = new ZipFile(Encoding.UTF8))
 						{	
-							zip.AddEntry(meta_field_name, memStream);
+							// zip.AddEntry(meta_field_name, memStream);
+							zip.AddEntry(meta_field_name, JsonConvert.SerializeObject(ChartData, Formatting.Indented));
 							// zip.AddFile(@CurrentAudioFileToCompress, "");
 							zip.AddEntry(
 								ChartData.AudioName,
@@ -302,17 +308,33 @@ namespace MiKu.NET {
 
 			try {
 				MemoryStream memStream = new MemoryStream();
-				using (ZipFile zip = ZipFile.Read(filePath))
-				{
-					ZipEntry e = zip[meta_field_name];					
-					e.Extract(memStream);
-				}		
-				memStream.Seek(0, SeekOrigin.Begin);
-				
-				BinaryFormatter bf = new BinaryFormatter();
-				ChartData = (Chart) bf.Deserialize(memStream);	
+
+				try {
+					using (ZipFile zip = ZipFile.Read(filePath))
+					{
+						ZipEntry e = zip[meta_field_name];					
+						e.Extract(memStream);
+					}	
+					memStream.Seek(0, SeekOrigin.Begin);
+					StreamReader reader = new StreamReader( memStream );
+					string jsonDATA = reader.ReadToEnd();
+					ChartData = JsonConvert.DeserializeObject<Chart>(jsonDATA);
+				} catch(Exception) {
+					Debug.Log("File made in version previous to 1.8, trying BinaryFormatter");
+					// Section for load of files previos to version 1.8					
+					using (ZipFile zip = ZipFile.Read(filePath))
+					{
+						ZipEntry e = zip[meta_field_name];					
+						e.Extract(memStream);
+					}		
+					memStream.Seek(0, SeekOrigin.Begin);
+					
+					BinaryFormatter bf = new BinaryFormatter();
+					ChartData = (Chart) bf.Deserialize(memStream);	
+				}
 
 			} catch(Exception) {
+				// Section for very old Synth Files
 				try {
 					FileStream file = File.OpenRead(filePath);
 					BinaryFormatter bf = new BinaryFormatter();
@@ -426,6 +448,74 @@ namespace MiKu.NET {
 			IsBusy = false;
 			return true;
 		}	
+
+		/// <sumary>
+        /// Method for the bach conver of SynthFiles of Binaryformater to JSON
+        /// </sumary>
+		public static void BachProcess(string dirPath) {
+			if(s_instance == null) {
+				Debug.LogError("Serializer class not initialized");
+				return;
+			}
+
+			if(!Directory.Exists(dirPath)) 
+			{
+				Miku_DialogManager.ShowDialog(Miku_DialogManager.DialogType.Alert, StringVault.Alert_FileLoadError);
+				return;
+			}
+			
+			BachComplete = false;
+			s_instance.StartCoroutine(s_instance.BatchProccesser(dirPath));
+		}	
+
+		// TODO change this to background thread
+		WaitForSeconds batchWait = new WaitForSeconds(0.3f);
+		private IEnumerator BatchProccesser(string dirPath) {
+			// Get all the SynthFiles of the direrctory
+			string[] synthFiles = Directory.GetFiles(@dirPath, "*.synth");
+
+			WriteToLogFile("Starting batch converter at "+dirPath);		
+
+			int cont = 0;
+			bool complete = false;
+			while(!complete) {
+				foreach (string synthFile in synthFiles) 
+				{
+					cont += 1;
+					Miku_DialogManager.ShowDialog(Miku_DialogManager.DialogType.Alert, 
+						string.Format("Converting {0} of {1}", cont, synthFiles.Length)
+					);
+
+					try {
+						MemoryStream memStream = new MemoryStream();
+						// Section for load of files previos to version 1.8					
+						using (ZipFile zip = ZipFile.Read(synthFile))
+						{
+							ZipEntry e = zip[meta_field_name];					
+							e.Extract(memStream);
+						}		
+						memStream.Seek(0, SeekOrigin.Begin);
+						
+						BinaryFormatter bf = new BinaryFormatter();
+						Chart data = (Chart) bf.Deserialize(memStream);	
+
+						using (ZipFile zip = ZipFile.Read(synthFile))
+						{	
+							zip.UpdateEntry(meta_field_name, JsonConvert.SerializeObject(data, Formatting.Indented));								
+							zip.Save();
+						}
+					} catch(Exception) {
+						Debug.Log("File not in compatible BinaryFormtter or already converted");				
+					}
+					yield return batchWait;
+				}
+				complete = true;
+			}				
+			
+			Miku_DialogManager.ShowDialog(Miku_DialogManager.DialogType.Alert, "Batch converter complete!");
+			WriteToLogFile("batch converter complete");
+			BachComplete = true;
+		}
 
 		public static void WriteToLogFile(string msg) {
 			try {

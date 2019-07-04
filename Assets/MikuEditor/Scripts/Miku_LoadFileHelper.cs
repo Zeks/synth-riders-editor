@@ -52,6 +52,8 @@ public class Miku_LoadFileHelper : MonoBehaviour {
 	string loadedArtwork;
 	string defaultArtworkData;
 
+	public GameObject batchLoader;
+
 	InputField currentField;
 
 	// important to keep the instance alive while the hook is active.
@@ -188,6 +190,22 @@ public class Miku_LoadFileHelper : MonoBehaviour {
             Debug.LogError("Error: Could not read file from disk. Original error: " + ex.Message);
         }
 	}
+
+	public void OpenBatchProccess()
+	{
+		try {
+			string[] SynthFilesFolder = StandaloneFileBrowser.OpenFolderPanel("Select Folder", Application.dataPath+"/../", false);	
+			if(SynthFilesFolder.Length > 0) {
+				batchLoader.SetActive(true);
+				Serializer.BachProcess(SynthFilesFolder[0]);
+			}			
+		}		
+		catch (Exception ex)
+        {
+            Debug.LogError("Error: Could not read file from disk. Original error: " + ex.Message);
+        }
+	}
+
 
     private void LoadAudioChart(string absoluteUri, bool isJSON = false)
     {
@@ -383,9 +401,6 @@ public class Miku_LoadFileHelper : MonoBehaviour {
 				} 
             }
         }
-		
-			
-         
 	}
 
 	void ShowPreloader(bool isEdit = false) {
@@ -438,6 +453,14 @@ public class Miku_LoadFileHelper : MonoBehaviour {
 			} else if(currentField == editMapperField) {
 				SetFieldFocus(editAuthorField);
 			}
+		}
+
+		if(Input.GetKeyDown(KeyCode.F12)) {
+			OpenBatchProccess();
+		}
+
+		if(Serializer.BachComplete && batchLoader.activeInHierarchy) {
+			batchLoader.SetActive(false);
 		}
 	}
 
