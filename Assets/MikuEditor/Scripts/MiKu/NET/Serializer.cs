@@ -385,9 +385,9 @@ namespace MiKu.NET {
 				return false;
 			}
 
-			try {				
-                string jsonDATA = isBeatSong ? BeatsynthConverter.Convert(filePath) : File.ReadAllText(filePath); ;
-				ChartData = JsonConvert.DeserializeObject<Chart>(jsonDATA);
+			try {
+                Chart tmp= isBeatSong ? BeatSynthConverter.Convert(filePath) : JsonConvert.DeserializeObject<Chart>(File.ReadAllText(filePath));
+                ChartData = tmp;
 				ChartData.AudioName = null;
 				ChartData.FilePath = string.Empty;
 			} catch(Exception e) {
