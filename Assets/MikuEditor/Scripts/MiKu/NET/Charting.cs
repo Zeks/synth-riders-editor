@@ -2,26 +2,30 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace MiKu.NET.Charting { 
+namespace MiKu.NET.Charting
+{
 
     [Serializable]
     /// <summary>
     /// Notes Class for the note representation
     /// </summary>
-    public class Note {
-        public enum NoteDirection {
-            None,      
-            Right,            
+    public class Note
+    {
+        public enum NoteDirection
+        {
+            None,
+            Right,
             RightBottom,
             Bottom,
-            LeftBottom, 
+            LeftBottom,
             Left,
             LeftTop,
             Top,
             RightTop,
         }
 
-        public enum NoteType {            
+        public enum NoteType
+        {
             RightHanded,
             LeftHanded,
             OneHandSpecial,
@@ -35,12 +39,15 @@ namespace MiKu.NET.Charting {
         /// <value>
 		/// ID for cache use, when set the format used is Note_{value passed}
 		/// </value>
-        public string Id { 
-            get {
+        public string Id
+        {
+            get
+            {
                 return _id;
-            } 
-            
-            set {
+            }
+
+            set
+            {
                 _id = string.Format("Note_{0}", value);
             }
         }
@@ -58,7 +65,7 @@ namespace MiKu.NET.Charting {
         /// <value>
         /// Segments of the line tha form the note
         /// </value>
-        public float[,] Segments  {get; set; }
+        public float[,] Segments { get; set; }
 
         /// <value>
 		/// Type of the note
@@ -70,11 +77,13 @@ namespace MiKu.NET.Charting {
 		/// </value>
         public NoteDirection Direction { get; set; }
 
-        public Note(UnityEngine.Vector3 pos, string idRoot = "", int idCmb = -1, NoteType t = NoteType.OneHandSpecial, NoteDirection d = NoteDirection.None) {
-            if(idRoot != null) {
+        public Note(UnityEngine.Vector3 pos, string idRoot = "", int idCmb = -1, NoteType t = NoteType.OneHandSpecial, NoteDirection d = NoteDirection.None)
+        {
+            if (idRoot != null)
+            {
                 Id = idRoot.ToString();
             }
-            
+
             ComboId = idCmb;
             Type = t;
             Position = new float[3] { pos.x, pos.y, pos.z };
@@ -86,44 +95,74 @@ namespace MiKu.NET.Charting {
     /// <summary>
     /// Class for the beats Representaion
     /// </summary>
-    public class Beats {
+    public class Beats
+    {
 
         /// <value>
         /// Notes for the easy dificulty
         /// </value>
-        public Dictionary<float, List<Note>> Easy { get; set; } 
+        public Dictionary<float, List<Note>> Easy { get; set; }
 
         /// <value>
         /// Notes for the normal dificulty
         /// </value>
-        public Dictionary<float, List<Note>> Normal { get; set; } 
+        public Dictionary<float, List<Note>> Normal { get; set; }
 
         /// <value>
         /// Notes for the hard dificulty
         /// </value>
-        public Dictionary<float, List<Note>> Hard { get; set; } 
+        public Dictionary<float, List<Note>> Hard { get; set; }
 
         /// <value>
         /// Notes for the expert dificulty
         /// </value>
-        public Dictionary<float, List<Note>> Expert { get; set; } 
+        public Dictionary<float, List<Note>> Expert { get; set; }
 
         /// <value>
         /// Notes for the Master dificulty
         /// </value>
-        public Dictionary<float, List<Note>> Master { get; set; } 
+        public Dictionary<float, List<Note>> Master { get; set; }
 
-         /// <value>
+        /// <value>
         /// Notes for the Custom dificulty
         /// </value>
-        public Dictionary<float, List<Note>> Custom { get; set; } 
+        public Dictionary<float, List<Note>> Custom { get; set; }
+
+        public Beats()
+        {
+            if (Easy == null)
+            {
+                Easy = new Dictionary<float, List<Note>>();
+            }
+            if (Normal == null)
+            {
+                Normal = new Dictionary<float, List<Note>>();
+            }
+            if (Hard == null)
+            {
+                Hard = new Dictionary<float, List<Note>>();
+            }
+            if (Expert == null)
+            {
+                Expert = new Dictionary<float, List<Note>>();
+            }
+            if (Master == null)
+            {
+                Master = new Dictionary<float, List<Note>>();
+            }
+            if (Custom == null)
+            {
+                Custom = new Dictionary<float, List<Note>>();
+            }
+        }
     }
 
     [Serializable]
     /// <summary>
     /// Class for the Effects Representaion
     /// </summary>
-    public class Effects {
+    public class Effects
+    {
         /// <value>
         /// Effects for the easy dificulty
         /// </value>
@@ -153,13 +192,42 @@ namespace MiKu.NET.Charting {
         /// Effects for the Custom dificulty
         /// </value>
         public List<float> Custom { get; set; }
+
+        public Effects()
+        {
+            if (Easy == null)
+            {
+                Easy = new List<float>();
+            }
+            if (Normal == null)
+            {
+                Normal = new List<float>();
+            }
+            if (Hard == null)
+            {
+                Hard = new List<float>();
+            }
+            if (Expert == null)
+            {
+                Expert = new List<float>();
+            }
+            if (Master == null)
+            {
+                Master = new List<float>();
+            }
+            if (Custom == null)
+            {
+                Custom = new List<float>();
+            }
+        }
     }
 
     [Serializable]
     /// <summary>
     /// Class for the Lights Representaion
     /// </summary>
-    public class Lights {
+    public class Lights
+    {
         /// <value>
         /// Lights for the easy dificulty
         /// </value>
@@ -189,10 +257,39 @@ namespace MiKu.NET.Charting {
         /// Lights for the Custom dificulty
         /// </value>
         public List<float> Custom { get; set; }
+
+        public Lights()
+        {
+            if (Easy == null)
+            {
+                Easy = new List<float>();
+            }
+            if (Normal == null)
+            {
+                Normal = new List<float>();
+            }
+            if (Hard == null)
+            {
+                Hard = new List<float>();
+            }
+            if (Expert == null)
+            {
+                Expert = new List<float>();
+            }
+            if (Master == null)
+            {
+                Master = new List<float>();
+            }
+            if (Custom == null)
+            {
+                Custom = new List<float>();
+            }
+        }
     }
 
     [Serializable]
-    public struct Bookmark {
+    public struct Bookmark
+    {
         public float time;
         public string name;
     }
@@ -201,14 +298,17 @@ namespace MiKu.NET.Charting {
     /// <summary>
     /// Class for the Bookmars Representaion
     /// </summary>
-    public class Bookmarks {
+    public class Bookmarks
+    {
         /// <value>
         /// Effects for the beatmap
         /// </value>
         public List<Bookmark> BookmarksList { get; set; }
 
-        public Bookmarks() {
-            if(BookmarksList == null) {
+        public Bookmarks()
+        {
+            if (BookmarksList == null)
+            {
                 BookmarksList = new List<Bookmark>();
             }
         }
@@ -218,7 +318,8 @@ namespace MiKu.NET.Charting {
     /// <summary>
     /// Class for the Jumps Representaion
     /// </summary>
-    public class Jumps {
+    public class Jumps
+    {
         /// <value>
         /// Jumps for the easy dificulty
         /// </value>
@@ -248,13 +349,42 @@ namespace MiKu.NET.Charting {
         /// Jumps for the Custom dificulty
         /// </value>
         public List<float> Custom { get; set; }
+
+        public Jumps()
+        {
+            if (Easy == null)
+            {
+                Easy = new List<float>();
+            }
+            if (Normal == null)
+            {
+                Normal = new List<float>();
+            }
+            if (Hard == null)
+            {
+                Hard = new List<float>();
+            }
+            if (Expert == null)
+            {
+                Expert = new List<float>();
+            }
+            if (Master == null)
+            {
+                Master = new List<float>();
+            }
+            if (Custom == null)
+            {
+                Custom = new List<float>();
+            }
+        }
     }
 
     [Serializable]
     /// <summary>
     /// Class for the Crouch Representaion
     /// </summary>
-    public class Crouchs {
+    public class Crouchs
+    {
         /// <value>
         /// Crouchs for the easy dificulty
         /// </value>
@@ -284,10 +414,39 @@ namespace MiKu.NET.Charting {
         /// Crouchs for the Custom dificulty
         /// </value>
         public List<float> Custom { get; set; }
+
+        public Crouchs()
+        {
+            if (Easy == null)
+            {
+                Easy = new List<float>();
+            }
+            if (Normal == null)
+            {
+                Normal = new List<float>();
+            }
+            if (Hard == null)
+            {
+                Hard = new List<float>();
+            }
+            if (Expert == null)
+            {
+                Expert = new List<float>();
+            }
+            if (Master == null)
+            {
+                Master = new List<float>();
+            }
+            if (Custom == null)
+            {
+                Custom = new List<float>();
+            }
+        }
     }
 
     [Serializable]
-    public struct Slide {
+    public struct Slide
+    {
         public float time;
         public Note.NoteType slideType;
 
@@ -298,7 +457,8 @@ namespace MiKu.NET.Charting {
     /// <summary>
     /// Class for the Slides Representaion
     /// </summary>
-    public class Slides {
+    public class Slides
+    {
         /// <value>
         /// Slides for the easy dificulty
         /// </value>
@@ -328,13 +488,42 @@ namespace MiKu.NET.Charting {
         /// Slides for the Custom dificulty
         /// </value>
         public List<Slide> Custom { get; set; }
+
+        public Slides()
+        {
+            if (Easy == null)
+            {
+                Easy = new List<Slide>();
+            }
+            if (Normal == null)
+            {
+                Normal = new List<Slide>();
+            }
+            if (Hard == null)
+            {
+                Hard = new List<Slide>();
+            }
+            if (Expert == null)
+            {
+                Expert = new List<Slide>();
+            }
+            if (Master == null)
+            {
+                Master = new List<Slide>();
+            }
+            if (Custom == null)
+            {
+                Custom = new List<Slide>();
+            }
+        }
     }
 
     [Serializable]
     /// <summary>
     /// Serilazable class of the Chart made from the user
     /// </summary>
-    public class Chart {
+    public class Chart
+    {
 
         /// <value>
 		/// Name of the chart
@@ -389,37 +578,37 @@ namespace MiKu.NET.Charting {
         /// <value>
 		/// List of beats that made the Chart
 		/// </value>
-        public Beats Track { get; set; }
+        public Beats Track = new Beats();
 
         /// <value>
         /// List of the effects for the chart
         /// </value>
-        public Effects Effects { get; set; }
+        public Effects Effects = new Effects();
 
         /// <value>
         /// List of the bookmars for the chart
         /// </value>
-        public Bookmarks Bookmarks { get; set; }
+        public Bookmarks Bookmarks = new Bookmarks();
 
         /// <value>
         /// List of the Jumps for the chart
         /// </value>
-        public Jumps Jumps { get; set; }
+        public Jumps Jumps = new Jumps();
 
         /// <value>
         /// List of the Crouchs for the chart
         /// </value>
-        public Crouchs Crouchs { get; set; }
+        public Crouchs Crouchs = new Crouchs();
 
         /// <value>
         /// List of the Slides for the chart
         /// </value>
-        public Slides Slides { get; set; }  
+        public Slides Slides = new Slides();
 
         /// <value>
         /// List of the Lights for the chart
         /// </value>
-        public Lights Lights { get; set; }      
+        public Lights Lights = new Lights();
 
         /// <value>
         /// The path of the file on disk
@@ -446,5 +635,33 @@ namespace MiKu.NET.Charting {
         public float CustomDifficultySpeed { get; set; }
 
         public List<string> Tags { get; set; }
-    }    
+
+        public Chart()
+        {
+            if (Bookmarks == null)
+            {
+                Bookmarks = new Bookmarks();
+            }
+            if (Jumps == null)
+            {
+                Jumps = new Jumps();
+            }
+            if (Crouchs == null)
+            {
+                Crouchs = new Crouchs();
+            }
+            if (Slides == null)
+            {
+                Slides = new Slides();
+            }
+            if (Lights == null)
+            {
+                Lights = new Lights();
+            }
+            if (Tags == null)
+            {
+                Tags = new List<string>();
+            }
+        }
+    }
 }

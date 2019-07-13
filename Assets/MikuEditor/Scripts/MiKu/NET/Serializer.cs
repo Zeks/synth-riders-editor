@@ -368,7 +368,7 @@ namespace MiKu.NET {
 		/// <sumary>
         /// Deserialize the Chart Data from JSON file
         /// </sumary>
-		public static bool LoadFronFile(string filePath, bool isJSON) {
+		public static bool LoadFronFile(string filePath, bool isJSON, bool isBeatSong = false) {
 			if(s_instance == null) {
 				Debug.LogError("Serializer class not initialized");
 				return false;
@@ -385,9 +385,9 @@ namespace MiKu.NET {
 				return false;
 			}
 
-			try {				
-				string jsonDATA = File.ReadAllText(filePath);
-				ChartData = JsonConvert.DeserializeObject<Chart>(jsonDATA);
+			try {
+                Chart tmp= isBeatSong ? BeatSynthConverter.Convert(filePath) : JsonConvert.DeserializeObject<Chart>(File.ReadAllText(filePath));
+                ChartData = tmp;
 				ChartData.AudioName = null;
 				ChartData.FilePath = string.Empty;
 			} catch(Exception e) {

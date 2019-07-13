@@ -87,10 +87,10 @@ public class Miku_LoadFileHelper : MonoBehaviour {
 			string file = aFiles[0];
 			if(file.Contains(".synth")){
 				LoadAudioChart(new System.Uri(file).LocalPath);
-			} else if(file.Contains(".json")) {
+			} else if(file.Contains(".json") || file.Contains(".dat")) {
 				LoadAudioChart(new System.Uri(file).LocalPath, true);
 			}
-		}
+        }
     }
 
 	public void OpenBrowseDialogAudio(bool isEdit = false)
@@ -174,7 +174,7 @@ public class Miku_LoadFileHelper : MonoBehaviour {
 		try {	
 			// Open file with filter
 			var extensions = new [] {
-				new ExtensionFilter("JSON Files", "json"),
+				new ExtensionFilter("JSON Files", "json", "dat"),
 			};
 
 			StandaloneFileBrowser.OpenFilePanelAsync("Open File", "", extensions, 
@@ -210,7 +210,7 @@ public class Miku_LoadFileHelper : MonoBehaviour {
     private void LoadAudioChart(string absoluteUri, bool isJSON = false)
     {
         if(Serializer.Initialized) {
-			bool fileLoadSuccess = isJSON ? Serializer.LoadFronFile(absoluteUri, isJSON) : Serializer.LoadFronFile(absoluteUri);
+			bool fileLoadSuccess = Serializer.LoadFronFile(absoluteUri, isJSON, absoluteUri.Contains(".dat"));
 			if(fileLoadSuccess) {
 
 				editPanelAnimator.Play("Panel In");
