@@ -504,8 +504,9 @@ namespace MiKu.NET {
 							zip.UpdateEntry(meta_field_name, JsonConvert.SerializeObject(data, Formatting.Indented));								
 							zip.Save();
 						}
-					} catch(Exception) {
-						Debug.Log("File not in compatible BinaryFormtter or already converted");				
+					} catch(Exception e) {
+						Debug.Log("File not in compatible BinaryFormtter or already converted");		
+						WriteToLogFile("Bach error "+e.ToString());		
 					}
 					yield return batchWait;
 				}
