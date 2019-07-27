@@ -32,7 +32,7 @@ namespace MiKu.NET {
         private Color m_confortableColor = Color.blue;
         [SerializeField]
         private Color m_moderateColor = Color.yellow;
-        [SerializeField]
+        [SerializeField] 
         private Color m_intenseColor = Color.red;		
 
         private GameObject selectedNote;
@@ -112,7 +112,7 @@ namespace MiKu.NET {
         void DisableSelectedNote() {
             if(selectedNote != null) {
                 GameObject.DestroyImmediate(selectedNote);
-                m_boundBox.SetActive(false);
+                m_boundBox.SetActive(false); 
             }	
 
             if(mirroredNote != null) {

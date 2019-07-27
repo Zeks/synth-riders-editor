@@ -16,7 +16,7 @@ namespace MiKu.NET.Charting {
             Bottom,
             LeftBottom, 
             Left,
-            LeftTop,
+            LeftTop, 
             Top,
             RightTop,
         }
@@ -29,9 +29,8 @@ namespace MiKu.NET.Charting {
             SeparateHandSpecial,
             NoHand,
         };
-
-        private string _id;
-
+ 
+        private string _id; 
         /// <value>
 		/// ID for cache use, when set the format used is Note_{value passed}
 		/// </value>

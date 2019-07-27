@@ -52,7 +52,7 @@ public class Miku_Clipboard : MonoBehaviour {
             // Iterate each entry on the Dictionary and get the note to copy
             foreach( KeyValuePair<float, List<Note>> kvp in workingTrack )
             {
-                List<Note> _notes = kvp.Value;
+                List<Note> _notes = kvp.Value; 
                 List<Note> copiedList = new List<Note>();
 
                 // Iterate each note and update its info

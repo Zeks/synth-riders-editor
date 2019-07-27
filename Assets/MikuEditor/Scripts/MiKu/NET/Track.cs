@@ -1664,7 +1664,7 @@ namespace MiKu.NET {
                 // m_BPMSlider.value = BPM;
                 m_BPMDisplay.SetText(BPM.ToString());
                 UpdateDisplayStartOffset(StartOffset);			
-                SetNoteMarkerType();
+                SetNoteMarkerType(); 
                 DrawTrackLines();
                 SetCurrentTrackDifficulty(TrackDifficulty.Easy);	
                 SetStatWindowData();	
