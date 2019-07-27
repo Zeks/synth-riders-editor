@@ -60,8 +60,9 @@ public class Miku_Clipboard : MonoBehaviour {
                     Note n = _notes[i];
                     Note newNote = new Note(Vector3.zero);
                     newNote.Position = n.Position;
-                    newNote.Id = Track.FormatNoteName(kvp.Key, i, n.Type);
-                    newNote.Type = n.Type;
+                    newNote.Id = Track.FormatNoteName(kvp.Key, i, n.HandType);
+                    newNote.HandType = n.HandType;
+                    newNote.UsageType = n.UsageType;
                     newNote.ComboId = n.ComboId;
                     newNote.Segments = n.Segments;
 

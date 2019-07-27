@@ -322,7 +322,7 @@ namespace MiKu.NET {
         /* [SerializeField]
         private Metronome m_metronome; */
 
-         [SerializeField]
+        [SerializeField]
         private GameObject m_LefthandNoteMarker;
 
         [SerializeField]
@@ -800,10 +800,10 @@ namespace MiKu.NET {
 
             pointEightWait = new WaitForSeconds(0.8f);
 
-            if(!m_Special1HandNoteMarker
-                || !m_LeftHandNoteMarker
-                || !m_RightHandNoteMarker
-                || !m_Special2HandsNoteMarker) {
+            if(!m_SpecialOneHandNoteMarker
+                || !m_LefthandNoteMarker
+                || !m_RighthandNoteMarker
+                || !m_SpecialBothHandsNoteMarker) {
                 Debug.LogError("Note maker prefab missing");
 #if UNITY_EDITOR
                 // Application.Quit() does not work in the editor so
@@ -5390,19 +5390,19 @@ namespace MiKu.NET {
         /// <param name="noteType">The type of note to look for, default is <see cref="Note.NoteHandType.LeftHanded" /></param>
         /// <returns>Returns <typeparamref name="GameObject"/></returns>
         GameObject GetNoteMarkerByType(Note.NoteHandType noteType = Note.NoteHandType.LeftHanded, bool isSegment = false) {
-            GameObject result = m_LeftHandNoteMarker;
+            GameObject result = m_LefthandNoteMarker;
             switch(noteType) {
                 case Note.NoteHandType.LeftHanded:
-                    result = m_LeftHandNoteMarker;
+                    result = m_LefthandNoteMarker;
                     break;
                 case Note.NoteHandType.RightHanded:
-                    result = m_RightHandNoteMarker;
+                    result = m_RighthandNoteMarker;
                     break;
                 case Note.NoteHandType.OneHandSpecial:
-                    result = m_Special1HandNoteMarker;
+                    result = m_SpecialOneHandNoteMarker;
                     break;
                 case Note.NoteHandType.BothHandsSpecial:
-                    result = m_Special2HandsNoteMarker;
+                    result = m_SpecialBothHandsNoteMarker;
                     break;
             }
             return result;

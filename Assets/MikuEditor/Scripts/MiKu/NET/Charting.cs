@@ -339,7 +339,7 @@ namespace MiKu.NET.Charting {
     [Serializable]
     public struct Slide {
         public float time;
-        public Note.NoteType slideType;
+        public Note.NoteHandType slideType;
 
         public bool initialized;
     }    
