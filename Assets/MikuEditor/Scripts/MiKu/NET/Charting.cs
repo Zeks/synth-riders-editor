@@ -16,12 +16,12 @@ namespace MiKu.NET.Charting {
             Bottom,
             LeftBottom, 
             Left,
-            LeftTop, 
+            LeftTop,
             Top,
             RightTop,
         }
-
-        public enum NoteType {            
+         
+        public enum NoteHandType {            
             RightHanded,
             LeftHanded,
             OneHandSpecial,
@@ -29,8 +29,31 @@ namespace MiKu.NET.Charting {
             SeparateHandSpecial,
             NoHand,
         };
- 
-        private string _id; 
+
+        public enum NoteUsageType
+        {
+            None,
+            Ball,
+            Line,
+            Breaker
+        };
+
+        ~Note()
+        {
+            IdDictionaries.RemoveNote(noteId);
+        }
+
+
+
+        private string _id;
+
+        public int noteId = -1;
+        public int railId = -1;
+
+        private static int noteCounter = 0;
+
+        private float timePoint;
+
         /// <value>
 		/// ID for cache use, when set the format used is Note_{value passed}
 		/// </value>
@@ -44,6 +67,8 @@ namespace MiKu.NET.Charting {
             }
         }
 
+        
+
         /// <value>
 		/// Combo Id that the note bellow to, is 0 based meaing that -1 means that the note doesnt belong to any combo
 		/// </value>
@@ -54,30 +79,56 @@ namespace MiKu.NET.Charting {
 		/// </value>
         public float[] Position { get; set; }
 
+        
+
         /// <value>
         /// Segments of the line tha form the note
         /// </value>
         public float[,] Segments  {get; set; }
 
         /// <value>
-		/// Type of the note
+		/// Type of the note's hand
 		/// </value>
-        public NoteType Type { get; set; }
+        public NoteHandType HandType { get; set; }
+        
+        /// <value>
+		/// Type of the note usage
+		/// </value>
+        public NoteUsageType UsageType { get; set; }
 
         /// <value>
 		/// Direction to hit the note
 		/// </value>
         public NoteDirection Direction { get; set; }
 
-        public Note(UnityEngine.Vector3 pos, string idRoot = "", int idCmb = -1, NoteType t = NoteType.OneHandSpecial, NoteDirection d = NoteDirection.None) {
+        public float TimePoint
+        {
+            get
+            {
+                return timePoint;
+            }
+
+            set
+            {
+                timePoint = value;
+            }
+        }
+
+        public Note(UnityEngine.Vector3 pos, float time = default(float), string idRoot = "", int idCmb = -1, NoteHandType t = NoteHandType.OneHandSpecial, NoteDirection d = NoteDirection.None) {
             if(idRoot != null) {
                 Id = idRoot.ToString();
             }
-            
+            noteId = noteCounter++;
+            timePoint = time;
             ComboId = idCmb;
-            Type = t;
+            HandType = t;
+            UsageType = Note.NoteUsageType.Ball;
             Position = new float[3] { pos.x, pos.y, pos.z };
             Direction = d;
+        }
+        public Note() {
+            noteId = noteCounter++;
+            UsageType = Note.NoteUsageType.Ball;
         }
     }
 

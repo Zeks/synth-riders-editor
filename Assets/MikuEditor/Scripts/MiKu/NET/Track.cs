@@ -34,8 +34,7 @@ namespace MiKu.NET {
         public float bpm;
         public string mapper;
 
-        public string SaveToJSON()
-        {
+        public string SaveToJSON() {
             return JsonUtility.ToJson(this, true);
         }
     }
@@ -67,8 +66,7 @@ namespace MiKu.NET {
 
         public BeatsLookup sixtyFourth;
 
-        public string SaveToJSON()
-        {
+        public string SaveToJSON() {
             return JsonUtility.ToJson(this, true);
         }
     }
@@ -86,26 +84,23 @@ namespace MiKu.NET {
         public List<int> segmentAxis;
     }
 
-    public struct SelectionArea
-    {
+    public struct SelectionArea {
         public float startTime;
-        public float endTime;		
+        public float endTime;
     }
 
-    public struct ClipBoardStruct
-    {
+    public struct ClipBoardStruct {
         public float startTime;
         public float lenght;
         public Dictionary<float, List<Note>> notes;
         public List<float> effects;
         public List<float> jumps;
         public List<float> crouchs;
-        public List<Slide> slides;	
-        public List<float> lights;	
+        public List<Slide> slides;
+        public List<float> lights;
     }
 
-    public struct TrackMetronome
-    {
+    public struct TrackMetronome {
         public float bpm;
         public bool isPlaying;
         public List<float> beats;
@@ -122,7 +117,7 @@ namespace MiKu.NET {
             Custom,
         }
 
-        public enum PromtType {			
+        public enum PromtType {
             // No action
             NoAction,
             // Delete GameObjects and Lists
@@ -146,7 +141,7 @@ namespace MiKu.NET {
             TagEdition
         }
 
-#region Constanst
+        #region Constanst
         // Time constants
         // A second is 1000 Milliseconds
         public const int MS = 1000;
@@ -159,11 +154,11 @@ namespace MiKu.NET {
         private const int R = 192;
 
         // Unity Unit / Second ratio
-        public const float UsC = 20f/1f;
+        public const float UsC = 20f / 1f;
 
         // Beat per Measure
         // BpM use to draw the lines
-        private const float DBPM = 1f/1f;
+        private const float DBPM = 1f / 1f;
 
         // Max Number of normal notes allowed
         private const int MAX_ALLOWED_NOTES = 2;
@@ -190,10 +185,10 @@ namespace MiKu.NET {
         private const float MIN_OVERLAP_DISTANCE = 0.15f;
 
         // Min duration on milliseconds that the line can have
-        private const float MIN_LINE_DURATION = 0.1f*MS;
+        public const float MIN_LINE_DURATION = 0.1f * MS;
 
         // Max duration on milliseconds that the line can have
-        private const float MAX_LINE_DURATION = 10*MS;
+        public const float MAX_LINE_DURATION = 10 * MS;
 
         // Max size that the note can have
         private const float MAX_NOTE_RESIZE = 0.2f;
@@ -233,8 +228,8 @@ namespace MiKu.NET {
         private const float MIN_NOTE_START = 2;
 
         public const int MAX_TAG_ALLOWED = 10;
-        
-#endregion
+
+        #endregion
 
         // For static access
         private static Track s_instance;
@@ -292,13 +287,13 @@ namespace MiKu.NET {
         private GameObject m_SlideLeftElement;
 
         [SerializeField]
-        private GameObject m_SlideCenterElement;	
+        private GameObject m_SlideCenterElement;
 
         [SerializeField]
         private GameObject m_SlideDiagRightElement;
 
         [SerializeField]
-        private GameObject m_SlideDiagLeftElement;	
+        private GameObject m_SlideDiagLeftElement;
 
         [SerializeField]
         private Light m_flashLight;
@@ -326,8 +321,8 @@ namespace MiKu.NET {
         // Metronome class
         /* [SerializeField]
         private Metronome m_metronome; */
-        
-        [SerializeField]
+
+         [SerializeField]
         private GameObject m_LefthandNoteMarker;
 
         [SerializeField]
@@ -352,10 +347,10 @@ namespace MiKu.NET {
         private GameObject m_Special2NoteMarkerSegment;
 
         [SerializeField]
-        private float m_NoteSegmentMarkerRedution = 0.5f;	
+        private float m_NoteSegmentMarkerRedution = 0.5f;
 
         [SerializeField]
-        private GameObject m_NotesDropArea;   
+        private GameObject m_NotesDropArea;
 
         [SerializeField]
         private GameObject m_DirectionMarker;
@@ -368,13 +363,13 @@ namespace MiKu.NET {
 
         [Header("Spectrum Settings")]
         [SerializeField]
-        float heightMultiplier = 0.8f;	
+        float heightMultiplier = 0.8f;
 
         [SerializeField]
         private GameObject m_NormalPointMarker;
 
         [SerializeField]
-        private GameObject m_PeakPointMarker;		     
+        private GameObject m_PeakPointMarker;
 
         [Header("UI Elements")]
         [SerializeField]
@@ -421,13 +416,13 @@ namespace MiKu.NET {
         private InputField m_TagInput;
 
         [SerializeField]
-        private Slider m_BPMSlider;			
+        private Slider m_BPMSlider;
 
         [SerializeField]
-        private Slider m_VolumeSlider;	
+        private Slider m_VolumeSlider;
 
         [SerializeField]
-        private Slider m_SFXVolumeSlider;	
+        private Slider m_SFXVolumeSlider;
 
         [SerializeField]
         private TextMeshProUGUI m_OffsetDisplay;
@@ -494,7 +489,7 @@ namespace MiKu.NET {
         private Animator m_TagEditAnimator;
 
         [SerializeField]
-        private TextMeshProUGUI m_PromtWindowText;	
+        private TextMeshProUGUI m_PromtWindowText;
 
         [Space(20)]
         [SerializeField]
@@ -505,13 +500,10 @@ namespace MiKu.NET {
 
         [Space(20)]
         [SerializeField]
-        private GridGuideController m_GridGuideController;
-
-        [SerializeField]
         private GameObject m_GridGuide;
 
         [Space(20)]
-        [Header("Audio Elements")]		
+        [Header("Audio Elements")]
         /*[SerializeField]
         private AudioSource m_metronome;*/
 
@@ -531,7 +523,7 @@ namespace MiKu.NET {
         private AudioClip m_MetronomeSound;
 
         [Space(20)]
-        [Header("Stats Window")]	
+        [Header("Stats Window")]
         [SerializeField]
         private GameObject m_StatsContainer;
         [SerializeField]
@@ -545,7 +537,7 @@ namespace MiKu.NET {
         [SerializeField]
         private TextMeshProUGUI m_statsTotalNotesText;
         [SerializeField]
-        private Image m_statsArtworkImage;		
+        private Image m_statsArtworkImage;
         [SerializeField]
         private GameObject m_statsAdminOnlyWrap;
         [SerializeField]
@@ -563,7 +555,7 @@ namespace MiKu.NET {
         private GameObject m_RightViewCamera;
 
         [SerializeField]
-        private GameObject m_FreeViewCamera;		
+        private GameObject m_FreeViewCamera;
 
         [SerializeField]
         private float m_CameraNearReductionFactor = 0.5f;
@@ -572,42 +564,42 @@ namespace MiKu.NET {
         [Header("Editor Settings")]
         public bool syncnhWithAudio = false;
 
-        private GameObject SelectedCamera { get; set; }		
+        private GameObject SelectedCamera { get; set; }
 
         [SerializeField]
         public bool DirectionalNotesEnabled = true;
 
         // distance/time that will be drawed
-        private int TM;		
+        private int TM;
 
         // BPM
         private float _BPM = 120;
 
         // Milliseconds per Beat
-        private float K;		
+        private float K;
 
         // BpM use to for the track movement
-        private float MBPM = 1f/1f;
+        private float MBPM = 1f / 1f;
         private float MBPMIncreaseFactor = 1f;
 
         // Current time advance the note selector
-        private float _currentTime = 0; 
+        private float _currentTime = 0;
 
         // Current Play time
-        private float _currentPlayTime = 0;      
+        private float _currentPlayTime = 0;
 
         // Current multiplier for the number of lines drawed
         private int _currentMultiplier = 1;
 
         // Note horizontal padding
-        private Vector2 _trackHorizontalBounds = new Vector2(-1.2f, 1.2f); 
+        private Vector2 _trackHorizontalBounds = new Vector2(-1.2f, 1.2f);
 
         // To save currently drawed lines for ease of acces
         private List<GameObject> drawedLines;
         private List<GameObject> drawedXSLines;
 
         // Is the editor Current Playing the Track
-        private bool isPlaying = false;		
+        private bool isPlaying = false;
 
         // Current chart meta data
         private Chart currentChart;
@@ -616,7 +608,7 @@ namespace MiKu.NET {
         private TrackDifficulty currentDifficulty = TrackDifficulty.Easy;
 
         // Flag to know when there is a heavy burden and not manipulate the data
-        private bool isBusy = false;		
+        private bool isBusy = false;
 
         // Track Duration for the lines drawing, default 60 seconds
         private float trackDuration = 60;
@@ -636,7 +628,7 @@ namespace MiKu.NET {
         private AudioSource audioSource;
 
         // The current selected type of note marker
-        private Note.NoteType selectedNoteType = Note.NoteType.RightHanded;
+        private Note.NoteHandType selectedNoteType = Note.NoteHandType.RightHanded;
 
         // Has the chart been Initiliazed
         private bool isInitilazed = false;
@@ -677,9 +669,10 @@ namespace MiKu.NET {
         private List<GameObject> resizedNotes;
 
         // For when a Long note is being added
-        private bool isOnLongNoteMode = false;
+        // is no longer used
+        //private bool isOnLongNoteMode = false; 
 
-        private LongNote CurrentLongNote { get; set; }
+        //private LongNote CurrentLongNote { get; set; }
 
         private bool turnOffGridOnPlay = false;
 
@@ -704,7 +697,7 @@ namespace MiKu.NET {
         int spc_sampleRate;
         float spc_clipLength;
         float[] spc_multiChannelSamples;
-        SpectralFluxAnalyzer preProcessedSpectralFluxAnalyzer;		
+        SpectralFluxAnalyzer preProcessedSpectralFluxAnalyzer;
         bool threadFinished = false;
         bool treadWithError = false;
         Thread analyzerThread;
@@ -718,7 +711,7 @@ namespace MiKu.NET {
         TimeSpan forwardTimeSpan;
 
         int CurrentVsync = 0;
-        Transform plotTempInstance;		
+        Transform plotTempInstance;
 
         // Pref Settings
         private const string MUSIC_VOLUME_PREF_KEY = "com.synth.editor.MusicVolume";
@@ -729,7 +722,7 @@ namespace MiKu.NET {
         private const string PANNING_PREF_KEY = "com.synth.editor.PanningSetting";
         private const string ROTATION_PREF_KEY = "com.synth.editor.RotationSetting";
         private const string MIDDLE_BUTTON_SEL_KEY = "com.synth.editor.MiddleButtonSel";
-        private const string AUTOSAVE_KEY = "com.synth.editor.AutoSave"; 
+        private const string AUTOSAVE_KEY = "com.synth.editor.AutoSave";
         private const string SCROLLSOUND_KEY = "com.synth.editor.ScrollSound";
 
         // 
@@ -758,21 +751,30 @@ namespace MiKu.NET {
 
         private bool isOnMirrorMode = false;
         private bool xAxisInverse = true;
-        private bool yAxisInverse = false; 
-
-        private GridGuideController.GridGuideType GridGuideShapeType = 0;
+        private bool yAxisInverse = false;
 
         private TrackInfo trackInfo;
 
         private BeatsLookupTable BeatsLookupTable;
 
-        private const float MIN_HIGHLIGHT_CHECK = 0.2f; 
+        private const float MIN_HIGHLIGHT_CHECK = 0.2f;
         private float currentHighlightCheck = 0;
         private bool highlightChecked = false;
         private CursorLockMode currentLockeMode;
 
+        public bool AddTimeToCurrentTrack(float time) {
+            Dictionary<float, List<Note>> workingTrack = s_instance.GetCurrentTrackDifficulty();
+            if(workingTrack == null)
+                return false;
+
+            if(!workingTrack.ContainsKey(time)) {
+                workingTrack.Add(time, new List<Note>());
+            }
+            return true;
+        }
+
         // Use this for initialization
-        void Awake () {	
+        void Awake() {
             // Initilization of the Game Object to use for the line drawing
             drawedLines = new List<GameObject>();
             drawedXSLines = new List<GameObject>();
@@ -783,12 +785,12 @@ namespace MiKu.NET {
 
             generatedRightLine = GameObject.Instantiate(m_SideLines, Vector3.zero,
                  Quaternion.identity, gameObject.transform);
-            generatedRightLine.name = "[Generated Right Line]";	
+            generatedRightLine.name = "[Generated Right Line]";
 
             // AudioSource initilization
             audioSource = gameObject.GetComponent<AudioSource>();
             audioSource.loop = false;
-            audioSource.playOnAwake = false;	
+            audioSource.playOnAwake = false;
 
             notesArea = m_NotesDropArea.GetComponent<NotesArea>();
 
@@ -798,27 +800,26 @@ namespace MiKu.NET {
 
             pointEightWait = new WaitForSeconds(0.8f);
 
-            if(!m_SpecialOneHandNoteMarker 
-                || !m_LefthandNoteMarker 
-                || !m_RighthandNoteMarker 
-                || !m_SpecialBothHandsNoteMarker) {
+            if(!m_Special1HandNoteMarker
+                || !m_LeftHandNoteMarker
+                || !m_RightHandNoteMarker
+                || !m_Special2HandsNoteMarker) {
                 Debug.LogError("Note maker prefab missing");
 #if UNITY_EDITOR
-            // Application.Quit() does not work in the editor so
-            // UnityEditor.EditorApplication.isPlaying need to be set to false to end the game
-            UnityEditor.EditorApplication.isPlaying = false;
+                // Application.Quit() does not work in the editor so
+                // UnityEditor.EditorApplication.isPlaying need to be set to false to end the game
+                UnityEditor.EditorApplication.isPlaying = false;
 #else
-            UnityEngine.Application.Quit();
+                UnityEngine.Application.Quit();
 #endif
-            }	
+            }
 
             currentLockeMode = Cursor.lockState;
 
-            s_instance = this;			
+            s_instance = this;
         }
 
-        void OnApplicationFocus(bool hasFocus)
-        {
+        void OnApplicationFocus(bool hasFocus) {
             if(hasFocus) {
                 Cursor.lockState = currentLockeMode;
 
@@ -836,21 +837,21 @@ namespace MiKu.NET {
             }
         }
 
-        void OnEnable() {	
+        void OnEnable() {
             try {
                 UpdateDisplayTime(_currentTime);
                 m_MetaNotesColider.SetActive(false);
-                
+
                 gridWasOn = m_GridGuide.activeSelf;
                 // Toggle Grid on by default
                 if(!gridWasOn) ToggleGridGuide();
-                
+
                 // After Enabled we proced to Init the Chart Data
                 InitChart();
                 SwitchRenderCamera(0);
                 ToggleWorkingStateAlertOff();
 
-                CurrentLongNote = new LongNote();			
+                //CurrentLongNote = new LongNote();            
                 CurrentSelection = new SelectionArea();
                 //
                 CurrentClipBoard = new ClipBoardStruct();
@@ -869,19 +870,18 @@ namespace MiKu.NET {
             } catch(Exception e) {
                 Serializer.WriteToLogFile("There was a error loading the Chart");
                 Serializer.WriteToLogFile(e.ToString());
-            }			
+            }
         }
-        
+
         // Update is called once per frame
-        void Update () {
-            if(isBusy || !IsInitilazed){ return; }
+        void Update() {
+            if(isBusy || !IsInitilazed) { return; }
 
             lastSaveTime += Time.deltaTime;
             keyHoldTime = keyHoldTime + Time.deltaTime;
 
             // Input.GetKeyDown(KeyCode.LeftControl) || Input.GetKeyDown(KeyCode.RightControl)
-            if(Input.GetButtonDown("Input Modifier1"))
-            {
+            if(Input.GetButtonDown("Input Modifier1")) {
                 isCTRLDown = true;
             }
 
@@ -902,38 +902,38 @@ namespace MiKu.NET {
 
             // Input.GetKeyDown(KeyCode.LeftAlt)
             if(Input.GetButtonDown("Input Modifier3")) {
-                if(!isOnLongNoteMode && !PromtWindowOpen && !isPlaying) {
+                if(!PromtWindowOpen && !isPlaying) {
                     isSHIFDown = true;
                     RefreshCurrentTime();
                     ToggleSelectionArea();
-                }				
+                }
             }
 
             // Input.GetKeyUp(KeyCode.LeftAlt)
             if(Input.GetButtonUp("Input Modifier3")) {
-                if(!isOnLongNoteMode && !PromtWindowOpen && !isPlaying) {
+                if(!PromtWindowOpen && !isPlaying) {
                     isSHIFDown = false;
                     ToggleSelectionArea(true);
                 }
             }
 
-#region Keyboard Shorcuts
+            #region Keyboard Shorcuts
             // Change Step and BPM
             // Input.GetKey(KeyCode.RightArrow)
-            if( Input.GetAxis("Horizontal") != 0 && !isBusy && keyHoldTime > nextKeyHold && !PromtWindowOpen) {
+            if(Input.GetAxis("Horizontal") != 0 && !isBusy && keyHoldTime > nextKeyHold && !PromtWindowOpen) {
                 nextKeyHold = keyHoldTime + keyHoldDelta;
                 if(!IsPlaying) {
-                    
+
                     /* if(isCTRLDown) { m_BPMSlider.value = BPM + 1; }
-                    else { ChangeStepMeasure(true); }	 */		
+                    else { ChangeStepMeasure(true); }     */
                     if(!isCTRLDown) {
                         ChangeStepMeasure(Input.GetAxis("Horizontal") > 0);
-                    }		
+                    }
                 } else {
                     ChangePlaySpeed(Input.GetAxis("Horizontal") > 0);
                 }
                 nextKeyHold = nextKeyHold - keyHoldTime;
-                keyHoldTime = 0.0f;				
+                keyHoldTime = 0.0f;
             }
 
             // Movement on the track
@@ -947,33 +947,31 @@ namespace MiKu.NET {
                 vertAxis = Input.GetAxis("Vertical Free Camera");
             }
 
-            if( vertAxis < 0 && keyHoldTime > nextKeyHold && !PromtWindowOpen && !isCTRLDown && !isALTDown) {
+            if(vertAxis < 0 && keyHoldTime > nextKeyHold && !PromtWindowOpen && !isCTRLDown && !isALTDown) {
                 nextKeyHold = keyHoldTime + keyHoldDelta;
                 MoveCamera(true, GetPrevStepPoint());
                 DrawTrackXSLines();
                 nextKeyHold = nextKeyHold - keyHoldTime;
                 keyHoldTime = 0.0f;
             }
-            
+
             // Input.GetKey(KeyCode.UpArrow)
-            if( vertAxis > 0 && keyHoldTime > nextKeyHold && !PromtWindowOpen && !isCTRLDown && !isALTDown) {				
+            if(vertAxis > 0 && keyHoldTime > nextKeyHold && !PromtWindowOpen && !isCTRLDown && !isALTDown) {
                 nextKeyHold = keyHoldTime + keyHoldDelta;
                 MoveCamera(true, GetNextStepPoint());
                 DrawTrackXSLines();
                 nextKeyHold = nextKeyHold - keyHoldTime;
-                keyHoldTime = 0.0f;				
+                keyHoldTime = 0.0f;
             }
 
             // Delete all the notes of the current difficulty
             // Input.GetKeyDown(KeyCode.Delete) 
-            if( Input.GetButtonDown("Delete") && !PromtWindowOpen) {
+            if(Input.GetButtonDown("Delete") && !PromtWindowOpen) {
                 if(isCTRLDown && !IsPlaying) {
                     CloseSpecialSection();
-                    FinalizeLongNoteMode();
                     DoClearNotePositions();
                 } else if(!IsPlaying) {
                     CloseSpecialSection();
-                    FinalizeLongNoteMode();
                     DeleteNotesAtTheCurrentTime();
                 }
             }
@@ -983,49 +981,46 @@ namespace MiKu.NET {
             if(Input.GetButtonDown("Timeline Start") && !PromtWindowOpen) {
                 if(isCTRLDown && !IsPlaying) {
                     CloseSpecialSection();
-                    FinalizeLongNoteMode();
                     ReturnToStartTime();
                     DrawTrackXSLines();
                 }
-            }		
+            }
 
             // Input.GetKeyDown(KeyCode.End)
             if(Input.GetButtonDown("Timeline End") && !PromtWindowOpen) {
                 if(isCTRLDown && !IsPlaying) {
                     CloseSpecialSection();
-                    FinalizeLongNoteMode();
                     GoToEndTime();
                     DrawTrackXSLines();
                 }
-            }		
+            }
 
             // Play/Stop
             // Input.GetKeyDown(KeyCode.Space)
-            if((Input.GetButtonDown("Play") || (Input.GetButtonDown("PlayReturn") && !isSHIFDown))  && !PromtWindowOpen) {
+            if((Input.GetButtonDown("Play") || (Input.GetButtonDown("PlayReturn") && !isSHIFDown)) && !PromtWindowOpen) {
                 CloseSpecialSection();
-                FinalizeLongNoteMode();
                 TogglePlay(Input.GetButton("PlayReturn"));
             }
 
             // Close the promt window or do Return to menu promt
             if(Input.GetButtonDown("Cancel")) {
-            //if(Input.GetKeyDown(KeyCode.Escape)) {
+                //if(Input.GetKeyDown(KeyCode.Escape)) {
                 if(PromtWindowOpen) {
-                    ClosePromtWindow();					
+                    ClosePromtWindow();
                 } else if(helpWindowOpen) {
                     ToggleHelpWindow();
                 } else {
                     if(CurrentSelection.endTime > CurrentSelection.startTime) {
-                        ClearSelectionMarker();						
+                        ClearSelectionMarker();
                     } else {
                         DoReturnToMainMenu();
-                    }					
+                    }
                 }
             }
-            
+
             if(Input.GetButtonDown("Submit")) {
-            // Accept promt action
-            //if(Input.GetKeyDown(KeyCode.Return)) {
+                // Accept promt action
+                //if(Input.GetKeyDown(KeyCode.Return)) {
                 if(PromtWindowOpen) {
                     OnAcceptPromt();
                 }
@@ -1034,8 +1029,8 @@ namespace MiKu.NET {
             // Save Action
             if(Input.GetKeyDown(KeyCode.S)) {
                 if(isCTRLDown && !IsPlaying) {
-                    DoSaveAction();					
-                }				
+                    DoSaveAction();
+                }
             }
 
             if(Input.GetMouseButtonDown(2)) {
@@ -1049,15 +1044,15 @@ namespace MiKu.NET {
                     if(MiddleButtonSelectorType == 1) {
                         if(middleButtonNoteTarget < 2 || middleButtonNoteTarget > 3) {
                             middleButtonNoteTarget = 2;
-                        }						
+                        }
                     }
 
                     if(MiddleButtonSelectorType == 2 && middleButtonNoteTarget > 3) {
                         middleButtonNoteTarget = 0;
                     }
-                    
+
                     /* if(middleButtonNoteTarget > 3) {
-                        middleButtonNoteTarget = 0;						
+                        middleButtonNoteTarget = 0;                        
                     } */
 
                     SetNoteMarkerType(middleButtonNoteTarget);
@@ -1072,10 +1067,10 @@ namespace MiKu.NET {
                     if(isCTRLDown) {
                         ToggleMovementSectionToChart(SLIDE_LEFT_TAG);
                     } else {
-                        SetNoteMarkerType(GetNoteMarkerTypeIndex(Note.NoteType.LeftHanded));
+                        SetNoteMarkerType(GetNoteMarkerTypeIndex(Note.NoteHandType.LeftHanded));
                         markerWasUpdated = true;
                     }
-                }				
+                }
             }
 
             // Input.GetKeyDown(KeyCode.Alpha2) || Input.GetKeyDown(KeyCode.Keypad2)
@@ -1084,7 +1079,7 @@ namespace MiKu.NET {
                     if(isCTRLDown) {
                         ToggleMovementSectionToChart(SLIDE_RIGHT_TAG);
                     } else {
-                        SetNoteMarkerType(GetNoteMarkerTypeIndex(Note.NoteType.RightHanded));
+                        SetNoteMarkerType(GetNoteMarkerTypeIndex(Note.NoteHandType.RightHanded));
                         markerWasUpdated = true;
                     }
                 }
@@ -1096,7 +1091,7 @@ namespace MiKu.NET {
                     if(isCTRLDown) {
                         ToggleMovementSectionToChart(SLIDE_CENTER_TAG);
                     } else {
-                        SetNoteMarkerType(GetNoteMarkerTypeIndex(Note.NoteType.OneHandSpecial));
+                        SetNoteMarkerType(GetNoteMarkerTypeIndex(Note.NoteHandType.OneHandSpecial));
                         markerWasUpdated = true;
                     }
                 }
@@ -1108,10 +1103,10 @@ namespace MiKu.NET {
                     if(isCTRLDown) {
                         ToggleMovementSectionToChart(SLIDE_LEFT_DIAG_TAG);
                     } else {
-                        SetNoteMarkerType(GetNoteMarkerTypeIndex(Note.NoteType.BothHandsSpecial));
+                        SetNoteMarkerType(GetNoteMarkerTypeIndex(Note.NoteHandType.BothHandsSpecial));
                         markerWasUpdated = true;
-                    }	
-                }			
+                    }
+                }
             }
 
             // Input.GetKeyDown(KeyCode.Alpha5) || Input.GetKeyDown(KeyCode.Keypad5)
@@ -1139,49 +1134,45 @@ namespace MiKu.NET {
             // Input.GetKeyDown(KeyCode.Alpha7) || Input.GetKeyDown(KeyCode.Keypad7)
             if(Input.GetButtonDown("Right Camera")) {
                 if(!PromtWindowOpen) {
-                    SwitchRenderCamera(2);					
+                    SwitchRenderCamera(2);
                 }
             }
 
             // (Input.GetKeyDown(KeyCode.Alpha8) || Input.GetKeyDown(KeyCode.Keypad8))
-            if( Input.GetButtonDown("Free View Camera") && !isALTDown ) {
+            if(Input.GetButtonDown("Free View Camera") && !isALTDown) {
                 if(!PromtWindowOpen) {
                     SwitchRenderCamera(3);
                 }
             }
 
             // (Input.GetKeyDown(KeyCode.Alpha9) || Input.GetKeyDown(KeyCode.Keypad9))
-            if( Input.GetButtonDown("Bookmarks") ) {
-                if(isCTRLDown){
+            if(Input.GetButtonDown("Bookmarks")) {
+                if(isCTRLDown) {
                     if(isALTDown) {
                         ToggleLightsToChart();
                     } else {
                         ToggleEffectToChart();
-                    }					
+                    }
                 } else {
                     if(currentPromt == PromtType.AddBookmarkAction) {
                         if(!m_BookmarkInput.isFocused) {
                             ClosePromtWindow();
-                        }							
+                        }
                     } else {
                         ToggleBookmarkToChart();
-                    }					
-                }				
+                    }
+                }
             }
 
             // Input.GetKeyDown(KeyCode.G) 
             // Toggle Grid Guide
             if(Input.GetButtonDown("Guide Grid") && !PromtWindowOpen) {
-                if(isCTRLDown) {
-                    SwitchGruidGuideType();
-                } else {
-                    ToggleGridGuide();
-                }                				
-            }	
+                ToggleGridGuide();
+            }
 
             if(Input.GetButtonDown("Bookmark Jump") && !PromtWindowOpen) {
                 ToggleBookmarkJump();
-            }		
+            }
 
             // Toggle Metronome
             // Input.GetKeyDown(KeyCode.M) Metronome
@@ -1190,29 +1181,28 @@ namespace MiKu.NET {
             }
 
             // Mouse Scroll
-            if (Input.GetAxis("Mouse ScrollWheel") > 0f && !IsPlaying && !PromtWindowOpen) // forward
+            if(Input.GetAxis("Mouse ScrollWheel") > 0f && !IsPlaying && !PromtWindowOpen) // forward
             {
                 if(!isCTRLDown && !isALTDown) {
                     MoveCamera(true, GetNextStepPoint());
                     DrawTrackXSLines();
                 } else if(isCTRLDown) {
                     ChangeStepMeasure(true);
-                }				
-            }
-            else if (Input.GetAxis("Mouse ScrollWheel") < 0f && !IsPlaying && !PromtWindowOpen) // backwards
-            {
+                }
+            } else if(Input.GetAxis("Mouse ScrollWheel") < 0f && !IsPlaying && !PromtWindowOpen) // backwards
+              {
                 if(!isCTRLDown && !isALTDown) {
                     MoveCamera(true, GetPrevStepPoint());
                     DrawTrackXSLines();
-                } else if(isCTRLDown){
+                } else if(isCTRLDown) {
                     ChangeStepMeasure(false);
                 }
             }
 
             // Volume control
             // (Input.GetKey(KeyCode.Plus) || Input.GetKey(KeyCode.KeypadPlus)
-            if( Input.GetAxis("Volume") > 0 
-                && keyHoldTime > nextKeyHold && !PromtWindowOpen ){
+            if(Input.GetAxis("Volume") > 0
+                && keyHoldTime > nextKeyHold && !PromtWindowOpen) {
 
                 nextKeyHold = keyHoldTime + keyHoldDelta;
 
@@ -1221,15 +1211,15 @@ namespace MiKu.NET {
                 } else {
                     m_VolumeSlider.value += 0.1f;
                 }
-                
+
                 nextKeyHold = nextKeyHold - keyHoldTime;
-                keyHoldTime = 0.0f;				
+                keyHoldTime = 0.0f;
             }
 
             // (Input.GetKey(KeyCode.Minus) || Input.GetKey(KeyCode.KeypadMinus)
-            if( Input.GetAxis("Volume") < 0 
-                && keyHoldTime > nextKeyHold && !PromtWindowOpen ){
-                
+            if(Input.GetAxis("Volume") < 0
+                && keyHoldTime > nextKeyHold && !PromtWindowOpen) {
+
                 nextKeyHold = keyHoldTime + keyHoldDelta;
 
                 if(isCTRLDown) {
@@ -1239,14 +1229,13 @@ namespace MiKu.NET {
                 }
 
                 nextKeyHold = nextKeyHold - keyHoldTime;
-                keyHoldTime = 0.0f;		
+                keyHoldTime = 0.0f;
             }
 
             // Copy and Paste actions
             if(Input.GetKeyDown(KeyCode.C)) {
                 if(isCTRLDown && !IsPlaying && !PromtWindowOpen) {
                     CloseSpecialSection();
-                    FinalizeLongNoteMode();
                     CopyAction();
 
                     /* if(TotalNotes > 0) {
@@ -1254,14 +1243,13 @@ namespace MiKu.NET {
                     } else {
                         Miku_DialogManager.ShowDialog(Miku_DialogManager.DialogType.Info, StringVault.Info_NotNotesToCopy);
                     } */
-                    
-                } 
+
+                }
             }
 
             if(Input.GetKeyDown(KeyCode.V)) {
                 if(isCTRLDown && !IsPlaying && !PromtWindowOpen) {
                     CloseSpecialSection();
-                    FinalizeLongNoteMode();
 
                     PasteAction();
                     /* if(Miku_Clipboard.Initialized && 
@@ -1271,8 +1259,8 @@ namespace MiKu.NET {
                     } else {
                         Miku_DialogManager.ShowDialog(Miku_DialogManager.DialogType.Info, StringVault.Info_ClipBoardEmpty);
                     } */
-                    
-                } 
+
+                }
             }
 
             // Toggle Stats Window
@@ -1285,28 +1273,21 @@ namespace MiKu.NET {
                 ToggleHelpWindow();
             }
 
-            // Toggle LongNote Mode
-            // Input.GetKeyDown(KeyCode.L)
-            if( Input.GetButtonDown("Long Line Mode") && !isPlaying && !PromtWindowOpen) {
-                ToggleLineMode();
-            }
-
             // Jumpt to Time
             // Input.GetKeyDown(KeyCode.F)
             if(Input.GetButtonDown("Jump to Time") && !IsPlaying && !PromtWindowOpen) {
                 CloseSpecialSection();
-                FinalizeLongNoteMode();
                 DoJumpToTimeAction();
             }
 
             if(Input.GetKeyDown(KeyCode.F12) && !PromtWindowOpen && !IsPlaying) {
-                ToggleAdminMode();			
+                ToggleAdminMode();
             }
 
             if(Input.GetKeyDown(KeyCode.F11) && !PromtWindowOpen && !IsPlaying) {
                 // ToggleSynthMode();
-                DoCustomDiffEdit();			
-            }	
+                DoCustomDiffEdit();
+            }
 
             if(Input.GetKeyDown(KeyCode.F10) && !PromtWindowOpen && !isPlaying) {
                 if(!isCTRLDown) {
@@ -1314,86 +1295,86 @@ namespace MiKu.NET {
                     DoTagEdit();
                 } else {
                     ToggleLatencyWindow();
-                }				
-            }	
+                }
+            }
 
             if(Input.GetKeyDown(KeyCode.F9)) {
                 if(!isCTRLDown) {
                     ToggleScrollSound();
                 } else {
                     ToggleVsycn();
-                }							
+                }
             }
 
             if(Input.GetKeyDown(KeyCode.F8) && !PromtWindowOpen && !isPlaying) {
-                DoClearBookmarks();				
-            }	
+                DoClearBookmarks();
+            }
 
             if(Input.GetKeyDown(KeyCode.F7)) {
-                ToggleAudioSpectrum();				
+                ToggleAudioSpectrum();
             }
 
             if(Input.GetKeyDown(KeyCode.F6) && !PromtWindowOpen && !isPlaying) {
-                DoMouseSentitivity();				
-            }		
+                DoMouseSentitivity();
+            }
 
             if(Input.GetKeyDown(KeyCode.F5) && !PromtWindowOpen && !isPlaying) {
-                UpdateMiddleButtonSelector();		
-            }	
+                UpdateMiddleButtonSelector();
+            }
 
             if(Input.GetKeyDown(KeyCode.F4) && !PromtWindowOpen && !isPlaying) {
-                UpdateAutoSaveAction();		
-            }	
+                UpdateAutoSaveAction();
+            }
 
             if(Input.GetKeyDown(KeyCode.F3) && !PromtWindowOpen && !isPlaying) {
                 if(!isCTRLDown) {
-                    ToggleMirrorMode();	
+                    ToggleMirrorMode();
                 } else {
                     ToggleGripSnapping();
                 }
-                    
-            }	
+
+            }
 
             if(Input.GetKeyDown(KeyCode.F2) && !PromtWindowOpen && !isPlaying) {
-                ExportToJSON();	
-            }		
+                ExportToJSON();
+            }
 
-            if( Input.GetButtonDown("Mirrored inverse Y") && isOnMirrorMode) { 
+            if(Input.GetButtonDown("Mirrored inverse Y") && isOnMirrorMode) {
                 YAxisInverse = !YAxisInverse;
             }
 
             // #endregionInput.GetKeyDown(KeyCode.PageUp)
-            if( Input.GetButtonDown("Advance UP") && !PromtWindowOpen) {
+            if(Input.GetButtonDown("Advance UP") && !PromtWindowOpen) {
                 if(!IsPlaying) {
                     float ms = MeasureToTime((TimeToMeasure(CurrentTime) + 1));
                     if(ms <= TrackDuration * MS) {
                         CurrentTime = GetCloseStepMeasure(ms, false);
                         MoveCamera(true, MStoUnit(CurrentTime));
                         DrawTrackXSLines();
-                    }					
+                    }
                 }
-            }	
+            }
 
             // Input.GetKeyDown(KeyCode.PageDown)
-            if( Input.GetButtonDown("Advance DOWN") && !PromtWindowOpen) {
+            if(Input.GetButtonDown("Advance DOWN") && !PromtWindowOpen) {
                 if(!IsPlaying) {
                     float ms = MeasureToTime((TimeToMeasure(CurrentTime) - 1));
-                    if(ms < 0){
+                    if(ms < 0) {
                         ms = 0;
                     }
 
                     CurrentTime = GetCloseStepMeasure(ms, false);
                     MoveCamera(true, MStoUnit(CurrentTime));
-                    DrawTrackXSLines();					
+                    DrawTrackXSLines();
                 }
-            }	
+            }
 
-            if( Input.GetButtonDown("TAB")) {
+            if(Input.GetButtonDown("TAB")) {
                 ToggleSideBars();
             }
 
             if(Input.GetButtonDown("Select All") && isCTRLDown) {
-                if(!isPlaying && !isOnLongNoteMode && !PromtWindowOpen) {
+                if(!isPlaying && !PromtWindowOpen) {
                     SelectAll();
                 }
             }
@@ -1409,7 +1390,7 @@ namespace MiKu.NET {
 
             // Directional Notes
 
-            if(isSHIFDown && !promtWindowOpen && !isPlaying && !isOnLongNoteMode) {
+            if(isSHIFDown && !promtWindowOpen && !isPlaying) {
                 if(Input.GetKeyDown(KeyCode.D)) {
                     ToggleNoteDirectionMarker(Note.NoteDirection.Right);
                 } else if(Input.GetKeyDown(KeyCode.C)) {
@@ -1428,26 +1409,24 @@ namespace MiKu.NET {
                     ToggleNoteDirectionMarker(Note.NoteDirection.RightTop);
                 }
             }
-#endregion
+            #endregion
 
             if(markerWasUpdated) {
                 markerWasUpdated = false;
                 notesArea.RefreshSelectedObjec();
-            }	
+            }
 
-            if(lastSaveTime >= AUTO_SAVE_TIME_CHECK 
+            if(lastSaveTime >= AUTO_SAVE_TIME_CHECK
                 && canAutoSave
-                && !isOnLongNoteMode 
                 && !PromtWindowOpen
                 && !isPlaying) {
                 SaveChartAction();
-            }			
+            }
         }
 
         void FixedUpdate() {
             if(IsPlaying) {
-                if(_currentPlayTime >= TrackDuration*MS){ Stop(); }
-                else { MoveCamera(); }				
+                if(_currentPlayTime >= TrackDuration * MS) { Stop(); } else { MoveCamera(); }
             }
         }
 
@@ -1471,7 +1450,7 @@ namespace MiKu.NET {
                         RefreshCurrentTime();
                         HighlightNotes();
                         //LogMessage("Check for hightligh");
-                    }					
+                    }                    
                 }
             } */
         }
@@ -1491,22 +1470,22 @@ namespace MiKu.NET {
             float ypos = transform.parent.position.y;
             CalculateConst();
             Gizmos.color = Color.yellow;
-            Gizmos.DrawLine(new Vector3(_trackHorizontalBounds.x, ypos, offset), 
-                new Vector3(_trackHorizontalBounds.x, ypos, GetLineEndPoint((TM-1)*K) + offset ));
-            Gizmos.DrawLine(new Vector3(_trackHorizontalBounds.y, ypos, offset), 
-                new Vector3(_trackHorizontalBounds.y, ypos,  GetLineEndPoint((TM-1)*K) + offset ));
-            
+            Gizmos.DrawLine(new Vector3(_trackHorizontalBounds.x, ypos, offset),
+                new Vector3(_trackHorizontalBounds.x, ypos, GetLineEndPoint((TM - 1) * K) + offset));
+            Gizmos.DrawLine(new Vector3(_trackHorizontalBounds.y, ypos, offset),
+                new Vector3(_trackHorizontalBounds.y, ypos, GetLineEndPoint((TM - 1) * K) + offset));
+
             for(int i = 0; i < TM; i++) {
-                Gizmos.DrawLine( new Vector3( _trackHorizontalBounds.x, ypos, i*GetLineEndPoint(K) ), 
-                    new Vector3( _trackHorizontalBounds.y, ypos, i*GetLineEndPoint(K) ) );
-                
+                Gizmos.DrawLine(new Vector3(_trackHorizontalBounds.x, ypos, i * GetLineEndPoint(K)),
+                    new Vector3(_trackHorizontalBounds.y, ypos, i * GetLineEndPoint(K)));
+
             }
 
             float lastCiqo = 0;
             for(int j = 0; j < 4; ++j) {
-                lastCiqo += K*( 1f/4f );
-                Gizmos.DrawLine(new Vector3( _trackHorizontalBounds.x, ypos,  GetLineEndPoint(lastCiqo ) ), 
-                    new Vector3( _trackHorizontalBounds.y, ypos,  GetLineEndPoint( lastCiqo ) ) );
+                lastCiqo += K * (1f / 4f);
+                Gizmos.DrawLine(new Vector3(_trackHorizontalBounds.x, ypos, GetLineEndPoint(lastCiqo)),
+                    new Vector3(_trackHorizontalBounds.y, ypos, GetLineEndPoint(lastCiqo)));
             }
         }
 
@@ -1516,26 +1495,26 @@ namespace MiKu.NET {
         private void InitChart() {
             if(Serializer.Initialized) {
                 CurrentChart = Serializer.ChartData;
-                BPM = CurrentChart.BPM;	
+                BPM = CurrentChart.BPM;
 
                 if(CurrentChart.Track.Master == null) {
                     CurrentChart.Track.Master = new Dictionary<float, List<Note>>();
                 }
 
                 if(CurrentChart.Effects.Master == null) {
-                    CurrentChart.Effects.Master = new List<float>();				
+                    CurrentChart.Effects.Master = new List<float>();
                 }
 
                 if(CurrentChart.Jumps.Master == null) {
-                    CurrentChart.Jumps.Master = new List<float>();					
+                    CurrentChart.Jumps.Master = new List<float>();
                 }
 
                 if(CurrentChart.Crouchs.Master == null) {
-                    CurrentChart.Crouchs.Master = new List<float>();					
+                    CurrentChart.Crouchs.Master = new List<float>();
                 }
 
                 if(CurrentChart.Slides.Master == null) {
-                    CurrentChart.Slides.Master = new List<Slide>();				
+                    CurrentChart.Slides.Master = new List<Slide>();
                 }
 
                 if(CurrentChart.Track.Custom == null) {
@@ -1543,26 +1522,26 @@ namespace MiKu.NET {
                 }
 
                 if(CurrentChart.Effects.Custom == null) {
-                    CurrentChart.Effects.Custom = new List<float>();				
+                    CurrentChart.Effects.Custom = new List<float>();
                 }
 
                 if(CurrentChart.Jumps.Custom == null) {
-                    CurrentChart.Jumps.Custom = new List<float>();					
+                    CurrentChart.Jumps.Custom = new List<float>();
                 }
 
                 if(CurrentChart.Crouchs.Custom == null) {
-                    CurrentChart.Crouchs.Custom = new List<float>();					
+                    CurrentChart.Crouchs.Custom = new List<float>();
                 }
 
                 if(CurrentChart.Slides.Custom == null) {
-                    CurrentChart.Slides.Custom = new List<Slide>();				
+                    CurrentChart.Slides.Custom = new List<Slide>();
                 }
 
                 if(CurrentChart.CustomDifficultyName == null || CurrentChart.CustomDifficultyName == string.Empty) {
                     CurrentChart.CustomDifficultyName = "Custom";
                     CurrentChart.CustomDifficultySpeed = 1;
                 }
-                
+
                 if(CurrentChart.Tags == null) {
                     CurrentChart.Tags = new List<string>();
                 }
@@ -1576,7 +1555,7 @@ namespace MiKu.NET {
 
                 songClip.SetData(Serializer.ChartData.AudioData, 0);
                 StartOffset = CurrentChart.Offset;
-                UpdateTrackDuration();				
+                UpdateTrackDuration();                
 
                 audioSource.clip = songClip; */
                 Serializer.GetAudioClipFromZip(
@@ -1587,14 +1566,14 @@ namespace MiKu.NET {
 
                 LoadHitSFX();
             } else {
-                
+
                 CurrentChart = new Chart();
                 Beats defaultBeats = new Beats();
                 defaultBeats.Easy = new Dictionary<float, List<Note>>();
                 defaultBeats.Normal = new Dictionary<float, List<Note>>();
                 defaultBeats.Hard = new Dictionary<float, List<Note>>();
                 defaultBeats.Expert = new Dictionary<float, List<Note>>();
-                defaultBeats.Master = new Dictionary<float, List<Note>>();	
+                defaultBeats.Master = new Dictionary<float, List<Note>>();
                 defaultBeats.Custom = new Dictionary<float, List<Note>>();
                 CurrentChart.Track = defaultBeats;
 
@@ -1649,25 +1628,25 @@ namespace MiKu.NET {
                 CurrentChart.CustomDifficultySpeed = 1;
 
                 CurrentChart.Tags = new List<string>();
-                
+
                 StartCoroutine(ResetApp());
-            }	
+            }
         }
 
         void OnClipLoaded(AudioClip loadedClip) {
             if(!Serializer.IsExtratingClip && Serializer.ClipExtratedComplete) {
                 songClip = loadedClip;
-                StartOffset = CurrentChart.Offset;					
+                StartOffset = CurrentChart.Offset;
                 audioSource.clip = songClip;
 
-                UpdateTrackDuration();					
+                UpdateTrackDuration();
                 // m_BPMSlider.value = BPM;
                 m_BPMDisplay.SetText(BPM.ToString());
-                UpdateDisplayStartOffset(StartOffset);			
-                SetNoteMarkerType(); 
+                UpdateDisplayStartOffset(StartOffset);
+                SetNoteMarkerType();
                 DrawTrackLines();
-                SetCurrentTrackDifficulty(TrackDifficulty.Easy);	
-                SetStatWindowData();	
+                SetCurrentTrackDifficulty(TrackDifficulty.Easy);
+                SetStatWindowData();
                 IsInitilazed = true;
 
                 BeginSpectralAnalyzer();
@@ -1685,27 +1664,27 @@ namespace MiKu.NET {
             }
         }
 
-#region Spectrum Analyzer
+        #region Spectrum Analyzer
         void BeginSpectralAnalyzer() {
             if(preProcessedSpectralFluxAnalyzer == null) {
                 if(IsSpectrumCached()) {
                     try {
-                        using(FileStream file = File.OpenRead(SpectrumCachePath+Serializer.CleanInput(CurrentChart.AudioName+spc_ext))) {
+                        using(FileStream file = File.OpenRead(SpectrumCachePath + Serializer.CleanInput(CurrentChart.AudioName + spc_ext))) {
                             System.Runtime.Serialization.Formatters.Binary.BinaryFormatter bf = new System.Runtime.Serialization.Formatters.Binary.BinaryFormatter();
-                            preProcessedSpectralFluxAnalyzer = (SpectralFluxAnalyzer) bf.Deserialize(file);
+                            preProcessedSpectralFluxAnalyzer = (SpectralFluxAnalyzer)bf.Deserialize(file);
                         }
 
                         EndSpectralAnalyzer();
                         LogMessage("Spectrum loaded from cached");
                     } catch(Exception ex) {
-                        Miku_DialogManager.ShowDialog(Miku_DialogManager.DialogType.Alert, 
-                            "Error while dezerializing Spectrum "+ex.ToString()
+                        Miku_DialogManager.ShowDialog(Miku_DialogManager.DialogType.Alert,
+                            "Error while dezerializing Spectrum " + ex.ToString()
                         );
                         LogMessage(ex.ToString(), true);
                     }
-                    
+
                 } else {
-                    preProcessedSpectralFluxAnalyzer = new SpectralFluxAnalyzer ();
+                    preProcessedSpectralFluxAnalyzer = new SpectralFluxAnalyzer();
 
                     // Need all audio samples.  If in stereo, samples will return with left and right channels interweaved
                     // [L,R,L,R,L,R]
@@ -1718,29 +1697,29 @@ namespace MiKu.NET {
                     spc_sampleRate = audioSource.clip.frequency;
 
                     audioSource.clip.GetData(spc_multiChannelSamples, 0);
-                    LogMessage ("GetData done");
+                    LogMessage("GetData done");
 
-                    analyzerThread = new Thread (this.getFullSpectrumThreaded);
+                    analyzerThread = new Thread(this.getFullSpectrumThreaded);
 
-                    LogMessage ("Starting Background Thread");
-                    analyzerThread.Start ();
+                    LogMessage("Starting Background Thread");
+                    analyzerThread.Start();
 
                     ToggleWorkingStateAlertOn(StringVault.Info_SpectrumLoading);
-                }				
-            }			
+                }
+            }
         }
 
         void EndSpectralAnalyzer() {
-            if(treadWithError) { 
-                LogMessage ("Specturm could not be created", true);
+            if(treadWithError) {
+                LogMessage("Specturm could not be created", true);
                 ToggleWorkingStateAlertOff();
-                return; 
+                return;
             }
 
             List<SpectralFluxInfo> flux = preProcessedSpectralFluxAnalyzer.spectralFluxSamples;
             Vector3 targetTransform = Vector3.zero;
             Vector3 targetScale = Vector3.one;
-            
+
             Transform childTransform;
             for(int i = 0; i < flux.Count; ++i) {
                 SpectralFluxInfo spcInfo = flux[i];
@@ -1750,7 +1729,7 @@ namespace MiKu.NET {
                     ).transform;
                     targetTransform.x = plotTempInstance.position.x;
                     targetTransform.y = plotTempInstance.position.y;
-                    targetTransform.z = MStoUnit((spcInfo.time*MS)); //+StartOffset);
+                    targetTransform.z = MStoUnit((spcInfo.time * MS)); //+StartOffset);
                     plotTempInstance.position = targetTransform;
                     plotTempInstance.parent = m_SpectrumHolder;
 
@@ -1767,36 +1746,36 @@ namespace MiKu.NET {
                         targetScale.x = spcInfo.spectralFlux * heightMultiplier;
                         childTransform.localScale = targetScale;
                     }
-                    
+
                     //plotTempInstance.localScale = targetScale; 
-                }	
-                
+                }
+
                 /* if(spcInfo.spectralFlux > 0) {
                     LogMessage ("Time is "+spcInfo.time+" at index "+i+" flux: "+(spcInfo.spectralFlux * 0.01f));
                     return;
                 } */
-            }	
+            }
 
-            ToggleWorkingStateAlertOff();	
+            ToggleWorkingStateAlertOff();
             isSpectrumGenerated = true;
             UpdateSpectrumOffset();
 
             if(!IsSpectrumCached()) {
                 try {
-                    using(FileStream file = File.Create(SpectrumCachePath+Serializer.CleanInput(CurrentChart.AudioName+spc_ext))) {
+                    using(FileStream file = File.Create(SpectrumCachePath + Serializer.CleanInput(CurrentChart.AudioName + spc_ext))) {
                         System.Runtime.Serialization.Formatters.Binary.BinaryFormatter bf = new System.Runtime.Serialization.Formatters.Binary.BinaryFormatter();
                         bf.Serialize(file, preProcessedSpectralFluxAnalyzer);
                     }
                 } catch {
                     LogMessage("There was a error while creating the specturm file", true);
-                }				
+                }
             }
         }
 
         public int getIndexFromTime(float curTime) {
             float lengthPerSample = spc_clipLength / (float)spc_numTotalSamples;
 
-            return Mathf.FloorToInt (curTime / lengthPerSample);
+            return Mathf.FloorToInt(curTime / lengthPerSample);
         }
 
         public float getTimeFromIndex(int index) {
@@ -1810,61 +1789,61 @@ namespace MiKu.NET {
 
                 int numProcessed = 0;
                 float combinedChannelAverage = 0f;
-                for (int i = 0; i < spc_multiChannelSamples.Length; i++) {
-                    combinedChannelAverage += spc_multiChannelSamples [i];
+                for(int i = 0; i < spc_multiChannelSamples.Length; i++) {
+                    combinedChannelAverage += spc_multiChannelSamples[i];
 
                     // Each time we have processed all channels samples for a point in time, we will store the average of the channels combined
-                    if ((i + 1) % spc_numChannels == 0) {
+                    if((i + 1) % spc_numChannels == 0) {
                         preProcessedSamples[numProcessed] = combinedChannelAverage / spc_numChannels;
                         numProcessed++;
                         combinedChannelAverage = 0f;
                     }
                 }
 
-                Debug.Log ("Combine Channels done");
-                Debug.Log (preProcessedSamples.Length.ToString());
+                Debug.Log("Combine Channels done");
+                Debug.Log(preProcessedSamples.Length.ToString());
 
                 // Once we have our audio sample data prepared, we can execute an FFT to return the spectrum data over the time domain
                 int spectrumSampleSize = 1024;
                 int iterations = preProcessedSamples.Length / spectrumSampleSize;
 
-                FFT fft = new FFT ();
-                fft.Initialize ((UInt32)spectrumSampleSize);
+                FFT fft = new FFT();
+                fft.Initialize((UInt32)spectrumSampleSize);
 
-                Debug.Log (string.Format("Processing {0} time domain samples for FFT", iterations));
+                Debug.Log(string.Format("Processing {0} time domain samples for FFT", iterations));
                 double[] sampleChunk = new double[spectrumSampleSize];
-                for (int i = 0; i < iterations; i++) {
+                for(int i = 0; i < iterations; i++) {
                     // Grab the current 1024 chunk of audio sample data
-                    Array.Copy (preProcessedSamples, i * spectrumSampleSize, sampleChunk, 0, spectrumSampleSize);
+                    Array.Copy(preProcessedSamples, i * spectrumSampleSize, sampleChunk, 0, spectrumSampleSize);
 
                     // Apply our chosen FFT Window
-                    double[] windowCoefs = DSP.Window.Coefficients (DSP.Window.Type.Hanning, (uint)spectrumSampleSize);
-                    double[] scaledSpectrumChunk = DSP.Math.Multiply (sampleChunk, windowCoefs);
-                    double scaleFactor = DSP.Window.ScaleFactor.Signal (windowCoefs);
+                    double[] windowCoefs = DSP.Window.Coefficients(DSP.Window.Type.Hanning, (uint)spectrumSampleSize);
+                    double[] scaledSpectrumChunk = DSP.Math.Multiply(sampleChunk, windowCoefs);
+                    double scaleFactor = DSP.Window.ScaleFactor.Signal(windowCoefs);
 
                     // Perform the FFT and convert output (complex numbers) to Magnitude
-                    Complex[] fftSpectrum = fft.Execute (scaledSpectrumChunk);
-                    double[] scaledFFTSpectrum = DSPLib.DSP.ConvertComplex.ToMagnitude (fftSpectrum);
-                    scaledFFTSpectrum = DSP.Math.Multiply (scaledFFTSpectrum, scaleFactor);
+                    Complex[] fftSpectrum = fft.Execute(scaledSpectrumChunk);
+                    double[] scaledFFTSpectrum = DSPLib.DSP.ConvertComplex.ToMagnitude(fftSpectrum);
+                    scaledFFTSpectrum = DSP.Math.Multiply(scaledFFTSpectrum, scaleFactor);
 
                     // These 1024 magnitude values correspond (roughly) to a single point in the audio timeline
                     float curSongTime = getTimeFromIndex(i) * spectrumSampleSize;
 
                     // Send our magnitude data off to our Spectral Flux Analyzer to be analyzed for peaks
-                    preProcessedSpectralFluxAnalyzer.analyzeSpectrum (Array.ConvertAll (scaledFFTSpectrum, x => (float)x), curSongTime);
+                    preProcessedSpectralFluxAnalyzer.analyzeSpectrum(Array.ConvertAll(scaledFFTSpectrum, x => (float)x), curSongTime);
                 }
 
-                Debug.Log ("Spectrum Analysis done");
-                Debug.Log ("Background Thread Completed");
-                
+                Debug.Log("Spectrum Analysis done");
+                Debug.Log("Background Thread Completed");
+
                 threadFinished = true;
-            } catch (Exception e) {
+            } catch(Exception e) {
                 threadFinished = true;
                 treadWithError = true;
                 // Catch exceptions here since the background thread won't always surface the exception to the main thread
-                Debug.LogError (e.ToString ());
+                Debug.LogError(e.ToString());
                 Serializer.WriteToLogFile("getFullSpectrumThreaded Error");
-                Serializer.WriteToLogFile(e.ToString());				
+                Serializer.WriteToLogFile(e.ToString());
             }
         }
 
@@ -1877,20 +1856,20 @@ namespace MiKu.NET {
                 } else {
                     return Application.persistentDataPath+save_path;
                 }   */
-                return Application.dataPath+"/../"+spc_cacheFolder;             
+                return Application.dataPath + "/../" + spc_cacheFolder;
             }
         }
 
         private bool IsSpectrumCached() {
-            if (!Directory.Exists(SpectrumCachePath)) {
+            if(!Directory.Exists(SpectrumCachePath)) {
                 DirectoryInfo dir = Directory.CreateDirectory(SpectrumCachePath);
                 dir.Attributes |= FileAttributes.Hidden;
 
                 return false;
             }
 
-            if(File.Exists(SpectrumCachePath+Serializer.CleanInput(CurrentChart.AudioName+spc_ext))){ 
-                return true;				
+            if(File.Exists(SpectrumCachePath + Serializer.CleanInput(CurrentChart.AudioName + spc_ext))) {
+                return true;
             }
 
             return false;
@@ -1900,23 +1879,23 @@ namespace MiKu.NET {
             if(isSpectrumGenerated) {
                 if(spectrumDefaultPos == null) {
                     spectrumDefaultPos = new Vector3(
-                        m_SpectrumHolder.transform.position.x, 
-                        m_SpectrumHolder.transform.position.y, 
+                        m_SpectrumHolder.transform.position.x,
+                        m_SpectrumHolder.transform.position.y,
                         0
                     );
                 }
 
                 m_SpectrumHolder.transform.position = new Vector3(
-                    spectrumDefaultPos.x, 
-                    spectrumDefaultPos.y, 
+                    spectrumDefaultPos.x,
+                    spectrumDefaultPos.y,
                     spectrumDefaultPos.z + MStoUnit(StartOffset)
                 );
             }
         }
-#endregion
-        
+        #endregion
 
-#region Public buttons actions
+
+        #region Public buttons actions
         /// <summary>
         /// Change Chart BPM and Redraw lines
         /// </summary>
@@ -1928,7 +1907,7 @@ namespace MiKu.NET {
             lastBPM = BPM;
             lastK = K;
             BPM = _bpm;
-            m_BPMDisplay.SetText(BPM.ToString());			
+            m_BPMDisplay.SetText(BPM.ToString());
             DrawTrackLines();
             DrawTrackXSLines(true);
             UpdateNotePositions();
@@ -1948,7 +1927,7 @@ namespace MiKu.NET {
 
             StartOffset = Mathf.Max(0, StartOffset);
             UpdateTrackDuration();
-            UpdateDisplayStartOffset(StartOffset);			
+            UpdateDisplayStartOffset(StartOffset);
         }
 
         /// <summary>
@@ -1958,7 +1937,7 @@ namespace MiKu.NET {
         public void ChangeStepMeasure(bool isIncrease) {
             MBPMIncreaseFactor = (isIncrease) ? MBPMIncreaseFactor * 2 : MBPMIncreaseFactor / 2;
             MBPMIncreaseFactor = Mathf.Clamp(MBPMIncreaseFactor, 1, 64);
-            MBPM = 1/MBPMIncreaseFactor;
+            MBPM = 1 / MBPMIncreaseFactor;
             m_StepMeasureDisplay.SetText(string.Format("1/{0}", MBPMIncreaseFactor));
             DrawTrackXSLines();
         }
@@ -1967,12 +1946,12 @@ namespace MiKu.NET {
         /// Change the selected difficulty bein displayed
         /// </summary>
         /// <param name="isIncrease">if true get the next Difficulty otherwise the previous</param>
-        public void ChangeDisplayDifficulty(bool isIncrease) {			
+        public void ChangeDisplayDifficulty(bool isIncrease) {
             int current = GetCurrentTrackDifficultyIndex();
             int increment = (isIncrease) ? 1 : -1;
-            current += increment; 
+            current += increment;
             current = Mathf.Clamp(current, 0, 3);
-            SetCurrentTrackDifficulty(current);						
+            SetCurrentTrackDifficulty(current);
         }
 
         /// <summary>
@@ -2000,7 +1979,7 @@ namespace MiKu.NET {
                 m_CustomDiffNameInput.text = CurrentChart.CustomDifficultyName;
                 m_CustomDiffSpeedInput.text = CurrentChart.CustomDifficultySpeed.ToString();
                 ShowPromtWindow(String.Empty);
-            }			
+            }
         }
 
         /// <summary>
@@ -2013,7 +1992,7 @@ namespace MiKu.NET {
                 currentPromt = PromtType.TagEdition;
                 m_TagInput.text = string.Empty;
                 ShowPromtWindow(String.Empty);
-            }			
+            }
         }
 
         /// <summary>
@@ -2027,7 +2006,7 @@ namespace MiKu.NET {
                 m_PanningInput.text = m_CameraMoverScript.panSpeed.ToString();
                 m_RotationInput.text = m_CameraMoverScript.turnSpeed.ToString();
                 ShowPromtWindow(String.Empty);
-            }			
+            }
         }
 
         /// <summary>
@@ -2044,11 +2023,11 @@ namespace MiKu.NET {
         public void DoReturnToMainMenu() {
             currentPromt = PromtType.BackToMenu;
             ShowPromtWindow(
-                StringVault.Promt_BackToMenu +(
-                    NeedSaveAction() 
+                StringVault.Promt_BackToMenu + (
+                    NeedSaveAction()
                     ?
                     "\n" +
-                    StringVault.Promt_NotSaveChanges 
+                    StringVault.Promt_NotSaveChanges
                     :
                     ""
                 )
@@ -2072,7 +2051,7 @@ namespace MiKu.NET {
         /// <summary>
         /// Show promt before saving the chart
         /// </summary>
-        public void DoSaveAction(){
+        public void DoSaveAction() {
             currentPromt = PromtType.SaveAction;
             //ShowPromtWindow(string.Empty);
             OnAcceptPromt();
@@ -2081,7 +2060,7 @@ namespace MiKu.NET {
         /// <summary>
         /// Show promt for manually edit BPM/Offset
         /// </summary>
-        public void DoEditBPMManual(){
+        public void DoEditBPMManual() {
             currentPromt = PromtType.EditActionBPM;
             m_BPMInput.text = BPM.ToString();
             StartCoroutine(SetFieldFocus(m_BPMInput));
@@ -2091,7 +2070,7 @@ namespace MiKu.NET {
         /// <summary>
         /// Show promt for manually edit BPM/Offset
         /// </summary>
-        public void DoEditOffsetManual(){
+        public void DoEditOffsetManual() {
             currentPromt = PromtType.EditOffset;
             m_OffsetInput.text = StartOffset.ToString();
             StartCoroutine(SetFieldFocus(m_OffsetInput));
@@ -2101,9 +2080,9 @@ namespace MiKu.NET {
         /// <summary>
         /// Toggle the admin mode of the selected chart
         /// </summary>
-        public void ToggleAdminMode(){
+        public void ToggleAdminMode() {
             CurrentChart.IsAdminOnly = !CurrentChart.IsAdminOnly;
-            Miku_DialogManager.ShowDialog(Miku_DialogManager.DialogType.Info, 
+            Miku_DialogManager.ShowDialog(Miku_DialogManager.DialogType.Info,
                 string.Format(
                     StringVault.Info_AdminMode,
                     (currentChart.IsAdminOnly) ? "On" : "Off"
@@ -2116,9 +2095,9 @@ namespace MiKu.NET {
         /// <summary>
         /// Toggle the Synchronization of the movement with the playback
         /// </summary>
-        public void ToggleSynthMode(){
+        public void ToggleSynthMode() {
             syncnhWithAudio = !syncnhWithAudio;
-            Miku_DialogManager.ShowDialog(Miku_DialogManager.DialogType.Info, 
+            Miku_DialogManager.ShowDialog(Miku_DialogManager.DialogType.Info,
                 string.Format(
                     StringVault.Info_SycnMode,
                     (syncnhWithAudio) ? "On" : "Off"
@@ -2129,7 +2108,7 @@ namespace MiKu.NET {
         /// <summary>
         /// Toggle the SpectralFlux Visualization
         /// </summary>
-        public void ToggleAudioSpectrum(){
+        public void ToggleAudioSpectrum() {
             m_SpectrumHolder.gameObject.SetActive(!m_SpectrumHolder.gameObject.activeSelf);
         }
 
@@ -2142,7 +2121,7 @@ namespace MiKu.NET {
                     ClearNotePositions();
                     resizedNotes.Clear();
                     break;
-                case PromtType.BackToMenu:								
+                case PromtType.BackToMenu:
                     Miku_LoaderHelper.LauchPreloader();
                     break;
                 case PromtType.CopyAllNotes:
@@ -2156,7 +2135,7 @@ namespace MiKu.NET {
                         PasteChartNotes();
                     }
                     break;
-                case PromtType.JumpActionTime:					
+                case PromtType.JumpActionTime:
                     Miku_JumpToTime.GoToTime();
                     break;
                 case PromtType.EditActionBPM:
@@ -2171,11 +2150,11 @@ namespace MiKu.NET {
                     break;
                 case PromtType.AddBookmarkAction:
                     List<Bookmark> bookmarks = CurrentChart.Bookmarks.BookmarksList;
-                    if(bookmarks != null){
+                    if(bookmarks != null) {
                         Bookmark book = new Bookmark();
                         book.time = CurrentTime;
                         book.name = m_BookmarkInput.text;
-                        bookmarks.Add(book);	
+                        bookmarks.Add(book);
                         s_instance.AddBookmarkGameObjectToScene(book.time, book.name);
 
                         Miku_DialogManager.ShowDialog(Miku_DialogManager.DialogType.Info, StringVault.Info_BookmarkOn);
@@ -2234,17 +2213,17 @@ namespace MiKu.NET {
                     break;
             }
 
-            if( currentPromt != PromtType.TagEdition) {
+            if(currentPromt != PromtType.TagEdition) {
                 ClosePromtWindow();
-            }			
-        }		
+            }
+        }
 
         /// <summary>
         /// Close the promt window
         /// </summary>
         public void ClosePromtWindow() {
-            if(currentPromt != PromtType.JumpActionTime 
-                && currentPromt != PromtType.EditActionBPM 
+            if(currentPromt != PromtType.JumpActionTime
+                && currentPromt != PromtType.EditActionBPM
                 && currentPromt != PromtType.JumpActionBookmark
                 && currentPromt != PromtType.AddBookmarkAction
                 && currentPromt != PromtType.SaveAction
@@ -2284,7 +2263,7 @@ namespace MiKu.NET {
                     m_TagInput.DeactivateInputField();
                 }
             }
-            currentPromt = PromtType.NoAction;			
+            currentPromt = PromtType.NoAction;
             PromtWindowOpen = false;
         }
 
@@ -2298,8 +2277,7 @@ namespace MiKu.NET {
             if(IsPlaying) {
                 lastHitNoteZ = -1;
                 Stop(returnToStart);
-            }
-            else Play();
+            } else Play();
         }
 
         /// <summary>
@@ -2342,7 +2320,7 @@ namespace MiKu.NET {
             if(Serializer.SerializeToFile(Serializer.ChartData.FilePath)) {
                 Miku_DialogManager.ShowDialog(Miku_DialogManager.DialogType.Alert, StringVault.Info_FileSaved);
             }
-            
+
             lastSaveTime = 0;
         }
 
@@ -2351,11 +2329,11 @@ namespace MiKu.NET {
             CurrentChart.Offset = StartOffset;
             Serializer.ChartData = CurrentChart;
             Serializer.ChartData.EditorVersion = EditorVersion;
-            
+
             if(Serializer.SerializeToJSON()) {
                 Miku_DialogManager.ShowDialog(Miku_DialogManager.DialogType.Alert, StringVault.Info_FileExported);
             }
-            
+
         }
 
         /// <summary>
@@ -2373,20 +2351,11 @@ namespace MiKu.NET {
         }
 
         /// <summary>
-        /// Swith the grid guide between solid/outline
-        /// </summary>
-        public void SwitchGruidGuideType() {
-            if(isBusy) return;
-
-            m_GridGuideController.SwitchGridGuideType();
-        }
-
-        /// <summary>
         /// Toggle Metronome on/off
         ///</summary>
         public void ToggleMetronome() {
             isMetronomeActive = !isMetronomeActive;
-            Miku_DialogManager.ShowDialog(Miku_DialogManager.DialogType.Alert, StringVault.Info_Metronome+(isMetronomeActive ? "On" : "Off"));			
+            Miku_DialogManager.ShowDialog(Miku_DialogManager.DialogType.Alert, StringVault.Info_Metronome + (isMetronomeActive ? "On" : "Off"));
 
             if(IsPlaying) {
                 /* if(isMetronomeActive && !wasMetronomePlayed) {
@@ -2415,7 +2384,7 @@ namespace MiKu.NET {
         /// </summary>
         /// <param name="_volume">the volume to set</param>
         public void ChangeSongVolume(float _volume) {
-            if(!IsInitilazed){ return; }
+            if(!IsInitilazed) { return; }
 
             audioSource.volume = _volume;
         }
@@ -2425,7 +2394,7 @@ namespace MiKu.NET {
         /// </summary>
         /// <param name="_volume">the volume to set</param>
         public void ChangeSFXVolume(float _volume) {
-            if(!IsInitilazed){ return; }
+            if(!IsInitilazed) { return; }
 
             m_SFXAudioSource.volume = _volume;
             // m_MetronomeAudioSource.volume = _volume;
@@ -2460,25 +2429,25 @@ namespace MiKu.NET {
             CurrentClipBoard.lights.Clear();
 
             List<float> keys_tofilter = workingTrack.Keys.ToList();
-            if(CurrentSelection.endTime > CurrentSelection.startTime) {				
-                keys_tofilter = keys_tofilter.Where(time => time >= CurrentSelection.startTime 
+            if(CurrentSelection.endTime > CurrentSelection.startTime) {
+                keys_tofilter = keys_tofilter.Where(time => time >= CurrentSelection.startTime
                     && time <= CurrentSelection.endTime).ToList();
 
-                CurrentClipBoard.effects = effects.Where(time => time >= CurrentSelection.startTime 
+                CurrentClipBoard.effects = effects.Where(time => time >= CurrentSelection.startTime
                     && time <= CurrentSelection.endTime).ToList();
 
-                CurrentClipBoard.jumps = jumps.Where(time => time >= CurrentSelection.startTime 
+                CurrentClipBoard.jumps = jumps.Where(time => time >= CurrentSelection.startTime
                     && time <= CurrentSelection.endTime).ToList();
 
-                CurrentClipBoard.crouchs = crouchs.Where(time => time >= CurrentSelection.startTime 
+                CurrentClipBoard.crouchs = crouchs.Where(time => time >= CurrentSelection.startTime
                     && time <= CurrentSelection.endTime).ToList();
-                
-                CurrentClipBoard.slides = slides.Where(s => s.time >= CurrentSelection.startTime 
+
+                CurrentClipBoard.slides = slides.Where(s => s.time >= CurrentSelection.startTime
                     && s.time <= CurrentSelection.endTime).ToList();
 
-                CurrentClipBoard.lights = lights.Where(time => time >= CurrentSelection.startTime 
+                CurrentClipBoard.lights = lights.Where(time => time >= CurrentSelection.startTime
                     && time <= CurrentSelection.endTime).ToList();
-                
+
                 CurrentClipBoard.startTime = CurrentSelection.startTime;
                 CurrentClipBoard.lenght = CurrentSelection.endTime - CurrentSelection.startTime;
             } else {
@@ -2508,19 +2477,19 @@ namespace MiKu.NET {
                     List<Note> copyNotes = workingTrack[lookUpTime];
                     List<Note> clipboardNotes = new List<Note>();
                     int totalNotes = copyNotes.Count;
-                    
+
                     for(int i = 0; i < totalNotes; ++i) {
                         Note toCopy = copyNotes[i];
-                        clipboardNotes.Add(toCopy);						
+                        clipboardNotes.Add(toCopy);
                     }
 
                     CurrentClipBoard.notes.Add(lookUpTime, clipboardNotes);
-                }				
-            }	
+                }
+            }
 
             Miku_DialogManager.ShowDialog(Miku_DialogManager.DialogType.Info, StringVault.Info_NotesCopied);
             ClearSelectionMarker();
-            isBusy = false;	
+            isBusy = false;
         }
 
         /// <summary>
@@ -2552,7 +2521,7 @@ namespace MiKu.NET {
             if(note_keys.Count > 0) {
                 Dictionary<float, List<Note>> workingTrack = GetCurrentTrackDifficulty();
                 List<Note> copyList, currList;
-                
+
                 for(int i = 0; i < note_keys.Count; ++i) {
                     currList = CurrentClipBoard.notes[note_keys[i]];
                     copyList = new List<Note>();
@@ -2560,23 +2529,24 @@ namespace MiKu.NET {
                     float newTime = prevTime + (backUpTime - CurrentClipBoard.startTime);
 
                     for(int j = 0; j < currList.Count; ++j) {
-                        Note currNote = currList[j];						
-                        float newPos = MStoUnit(newTime);											
+                        Note currNote = currList[j];
+                        float newPos = MStoUnit(newTime);
 
                         Note copyNote = new Note(
                             new Vector3(currNote.Position[0], currNote.Position[1], newPos),
-                            FormatNoteName(newTime, j, currNote.Type),
+                            currNote.TimePoint,
+                            FormatNoteName(newTime, j, currNote.HandType),
                             currNote.ComboId,
-                            currNote.Type,
+                            currNote.HandType,
                             currNote.Direction
                         );
 
-                        if(currNote.Segments != null && currNote.Segments.GetLength(0) > 0) {	
+                        if(currNote.Segments != null && currNote.Segments.GetLength(0) > 0) {
                             float[,] copySegments = new float[currNote.Segments.GetLength(0), 3];
                             for(int x = 0; x < currNote.Segments.GetLength(0); ++x) {
                                 Vector3 segmentPos = transform.InverseTransformPoint(
                                         currNote.Segments[x, 0],
-                                        currNote.Segments[x, 1], 
+                                        currNote.Segments[x, 1],
                                         currNote.Segments[x, 2]
                                 );
 
@@ -2595,8 +2565,8 @@ namespace MiKu.NET {
 
                     workingTrack.Add(newTime, copyList);
                     AddTimeToSFXList(newTime);
-                }				
-            }			
+                }
+            }
 
             for(int i = 0; i < CurrentClipBoard.jumps.Count; ++i) {
                 CurrentTime = CurrentClipBoard.jumps[i] + (backUpTime - CurrentClipBoard.startTime);
@@ -2624,10 +2594,10 @@ namespace MiKu.NET {
             }
 
             CurrentTime = backUpTime;
-            Miku_DialogManager.ShowDialog(Miku_DialogManager.DialogType.Info, StringVault.Info_NotePasteSuccess);			
-            isBusy = false;	
+            Miku_DialogManager.ShowDialog(Miku_DialogManager.DialogType.Info, StringVault.Info_NotePasteSuccess);
+            isBusy = false;
         }
-        
+
         /// <summary>
         /// Turn on/off and update the data of the Stats Window
         /// </summary>
@@ -2679,7 +2649,7 @@ namespace MiKu.NET {
                 helpWindowOpen = true;
                 m_HelpWindowAnimator.Play("Panel In");
             }
-        }		
+        }
 
         /// <summary>
         /// Change the current Track Difficulty by index
@@ -2693,7 +2663,7 @@ namespace MiKu.NET {
         /// Show the dialog to jump to a specifit time
         ///</summary>
         public void DoJumpToTimeAction() {
-            Miku_JumpToTime.SetMinutePickerLenght(Mathf.RoundToInt(TrackDuration/60) + 1);
+            Miku_JumpToTime.SetMinutePickerLenght(Mathf.RoundToInt(TrackDuration / 60) + 1);
             currentPromt = PromtType.JumpActionTime;
             ShowPromtWindow(string.Empty);
         }
@@ -2705,7 +2675,7 @@ namespace MiKu.NET {
             if(isBusy || IsPlaying) return;
 
             if(PromtWindowOpen) {
-                if(currentPromt == PromtType.JumpActionBookmark){ ClosePromtWindow(); }
+                if(currentPromt == PromtType.JumpActionBookmark) { ClosePromtWindow(); }
                 return;
             }
 
@@ -2740,28 +2710,29 @@ namespace MiKu.NET {
             List<Bookmark> bookmarks = CurrentChart.Bookmarks.BookmarksList;
             if(bookmarks != null && bookmarks.Count > 0) {
                 // print(bookmarks[index-1].time);
-                JumpToTime(bookmarks[index-1].time);
+                JumpToTime(bookmarks[index - 1].time);
                 ClosePromtWindow();
-            }			
+            }
         }
 
         /// <summary> 
         /// Toggle the LongLine Mode
+        /// not used anymore
         /// </summary>
-        public void ToggleLineMode() {
-            if(isOnLongNoteMode) {
-                FinalizeLongNoteMode();
-            } else {
-                /* if(selectedNoteType == Note.NoteType.LeftHanded || selectedNoteType == Note.NoteType.RightHanded)  */{
-                    isOnLongNoteMode = true;
-                    CloseSpecialSection();
-                    Miku_DialogManager.ShowDialog(Miku_DialogManager.DialogType.Info, StringVault.Info_LongNoteModeEnabled);
-                    ToggleWorkingStateAlertOn(StringVault.Info_UserOnLongNoteMode);
-                }/*  else {
-                    Miku_DialogManager.ShowDialog(Miku_DialogManager.DialogType.Alert, StringVault.Alert_LongNoteModeWrongNote);
-                }	 */				
-            }
-        }
+        //public void ToggleLineMode() {
+        //    if(isOnLongNoteMode) {
+        //        FinalizeLongNoteMode();
+        //    } else {
+        //        /* if(selectedNoteType == Note.NoteType.LeftHanded || selectedNoteType == Note.NoteType.RightHanded)  */{
+        //            isOnLongNoteMode = true;
+        //            CloseSpecialSection();
+        //            Miku_DialogManager.ShowDialog(Miku_DialogManager.DialogType.Info, StringVault.Info_LongNoteModeEnabled);
+        //            ToggleWorkingStateAlertOn(StringVault.Info_UserOnLongNoteMode);
+        //        }/*  else {
+        //            Miku_DialogManager.ShowDialog(Miku_DialogManager.DialogType.Alert, StringVault.Alert_LongNoteModeWrongNote);
+        //        }     */                
+        //    }
+        //}
 
         /// <summary> 
         /// Public handler for the ToggleEffectToChart method
@@ -2771,7 +2742,7 @@ namespace MiKu.NET {
                 ToggleLightsToChart();
             } else {
                 ToggleEffectToChart();
-            }			
+            }
         }
 
         /// <summary> 
@@ -2782,7 +2753,7 @@ namespace MiKu.NET {
                 ToggleBookmarkJump();
             } else {
                 ToggleBookmarkToChart();
-            }			
+            }
         }
 
         /// <summary>
@@ -2794,7 +2765,7 @@ namespace MiKu.NET {
             } else {
                 currentPromt = PromtType.EditLatency;
                 ShowPromtWindow(string.Empty);
-            }			
+            }
         }
 
         /// <summary>
@@ -2864,15 +2835,15 @@ namespace MiKu.NET {
             }
 
             switch(SideBarsStatus) {
-                case 1: 
+                case 1:
                     m_LeftSideBar.SetActive(false);
                     m_RightSideBar.SetActive(true);
                     break;
-                case 2: 
+                case 2:
                     m_LeftSideBar.SetActive(true);
                     m_RightSideBar.SetActive(false);
                     break;
-                case 3: 
+                case 3:
                     m_LeftSideBar.SetActive(false);
                     m_RightSideBar.SetActive(false);
                     break;
@@ -2883,7 +2854,7 @@ namespace MiKu.NET {
             }
         }
 
-#endregion
+        #endregion
 
         /// <summary>
         /// Try to find the Hit's SFX and begin its load
@@ -2910,17 +2881,15 @@ namespace MiKu.NET {
                 if(targetFiles.Length > 0) {
                     StartCoroutine(GetHitAudioClip(@targetFiles[0], 2));
                 }
-            } 
+            }
         }
 
         /// <summary>
         /// IEnumerator for the load of the hit sound
         /// </summary>
-        IEnumerator GetHitAudioClip(string url, int type = 0)
-        {
-            using (WWW www = new WWW(url))
-            {
-                yield return www;	
+        IEnumerator GetHitAudioClip(string url, int type = 0) {
+            using(WWW www = new WWW(url)) {
+                yield return www;
 
                 try {
                     if(type == 0) {
@@ -2930,14 +2899,12 @@ namespace MiKu.NET {
                     } else if(type == 2) {
                         m_MetronomeSound = www.GetAudioClip(false, true);
                     }
-                                        
-                }			
-                catch (Exception ex)
-                {
+
+                } catch(Exception ex) {
                     LogMessage("Problem opening the hit audio, please check extension" + ex.Message, true);
-                } 			
+                }
             }
-        }	
+        }
 
         private void SetStatWindowData() {
             m_statsArtistText.SetText(CurrentChart.Author);
@@ -2945,15 +2912,15 @@ namespace MiKu.NET {
 
             TimeSpan t = TimeSpan.FromSeconds(TrackDuration);
             m_statsDurationText.text = string.Format("{0:D2}:{1:D2}",
-                t.Minutes, 
+                t.Minutes,
                 t.Seconds);
 
             if(CurrentChart.ArtworkBytes != null) {
                 Texture2D text = new Texture2D(1, 1);
                 text.LoadImage(Convert.FromBase64String(CurrentChart.ArtworkBytes));
-                Sprite artWorkSprite = Sprite.Create(text, new Rect(0,0, text.width, text.height), new Vector2(0.5f, 0.5f));	
+                Sprite artWorkSprite = Sprite.Create(text, new Rect(0, 0, text.width, text.height), new Vector2(0.5f, 0.5f));
                 m_statsArtworkImage.sprite = artWorkSprite;
-            }			
+            }
 
             if(Serializer.IsAdmin()) {
                 m_statsAdminOnlyText.text = (CurrentChart.IsAdminOnly) ? "Admin Only Edit" : "Public Edit";
@@ -2969,15 +2936,15 @@ namespace MiKu.NET {
         /// </summary>
         /// <param name="message">The mensaje to show to the user</param>
         void ShowPromtWindow(string message) {
-            if(currentPromt != PromtType.JumpActionTime 
-                && currentPromt != PromtType.EditActionBPM 
+            if(currentPromt != PromtType.JumpActionTime
+                && currentPromt != PromtType.EditActionBPM
                 && currentPromt != PromtType.JumpActionBookmark
                 && currentPromt != PromtType.AddBookmarkAction
                 && currentPromt != PromtType.SaveAction
                 && currentPromt != PromtType.EditLatency
                 && currentPromt != PromtType.EditOffset
                 && currentPromt != PromtType.MouseSentitivity
-                && currentPromt != PromtType.CustomDifficultyEdit 
+                && currentPromt != PromtType.CustomDifficultyEdit
                 && currentPromt != PromtType.TagEdition) {
                 m_PromtWindowText.SetText(message);
                 m_PromtWindowAnimator.Play("Panel In");
@@ -2991,13 +2958,13 @@ namespace MiKu.NET {
                     StartCoroutine(SetFieldFocus(m_BookmarkInput));
                 } else if(currentPromt == PromtType.JumpActionBookmark) {
                     m_BookmarkJumpWindowAnimator.Play("Panel In");
-                } else if(currentPromt == PromtType.EditActionBPM) { 
+                } else if(currentPromt == PromtType.EditActionBPM) {
                     m_ManualBPMWindowAnimator.Play("Panel In");
                 } else if(currentPromt == PromtType.EditLatency) {
                     m_LatencyWindowAnimator.Play("Panel In");
                     m_LatencyInput.text = string.Format("{0:.##}", LatencyOffset);
                     StartCoroutine(SetFieldFocus(m_LatencyInput));
-                } else if(currentPromt == PromtType.EditOffset) { 
+                } else if(currentPromt == PromtType.EditOffset) {
                     m_ManualOffsetWindowAnimator.Play("Panel In");
                 } else if(currentPromt == PromtType.MouseSentitivity) {
                     m_MouseSentitivityAnimator.Play("Panel In");
@@ -3010,7 +2977,7 @@ namespace MiKu.NET {
                     StartCoroutine(SetFieldFocus(m_TagInput));
                 }
             }
-            
+
             PromtWindowOpen = true;
         }
 
@@ -3033,13 +3000,13 @@ namespace MiKu.NET {
                 BeatsLookupTable.BPM = BPM;
                 BeatsLookupTable.full = new BeatsLookup();
                 BeatsLookupTable.full.step = K;
-                BeatsLookupTable.half.step = K/2;
-                BeatsLookupTable.quarter.step = K/4;
-                BeatsLookupTable.eighth.step = K/8;
-                BeatsLookupTable.sixteenth.step = K/16;
-                BeatsLookupTable.thirtyTwo.step = K/32;
-                BeatsLookupTable.sixtyFourth.step = K/64;
-                
+                BeatsLookupTable.half.step = K / 2;
+                BeatsLookupTable.quarter.step = K / 4;
+                BeatsLookupTable.eighth.step = K / 8;
+                BeatsLookupTable.sixteenth.step = K / 16;
+                BeatsLookupTable.thirtyTwo.step = K / 32;
+                BeatsLookupTable.sixtyFourth.step = K / 64;
+
                 if(BeatsLookupTable.full.beats == null) {
                     BeatsLookupTable.full.beats = new List<float>();
                     BeatsLookupTable.half.beats = new List<float>();
@@ -3056,7 +3023,7 @@ namespace MiKu.NET {
                     BeatsLookupTable.sixteenth.beats.Clear();
                     BeatsLookupTable.thirtyTwo.beats.Clear();
                     BeatsLookupTable.sixtyFourth.beats.Clear();
-                }				
+                }
 
                 /* for(int i = 0; i < TM; i++) {
                     float lineEndPosition = (i*K);
@@ -3075,7 +3042,7 @@ namespace MiKu.NET {
         /// </summary>
         /// Draw the track lines
         /// <summary>
-        void DrawTrackLines() {	
+        void DrawTrackLines() {
             // Make sure that all the const are calculated before Drawing the lines
             CalculateConst();
             // FillLookupTable();
@@ -3087,33 +3054,33 @@ namespace MiKu.NET {
 
             LineRenderer lr = GetLineRenderer(generatedLeftLine);
             lr.SetPosition(0, new Vector3(_trackHorizontalBounds.x, ypos, offset));
-            lr.SetPosition(1, new Vector3(_trackHorizontalBounds.x, ypos, GetLineEndPoint((TM-1)*K) + offset ));
-            
+            lr.SetPosition(1, new Vector3(_trackHorizontalBounds.x, ypos, GetLineEndPoint((TM - 1) * K) + offset));
+
             LineRenderer rl = GetLineRenderer(generatedRightLine);
             rl.SetPosition(0, new Vector3(_trackHorizontalBounds.y, ypos, offset));
-            rl.SetPosition(1, new Vector3(_trackHorizontalBounds.y, ypos, GetLineEndPoint((TM-1)*K) + offset ));
+            rl.SetPosition(1, new Vector3(_trackHorizontalBounds.y, ypos, GetLineEndPoint((TM - 1) * K) + offset));
 
             uint currentBEAT = 0;
             uint beatNumberReal = 0;
             GameObject trackLine;
             LineRenderer trackRender;
             for(int i = 0; i < TM * _currentMultiplier; i++) {
-                float lineEndPosition = (i*GetLineEndPoint(K)) + offset;
+                float lineEndPosition = (i * GetLineEndPoint(K)) + offset;
                 if(currentBEAT % 4 == 0) {
                     trackLine = GameObject.Instantiate(m_ThickLine, Vector3.zero,
-                        Quaternion.identity, gameObject.transform);	
+                        Quaternion.identity, gameObject.transform);
 
                     DrawBeatNumber(beatNumberReal, lineEndPosition, trackLine.transform, true);
-                    //beatNumberReal++;				
+                    //beatNumberReal++;                
                 } else {
                     trackLine = GameObject.Instantiate(m_ThinLine, Vector3.zero,
-                        Quaternion.identity, gameObject.transform);	
+                        Quaternion.identity, gameObject.transform);
                     DrawBeatNumber(beatNumberReal, lineEndPosition, trackLine.transform, false);
                 }
                 trackLine.name = "[Generated Beat Line]";
                 trackRender = GetLineRenderer(trackLine);
                 drawedLines.Add(trackLine);
-                
+
                 trackRender.SetPosition(0, new Vector3(_trackHorizontalBounds.x, ypos, lineEndPosition));
                 trackRender.SetPosition(1, new Vector3(_trackHorizontalBounds.y, ypos, lineEndPosition));
                 currentBEAT++;
@@ -3125,15 +3092,15 @@ namespace MiKu.NET {
         /// Draw the track extra thin lines when the <see cref="MBPM"/> is increase
         /// <summary>
         /// <param name="forceClear">If true, the lines will be forcefull redrawed</param>
-        void DrawTrackXSLines(bool forceClear = false) {	
+        void DrawTrackXSLines(bool forceClear = false) {
             if(MBPM < 1) {
                 float newXSSection = 0;
-                float _CK = ( K*MBPM );
+                float _CK = (K * MBPM);
                 // double xsKConst = (MS*MINUTE)/(double)BPM;
-                if( (_currentTime%K) > 0 ) {
-                    newXSSection = _currentTime - ( _currentTime%K );
+                if((_currentTime % K) > 0) {
+                    newXSSection = _currentTime - (_currentTime % K);
                 } else {
-                    newXSSection = _currentTime; //+ ( K - (_currentTime%K ) );			
+                    newXSSection = _currentTime; //+ ( K - (_currentTime%K ) );            
                 }
 
                 //print(string.Format("{2} : {0} - {1}", currentXSLinesSection, newXSSection, _currentTime));
@@ -3148,20 +3115,20 @@ namespace MiKu.NET {
                     float ypos = 0;
 
                     for(int j = 0; j < MBPMIncreaseFactor * 2; ++j) {
-                        startTime += K*MBPM;
-                        GameObject trackLineXS = GameObject.Instantiate(m_ThinLineXS, 
-                            Vector3.zero, Quaternion.identity, gameObject.transform);	
-                            trackLineXS.name = "[Generated Beat Line XS]";
+                        startTime += K * MBPM;
+                        GameObject trackLineXS = GameObject.Instantiate(m_ThinLineXS,
+                            Vector3.zero, Quaternion.identity, gameObject.transform);
+                        trackLineXS.name = "[Generated Beat Line XS]";
 
                         trackLineXS.transform.localPosition = new Vector3(0, 0, trackLineXS.transform.localPosition.z);
 
                         LineRenderer trackRenderXS = GetLineRenderer(trackLineXS);
                         drawedXSLines.Add(trackLineXS);
 
-                        trackRenderXS.SetPosition(0, new Vector3( _trackHorizontalBounds.x, ypos, GetLineEndPoint(startTime)) );
-                        trackRenderXS.SetPosition(1, new Vector3( _trackHorizontalBounds.y, ypos, GetLineEndPoint(startTime)) );
+                        trackRenderXS.SetPosition(0, new Vector3(_trackHorizontalBounds.x, ypos, GetLineEndPoint(startTime)));
+                        trackRenderXS.SetPosition(1, new Vector3(_trackHorizontalBounds.y, ypos, GetLineEndPoint(startTime)));
                     }
-                }				
+                }
             } else {
                 ClearXSLines();
             }
@@ -3173,7 +3140,7 @@ namespace MiKu.NET {
         void ClearLines() {
             if(drawedLines.Count <= 0) return;
 
-            for(int i=0; i < drawedLines.Count; i++) {
+            for(int i = 0; i < drawedLines.Count; i++) {
                 Destroy(drawedLines[i]);
             }
 
@@ -3186,7 +3153,7 @@ namespace MiKu.NET {
         void ClearXSLines() {
             if(drawedXSLines.Count <= 0) return;
 
-            for(int i=0; i < drawedXSLines.Count; i++) {
+            for(int i = 0; i < drawedXSLines.Count; i++) {
                 DestroyImmediate(drawedXSLines[i]);
             }
 
@@ -3199,28 +3166,28 @@ namespace MiKu.NET {
         void DrawBeatNumber(uint number, float zPos, Transform parent = null, bool large = true) {
             if(number == 0) { return; }
 
-            GameObject numberGO = GameObject.Instantiate( large ? m_BeatNumberLarge : m_BeatNumberSmall);
+            GameObject numberGO = GameObject.Instantiate(large ? m_BeatNumberLarge : m_BeatNumberSmall);
             numberGO.transform.localPosition = new Vector3(
                                                 0,
-                                                0, 
+                                                0,
                                                 zPos
                                             );
-            
+
             numberGO.transform.rotation = Quaternion.identity;
             numberGO.transform.parent = (parent == null) ? m_NoNotesElementHolder : parent;
             string numberFormated = string.Format("{0:00}", number);
 
             BeatNumberHelper textField = numberGO.GetComponentInChildren<BeatNumberHelper>();
             textField.SetText(numberFormated);
-            numberGO.name = "beat-"+numberFormated;
+            numberGO.name = "beat-" + numberFormated;
         }
 
         /// <summary>
         /// Calculate the constans needed to draw the track
         /// </summary>
         void CalculateConst() {
-            K = (MS*MINUTE)/BPM;
-            TM = Mathf.RoundToInt( BPM * ( TrackDuration/60 ) ) + 1;
+            K = (MS * MINUTE) / BPM;
+            TM = Mathf.RoundToInt(BPM * (TrackDuration / 60)) + 1;
         }
 
         /// <summary>
@@ -3229,7 +3196,7 @@ namespace MiKu.NET {
         /// <param name="_ms">Milliseconds to convert</param>
         /// <returns>Returns <typeparamref name="float"/></returns>
         float MStoUnit(float _ms) {
-            return (_ms/MS) * UsC;
+            return (_ms / MS) * UsC;
         }
 
         /// <summary>
@@ -3238,7 +3205,7 @@ namespace MiKu.NET {
         /// <param name="_unit">Unity Units to convert</param>
         /// <returns>Returns <typeparamref name="float"/></returns>
         float UnitToMS(float _unit) {
-            return (_unit/UsC) * MS;
+            return (_unit / UsC) * MS;
         }
 
         /// <summary>
@@ -3248,9 +3215,9 @@ namespace MiKu.NET {
         /// <param name="offset">Offest at where the line will be drawed</param>
         /// <returns>Returns <typeparamref name="float"/></returns>
         float GetLineEndPoint(float _ms, float offset = 0) {
-            return MStoUnit((_ms + offset)*DBPM);
+            return MStoUnit((_ms + offset) * DBPM);
         }
-        
+
         /// <summary>
         /// Return the next point to displace the stage
         /// </summary>
@@ -3259,14 +3226,14 @@ namespace MiKu.NET {
         /// </remarks>
         /// <returns>Returns <typeparamref name="float"/></returns>
         float GetNextStepPoint() {
-            float _CK = ( K*MBPM );
+            float _CK = (K * MBPM);
 
             //_currentTime+= K*MBPM;
             //Debug.Log("Current "+_currentTime);
-            if(_currentTime%_CK == 0) { 
-                _currentTime += _CK; 
-            } else { 
-                float nextPoint = _currentTime + ( _CK - (_currentTime%_CK ) );
+            if(_currentTime % _CK == 0) {
+                _currentTime += _CK;
+            } else {
+                float nextPoint = _currentTime + (_CK - (_currentTime % _CK));
                 //Debug.Log("Next "+nextPoint);
                 //print(_CK);
 
@@ -3282,7 +3249,7 @@ namespace MiKu.NET {
                 _currentTime = nextPoint; //_currentTime + ( _CK - (_currentTime%_CK ) );
             }
 
-            _currentTime = Mathf.Min(_currentTime, (TM-1)*K);
+            _currentTime = Mathf.Min(_currentTime, (TM - 1) * K);
             lastUsedCK = _CK;
             return MStoUnit(_currentTime);
         }
@@ -3295,14 +3262,14 @@ namespace MiKu.NET {
         /// </remarks>
         /// <returns>Returns <typeparamref name="float"/></returns>
         float GetPrevStepPoint() {
-            float _CK = ( K*MBPM );
+            float _CK = (K * MBPM);
             //_currentTime-= K*MBPM;
-            if(_currentTime%_CK == 0) { 
-                _currentTime -= _CK; 
-            } else { 
-                float nextPoint = _currentTime - ( _currentTime%_CK );
+            if(_currentTime % _CK == 0) {
+                _currentTime -= _CK;
+            } else {
+                float nextPoint = _currentTime - (_currentTime % _CK);
 
-                if(nextPoint == _currentTime ) {
+                if(nextPoint == _currentTime) {
                     nextPoint = _currentTime - _CK;
                     //print("Now Here");
                     // || (_currentTime - nextPoint) <= _CK
@@ -3314,8 +3281,8 @@ namespace MiKu.NET {
 
                 _currentTime = nextPoint; //_currentTime - ( _currentTime%_CK ); 
             }
-            _currentTime = Mathf.Max(_currentTime, 0);	
-            lastUsedCK = _CK;		
+            _currentTime = Mathf.Max(_currentTime, 0);
+            lastUsedCK = _CK;
             return MStoUnit(_currentTime);
         }
 
@@ -3331,7 +3298,7 @@ namespace MiKu.NET {
             // Init metronme if not initialized
             if(Metronome.bpm == 0 || Metronome.bpm != BPM) {
                 if(Metronome.beats == null) {
-                    Metronome.beats = new List<float>(); 
+                    Metronome.beats = new List<float>();
                 }
 
                 Metronome.beats.Clear();
@@ -3339,10 +3306,10 @@ namespace MiKu.NET {
 
                 // Init the beats to a max of 10min
                 //print("A beat every "+K.ToString());
-                float metroDuration = Math.Max(5000, TrackDuration*MS);
+                float metroDuration = Math.Max(5000, TrackDuration * MS);
                 for(int i = 1; i <= metroDuration; ++i) {
                     //print(i+"-"+(i*K).ToString());
-                    Metronome.beats.Add(i*K);
+                    Metronome.beats.Add(i * K);
                 }
                 Metronome.beats.Sort();
             }
@@ -3352,14 +3319,14 @@ namespace MiKu.NET {
         /// Play the track from the start or from <see cref="StartOffset"/>
         /// </summary>
         void Play() {
-            float seekTime = (StartOffset > 0) ? Mathf.Max(0, (_currentTime / MS) - (StartOffset / MS) ) : (_currentTime / MS);
+            float seekTime = (StartOffset > 0) ? Mathf.Max(0, (_currentTime / MS) - (StartOffset / MS)) : (_currentTime / MS);
             // if(seekTime >= audioSource.clip.length) { seekTime = audioSource.clip.length; }
             audioSource.time = seekTime;
             /*float targetSample = (StartOffset > 0) ? Mathf.Max(0, (_currentTime / MS) - (StartOffset / MS) ) : (_currentTime / MS);
             targetSample = (CurrentChart.AudioFrecuency * CurrentChart.AudioChannels) * (_currentTime + targetSample);
             audioSource.timeSamples = (int)targetSample;*/
             _currentPlayTime = _currentTime;
-            
+
             m_NotesDropArea.SetActive(false);
             m_MetaNotesColider.SetActive(true);
 
@@ -3373,9 +3340,9 @@ namespace MiKu.NET {
             m_UIGroupRight.interactable = false;
             // m_UIGroupRight.alpha = 0.3f;
 
-            if(m_SideBarScroll) { 
-                m_SideBarScroll.verticalNormalizedPosition = 1; 
-            }		
+            if(m_SideBarScroll) {
+                m_SideBarScroll.verticalNormalizedPosition = 1;
+            }
 
             // Deprecated, Old Metronome Code
             /* if (m_metronome != null) {
@@ -3408,13 +3375,13 @@ namespace MiKu.NET {
             workingEffects.Sort();
             if(workingEffects != null && workingEffects.Count > 0) {
                 for(int i = workingEffects.Count - 1; i >= 0; --i) {
-                //for(int i = 0; i < workingEffects.Count; ++i) {
+                    //for(int i = 0; i < workingEffects.Count; ++i) {
                     effectsStacks.Push(workingEffects[i]);
                 }
-                
+
                 //Track.LogMessage(effectsStacks.Peek().ToString());
-            }	
-                
+            }
+
 
             if(hitSFXQueue == null) {
                 hitSFXQueue = new Queue<float>();
@@ -3424,21 +3391,20 @@ namespace MiKu.NET {
 
             hitSFXSource.Sort();
             for(int i = 0; i < hitSFXSource.Count; ++i) {
-                if(hitSFXSource[i] >= _currentPlayTime){
+                if(hitSFXSource[i] >= _currentPlayTime) {
                     hitSFXQueue.Enqueue(hitSFXSource[i]);
-                }				
+                }
             }
 
             ResetResizedList();
 
             ClearSelectionMarker();
 
-            if(seekTime < audioSource.clip.length){
-                if(StartOffset == 0) { audioSource.Play(); }
-                else { StartCoroutine(StartAudioSourceDelay()); }
+            if(seekTime < audioSource.clip.length) {
+                if(StartOffset == 0) { audioSource.Play(); } else { StartCoroutine(StartAudioSourceDelay()); }
             }
 
-            // MoveCamera(true , MStoUnit(_currentPlayTime));	
+            // MoveCamera(true , MStoUnit(_currentPlayTime));    
 
             IsPlaying = true;
         }
@@ -3454,20 +3420,20 @@ namespace MiKu.NET {
             MetronomeBeatQueue.Clear();
             if(Metronome.beats != null) {
                 for(int i = 0; i < Metronome.beats.Count; ++i) {
-                    if(Metronome.beats[i] >= _currentPlayTime){
+                    if(Metronome.beats[i] >= _currentPlayTime) {
                         MetronomeBeatQueue.Enqueue(Metronome.beats[i]);
-                    }				
+                    }
                 }
-            }			
+            }
         }
 
         /// <summary>
         /// Coorutine that start the AudioSource after the <see cref="StartOffset"/> millisecons has passed
         /// </summary>
         IEnumerator StartAudioSourceDelay() {
-            yield return new WaitForSecondsRealtime(Mathf.Max(0, ( (StartOffset / MS)  - (_currentTime / MS)) / PlaySpeed  ));
+            yield return new WaitForSecondsRealtime(Mathf.Max(0, ((StartOffset / MS) - (_currentTime / MS)) / PlaySpeed));
 
-            if(IsPlaying){ audioSource.Play(); }
+            if(IsPlaying) { audioSource.Play(); }
         }
 
         /// <summary>
@@ -3476,11 +3442,11 @@ namespace MiKu.NET {
         void Stop(bool backToPreviousPoint = false) {
             audioSource.time = 0;
             //audioSource.timeSamples = 0;
-            
+
 
             if(StartOffset > 0) StopCoroutine(StartAudioSourceDelay());
             audioSource.Stop();
-            
+
             /* if(m_metronome != null) {
                 if(isMetronomeActive) m_metronome.Stop();
                 wasMetronomePlayed = false;
@@ -3490,8 +3456,8 @@ namespace MiKu.NET {
             IsPlaying = false;
 
             if(!backToPreviousPoint) {
-                float _CK = ( K*MBPM );
-                if( (_currentPlayTime%_CK) / _CK >= 0.5f ) {
+                float _CK = (K * MBPM);
+                if((_currentPlayTime % _CK) / _CK >= 0.5f) {
                     _currentTime = GetCloseStepMeasure(_currentPlayTime);
                 } else {
                     _currentTime = GetCloseStepMeasure(_currentPlayTime, false);
@@ -3500,7 +3466,7 @@ namespace MiKu.NET {
 
             _currentPlayTime = 0;
 
-            MoveCamera(true , MStoUnit(_currentTime));
+            MoveCamera(true, MStoUnit(_currentTime));
 
             m_NotesDropArea.SetActive(true);
             m_MetaNotesColider.SetActive(false);
@@ -3542,7 +3508,7 @@ namespace MiKu.NET {
             } else {
                 //_currentPlayTime += Time.unscaledDeltaTime * MS;
                 if(audioSource.isPlaying && syncnhWithAudio)
-                    _currentPlayTime = ( (audioSource.timeSamples / (float)audioSource.clip.frequency ) * MS) + StartOffset;
+                    _currentPlayTime = ((audioSource.timeSamples / (float)audioSource.clip.frequency) * MS) + StartOffset;
                 else {
                     _currentPlayTime += (Time.smoothDeltaTime * MS) * PlaySpeed;
                 }
@@ -3551,14 +3517,14 @@ namespace MiKu.NET {
                 //GetTrackTime();
                 UpdateDisplayTime(_currentPlayTime);
                 //m_CamerasHolder.Translate((Vector3.forward * Time.unscaledDeltaTime) * UsC);
-                zDest = MStoUnit(_currentPlayTime - (LatencyOffset * MS));							
-            }			
-            
+                zDest = MStoUnit(_currentPlayTime - (LatencyOffset * MS));
+            }
+
             m_CamerasHolder.position = new Vector3(
                     m_CamerasHolder.position.x,
                     m_CamerasHolder.position.y,
                     zDest);
-            
+
         }
 
         /// <summary>
@@ -3574,19 +3540,19 @@ namespace MiKu.NET {
 
             forwardTimeSB.Length = 0;
             forwardTimeSB.AppendFormat("{0:D2}m:{1:D2}s.{2:D3}ms",
-                forwardTimeSpan.Minutes.ToString("D2"), 
-                forwardTimeSpan.Seconds.ToString("D2"), 
+                forwardTimeSpan.Minutes.ToString("D2"),
+                forwardTimeSpan.Seconds.ToString("D2"),
                 forwardTimeSpan.Milliseconds.ToString("D3")
             );
 
             m_diplayTime.SetText(forwardTimeSB);
 
-            forwardTimeSpan = TimeSpan.FromMilliseconds((TrackDuration*MS) - _ms);
+            forwardTimeSpan = TimeSpan.FromMilliseconds((TrackDuration * MS) - _ms);
 
             backwardTimeSB.Length = 0;
             backwardTimeSB.AppendFormat("{0:D2}m:{1:D2}s.{2:D3}ms",
-                forwardTimeSpan.Minutes.ToString("D2"), 
-                forwardTimeSpan.Seconds.ToString("D2"), 
+                forwardTimeSpan.Minutes.ToString("D2"),
+                forwardTimeSpan.Seconds.ToString("D2"),
                 forwardTimeSpan.Milliseconds.ToString("D3")
             );
 
@@ -3601,12 +3567,12 @@ namespace MiKu.NET {
             TimeSpan t = TimeSpan.FromMilliseconds(_ms);
 
             m_OffsetDisplay.SetText(string.Format("{0:D2}s.{1:D3}ms",
-                t.Seconds.ToString(), 
+                t.Seconds.ToString(),
                 t.Milliseconds.ToString()));
-            
+
             UpdateSpectrumOffset();
             SetStatWindowData();
-        }	
+        }
 
         /// <summary>
         /// Update the display of the PlayBack speed
@@ -3615,13 +3581,13 @@ namespace MiKu.NET {
             m_PlaySpeedDisplay.SetText(string.Format("{0:D1}x",
                 PlaySpeed.ToString()
             ));
-        }		
+        }
 
         /// <summary>
         /// Load the menu scene when the Serializer had not been initialized
         /// </summary>
-        IEnumerator ResetApp() {			
-            
+        IEnumerator ResetApp() {
+
             while(Miku_LoaderHelper.s_instance == null) {
                 yield return null;
             }
@@ -3635,11 +3601,11 @@ namespace MiKu.NET {
         private void UpdateTrackDuration() {
             if(Serializer.Initialized) {
                 // TrackDuration = (StartOffset / MS) + ( CurrentChart.AudioData.Length / (CurrentChart.AudioFrecuency * CurrentChart.AudioChannels) ) + END_OF_SONG_OFFSET;
-                TrackDuration = (StartOffset / MS) + ( songClip.length ) + END_OF_SONG_OFFSET;
+                TrackDuration = (StartOffset / MS) + (songClip.length) + END_OF_SONG_OFFSET;
             } else {
-                TrackDuration = (StartOffset / MS) + ( MINUTE ) + END_OF_SONG_OFFSET;
+                TrackDuration = (StartOffset / MS) + (MINUTE) + END_OF_SONG_OFFSET;
             }
-            
+
         }
 
         /// <summary>
@@ -3664,8 +3630,8 @@ namespace MiKu.NET {
             if(workingTrack != null && workingTrack.Count > 0) {
                 // Iterate each entry on the Dictionary and get the note to update
                 //foreach( List<Note> _notes in valueColl ) {
-                foreach( float key in keys_sorted ) {
-                    if(key > (TrackDuration * MS) ) {
+                foreach(float key in keys_sorted) {
+                    if(key > (TrackDuration * MS)) {
                         // If the note to add is pass the current song duration, we delete it
                         workingTrack.Remove(key);
                     } else {
@@ -3692,7 +3658,7 @@ namespace MiKu.NET {
                                     s_instance.currentSpecialSectionID = n.ComboId;
                                 }
                             }
-                            
+
 
                             // And add the note game object to the screen
                             AddNoteGameObjectToScene(n);
@@ -3712,12 +3678,12 @@ namespace MiKu.NET {
                             } */
                         }
 
-                        AddTimeToSFXList(key);						
-                    }								
+                        AddTimeToSFXList(key);
+                    }
                 }
             }
 
-            Track.LogMessage("Current Special ID: "+s_instance.currentSpecialSectionID);
+            Track.LogMessage("Current Special ID: " + s_instance.currentSpecialSectionID);
 
             if(CurrentChart.Effects == null) {
                 CurrentChart.Effects = new Effects();
@@ -3740,7 +3706,7 @@ namespace MiKu.NET {
                     AddBookmarkGameObjectToScene(bookmarks[i].time, bookmarks[i].name);
                 }
             }
-            
+
             List<float> jumps = GetCurrentMovementListByDifficulty(true);
             if(jumps != null && jumps.Count > 0) {
                 for(int i = 0; i < jumps.Count; ++i) {
@@ -3798,7 +3764,7 @@ namespace MiKu.NET {
             isBusy = true;
             UpdateTotalNotes(true);
             // First Clear the current chart data
-            ClearNotePositions();						
+            ClearNotePositions();
 
             // Now get the track to start the paste operation
 
@@ -3811,8 +3777,7 @@ namespace MiKu.NET {
             if(copiedTrack != null && copiedTrack.Count > 0) {
 
                 // Iterate each entry on the Dictionary and get the note to copy
-                foreach( KeyValuePair<float, List<Note>> kvp in copiedTrack )
-                {
+                foreach(KeyValuePair<float, List<Note>> kvp in copiedTrack) {
                     List<Note> _notes = kvp.Value;
                     List<Note> copiedList = new List<Note>();
 
@@ -3821,8 +3786,10 @@ namespace MiKu.NET {
                         Note n = _notes[i];
                         Note newNote = new Note(Vector3.zero);
                         newNote.Position = n.Position;
-                        newNote.Id = Track.FormatNoteName(kvp.Key, i, n.Type);
-                        newNote.Type = n.Type;
+                        newNote.TimePoint = n.TimePoint;
+                        newNote.Id = Track.FormatNoteName(kvp.Key, i, n.HandType);
+                        newNote.HandType = n.HandType;
+                        newNote.UsageType = n.UsageType;
                         newNote.ComboId = n.ComboId;
                         newNote.Segments = n.Segments;
 
@@ -3833,7 +3800,7 @@ namespace MiKu.NET {
 
                         copiedList.Add(newNote);
                     }
-                    
+
                     // Add copied note to the list
                     workingTrack.Add(kvp.Key, copiedList);
                 }
@@ -3851,15 +3818,15 @@ namespace MiKu.NET {
         /// Instantiate the Note GameObject on the scene
         /// </summary>
         /// <param name="noteData">The Note from where the data for the instantiation will be read</param>
-        GameObject AddNoteGameObjectToScene(Note noteData) {
+        public GameObject AddNoteGameObjectToScene(Note noteData) {
             // And add the note game object to the screen
-            GameObject noteGO = GameObject.Instantiate(GetNoteMarkerByType(noteData.Type));
+            GameObject noteGO = GameObject.Instantiate(GetNoteMarkerByType(noteData.HandType));
             noteGO.transform.localPosition = new Vector3(
-                                                noteData.Position[0], 
-                                                noteData.Position[1], 
+                                                noteData.Position[0],
+                                                noteData.Position[1],
                                                 noteData.Position[2]
                                             );
-            noteGO.transform.rotation =	Quaternion.identity;
+            noteGO.transform.rotation = Quaternion.identity;
             noteGO.transform.parent = m_NotesHolder;
             noteGO.name = noteData.Id;
 
@@ -3887,25 +3854,25 @@ namespace MiKu.NET {
                     GameObject target = segmentsParent.GetChild(j).gameObject;
                     if(!target.name.Equals("Segments")) {
                         DestroyImmediate(target);
-                    }						
+                    }
                 }
             }
 
             for(int i = 0; i < noteData.Segments.GetLength(0); ++i) {
-                GameObject noteGO = GameObject.Instantiate(GetNoteMarkerByType(noteData.Type, true));
+                GameObject noteGO = GameObject.Instantiate(GetNoteMarkerByType(noteData.HandType, true));
                 noteGO.transform.localPosition = new Vector3(
                     noteData.Segments[i, 0],
                     noteData.Segments[i, 1],
                     noteData.Segments[i, 2]
                 );
-                noteGO.transform.rotation =	Quaternion.identity;
+                noteGO.transform.rotation = Quaternion.identity;
                 noteGO.transform.localScale *= m_NoteSegmentMarkerRedution;
                 noteGO.transform.parent = segmentsParent;
-                noteGO.name = noteData.Id+"_Segment";
+                noteGO.name = noteData.Id + "_Segment";
             }
             //}
-            
-            RenderLine(segmentsParent.gameObject, noteData.Segments, isRefresh);		
+
+            RenderLine(segmentsParent.gameObject, noteData.Segments, isRefresh);
         }
 
         /// <summary>
@@ -3913,17 +3880,17 @@ namespace MiKu.NET {
         /// </summary>
         /// <param name="noteData">The Note from where the data for the instantiation will be read</param>
         void AddNoteDirectionObject(Note noteData) {
-            if(noteData.Direction != Note.NoteDirection.None) {					
-                GameObject parentGO =  GameObject.Find(noteData.Id);
+            if(noteData.Direction != Note.NoteDirection.None) {
+                GameObject parentGO = GameObject.Find(noteData.Id);
                 GameObject dirGO;
                 Transform dirTrans = parentGO.transform.Find("DirectionWrap/DirectionMarker");
 
                 if(dirTrans == null) {
-                    dirGO = GameObject.Instantiate(m_DirectionMarker);				
+                    dirGO = GameObject.Instantiate(m_DirectionMarker);
                     Transform parent = parentGO.transform.Find("DirectionWrap");
                     dirGO.transform.parent = parent;
                     dirGO.transform.localPosition = Vector3.zero;
-                    dirGO.transform.rotation =	Quaternion.identity;				
+                    dirGO.transform.rotation = Quaternion.identity;
                     dirGO.name = "DirectionMarker";
                 } else {
                     dirGO = dirTrans.gameObject;
@@ -3931,9 +3898,9 @@ namespace MiKu.NET {
                 }
 
                 Quaternion localRot = dirGO.transform.localRotation;
-                localRot.eulerAngles = new Vector3(0,0, (int)(noteData.Direction - 1) * m_DirectionNoteAngle);
+                localRot.eulerAngles = new Vector3(0, 0, (int)(noteData.Direction - 1) * m_DirectionNoteAngle);
                 dirGO.transform.localRotation = localRot;
-            }		
+            }
         }
 
         /// <summary>
@@ -3944,15 +3911,15 @@ namespace MiKu.NET {
             GameObject effectGO = GameObject.Instantiate(s_instance.m_FlashMarker);
             effectGO.transform.localPosition = new Vector3(
                                                 0,
-                                                0, 
+                                                0,
                                                 s_instance.MStoUnit(ms)
                                             );
-            effectGO.transform.rotation =	Quaternion.identity;
+            effectGO.transform.rotation = Quaternion.identity;
             effectGO.transform.parent = s_instance.m_NoNotesElementHolder;
             effectGO.name = s_instance.GetEffectIdFormated(ms);
 
             return effectGO;
-        }	
+        }
 
         /// <summary>
         /// Instantiate the Flash GameObject on the scene
@@ -3963,17 +3930,17 @@ namespace MiKu.NET {
             GameObject bookmarkGO = GameObject.Instantiate(s_instance.m_BookmarkElement);
             bookmarkGO.transform.localPosition = new Vector3(
                                                 0,
-                                                0, 
+                                                0,
                                                 s_instance.MStoUnit(ms)
                                             );
-            bookmarkGO.transform.rotation =	Quaternion.identity;
+            bookmarkGO.transform.rotation = Quaternion.identity;
             bookmarkGO.transform.parent = s_instance.m_NoNotesElementHolder;
             bookmarkGO.name = s_instance.GetBookmarkIdFormated(ms);
 
             TextMeshPro bookmarkText = bookmarkGO.GetComponentInChildren<TextMeshPro>();
             bookmarkText.SetText(name);
             return bookmarkGO;
-        }	
+        }
 
         /// <summary>
         /// Instantiate the Flash GameObject on the scene
@@ -4002,7 +3969,7 @@ namespace MiKu.NET {
                     break;
                 case SLIDE_RIGHT_DIAG_TAG:
                     movementToInst = s_instance.m_SlideDiagRightElement;
-                    break;					
+                    break;
                 default:
                     movementToInst = s_instance.m_JumpElement;
                     break;
@@ -4011,15 +3978,15 @@ namespace MiKu.NET {
             GameObject moveSectGO = GameObject.Instantiate(movementToInst);
             moveSectGO.transform.localPosition = new Vector3(
                                                 0,
-                                                0, 
+                                                0,
                                                 s_instance.MStoUnit(ms)
                                             );
-            moveSectGO.transform.rotation =	Quaternion.identity;
+            moveSectGO.transform.rotation = Quaternion.identity;
             moveSectGO.transform.parent = s_instance.m_NoNotesElementHolder;
             moveSectGO.name = s_instance.GetMovementIdFormated(ms, MovementTag);
 
             return moveSectGO;
-        }	
+        }
 
         /// <summary>
         /// Instantiate the Light GameObject on the scene
@@ -4029,15 +3996,15 @@ namespace MiKu.NET {
             GameObject lightGO = GameObject.Instantiate(s_instance.m_LightMarker);
             lightGO.transform.localPosition = new Vector3(
                                                 0,
-                                                0, 
+                                                0,
                                                 s_instance.MStoUnit(ms)
                                             );
-            lightGO.transform.rotation =	Quaternion.identity;
+            lightGO.transform.rotation = Quaternion.identity;
             lightGO.transform.parent = s_instance.m_NoNotesElementHolder;
             lightGO.name = s_instance.GetLightIdFormated(ms);
 
             return lightGO;
-        }			
+        }
 
         /// <summary>
         /// Update the <see cref="TotalNotes" /> stat
@@ -4051,174 +4018,177 @@ namespace MiKu.NET {
                 if(deleted) TotalNotes--;
                 else TotalNotes++;
             }
-            
+
             m_statsTotalNotesText.SetText(TotalNotes.ToString() + " Notes");
         }
 
         /// <summary>
         /// Start the functionality to add a longnote
+        /// no longer used
         /// </summary>
-        void StartLongNoteMode() {
-            /// TODO, show message with mode instructions
-            Track.LogMessage("TODO Show help long note");
-        }
+        //void StartLongNoteMode() {
+        //    /// TODO, show message with mode instructions
+        //    Track.LogMessage("TODO Show help long note");
+        //}
 
         /// <summary>
         /// Finalize the LongNote mode functionality and remove any incomplete elements
+        /// not used anymore
         /// </summary>
-        void FinalizeLongNoteMode() {
-            if(isOnLongNoteMode) {
-                isOnLongNoteMode = false;
-                bool abortLongNote = false;
-                
-                if(CurrentLongNote.duration <= 0) {
-                    // if the line has no segement we just disable the mode
-                    Miku_DialogManager.ShowDialog(Miku_DialogManager.DialogType.Info, StringVault.Info_LongNoteModeDisabled);
-                    abortLongNote = true;
-                } else if(CurrentLongNote.duration < MIN_LINE_DURATION || CurrentLongNote.duration > MAX_LINE_DURATION) {
-                    // if the line duration is not between the min/max duration				
-                    Miku_DialogManager.ShowDialog(Miku_DialogManager.DialogType.Alert, 
-                        string.Format(StringVault.Alert_LongNoteLenghtBounds,
-                            MIN_LINE_DURATION/MS, MAX_LINE_DURATION/MS
-                        ));
-                    abortLongNote = true;					
-                } else {
-                    // Add the long segment to the working track;
-                    // first we check if theres is any note in that time period
-                    // We need to check the track difficulty selected
-                    Dictionary<float, List<Note>> workingTrack = s_instance.GetCurrentTrackDifficulty();
-                    if(workingTrack != null) {
-                        if(!workingTrack.ContainsKey(CurrentLongNote.startTime)) {
-                            workingTrack.Add(CurrentLongNote.startTime, new List<Note>());
-                        } 
+        //void FinalizeLongNoteMode() {
+        //    if(isOnLongNoteMode) {
+        //        isOnLongNoteMode = false;
+        //        bool abortLongNote = false;
 
-                        if(CurrentLongNote.note.Segments == null) {
-                            CurrentLongNote.note.Segments = new float[CurrentLongNote.segments.Count, 3];
+        //        if(CurrentLongNote.duration <= 0) {
+        //            // if the line has no segement we just disable the mode
+        //            Miku_DialogManager.ShowDialog(Miku_DialogManager.DialogType.Info, StringVault.Info_LongNoteModeDisabled);
+        //            abortLongNote = true;
+        //        } else if(CurrentLongNote.duration < MIN_LINE_DURATION || CurrentLongNote.duration > MAX_LINE_DURATION) {
+        //            // if the line duration is not between the min/max duration                
+        //            Miku_DialogManager.ShowDialog(Miku_DialogManager.DialogType.Alert, 
+        //                string.Format(StringVault.Alert_LongNoteLenghtBounds,
+        //                    MIN_LINE_DURATION/MS, MAX_LINE_DURATION/MS
+        //                ));
+        //            abortLongNote = true;                    
+        //        } else {
+        //            // Add the long segment to the working track;
+        //            // first we check if theres is any note in that time period
+        //            // We need to check the track difficulty selected
+        //            Dictionary<float, List<Note>> workingTrack = s_instance.GetCurrentTrackDifficulty();
+        //            if(workingTrack != null) {
+        //                if(!workingTrack.ContainsKey(CurrentLongNote.startTime)) {
+        //                    workingTrack.Add(CurrentLongNote.startTime, new List<Note>());
+        //                } 
 
-                            if(CurrentLongNote.mirroredNote != null) { 
-                                CurrentLongNote.mirroredNote.Segments = new float[CurrentLongNote.segments.Count, 3];
-                            }
-                        }
+        //                if(CurrentLongNote.note.Segments == null) {
+        //                    CurrentLongNote.note.Segments = new float[CurrentLongNote.segments.Count, 3];
 
-                        for(int i = 0; i < CurrentLongNote.segments.Count; ++i) {
-                            Transform segmentTransform = CurrentLongNote.segments[i].transform;
-                            int segmentAxis = CurrentLongNote.segmentAxis[i];
-                            CurrentLongNote.note.Segments[i, 0] = segmentTransform.position.x; 
-                            CurrentLongNote.note.Segments[i, 1] = segmentTransform.position.y;
-                            CurrentLongNote.note.Segments[i, 2] = segmentTransform.position.z;	
+        //                    if(CurrentLongNote.mirroredNote != null) { 
+        //                        CurrentLongNote.mirroredNote.Segments = new float[CurrentLongNote.segments.Count, 3];
+        //                    }
+        //                }
 
-                            if(CurrentLongNote.mirroredNote != null) {
-                                CurrentLongNote.mirroredNote.Segments[i, 0] = segmentTransform.position.x * -1; 
-                                CurrentLongNote.mirroredNote.Segments[i, 1] = segmentTransform.position.y * segmentAxis;
-                                CurrentLongNote.mirroredNote.Segments[i, 2] = segmentTransform.position.z;
-                            }						
-                        }
+        //                for(int i = 0; i < CurrentLongNote.segments.Count; ++i) {
+        //                    Transform segmentTransform = CurrentLongNote.segments[i].transform;
+        //                    int segmentAxis = CurrentLongNote.segmentAxis[i];
+        //                    CurrentLongNote.note.Segments[i, 0] = segmentTransform.position.x; 
+        //                    CurrentLongNote.note.Segments[i, 1] = segmentTransform.position.y;
+        //                    CurrentLongNote.note.Segments[i, 2] = segmentTransform.position.z;    
 
-                        workingTrack[CurrentLongNote.startTime].Add(CurrentLongNote.note);
-                        abortLongNote = false;
-                        Miku_DialogManager.ShowDialog(Miku_DialogManager.DialogType.Info, StringVault.Info_LongNoteModeFinalized);
-                        
-                        UpdateTotalNotes();
-                        RenderLine(CurrentLongNote.gameObject, CurrentLongNote.note.Segments);
-                        AddTimeToSFXList(CurrentLongNote.startTime);
+        //                    if(CurrentLongNote.mirroredNote != null) {
+        //                        CurrentLongNote.mirroredNote.Segments[i, 0] = segmentTransform.position.x * -1; 
+        //                        CurrentLongNote.mirroredNote.Segments[i, 1] = segmentTransform.position.y * segmentAxis;
+        //                        CurrentLongNote.mirroredNote.Segments[i, 2] = segmentTransform.position.z;
+        //                    }                        
+        //                }
 
-                        if(CurrentLongNote.mirroredNote != null) {
-                            workingTrack[CurrentLongNote.startTime].Add(CurrentLongNote.mirroredNote);
-                            UpdateTotalNotes();
-                            RenderLine(CurrentLongNote.mirroredObject, CurrentLongNote.mirroredNote.Segments);
-                        }
-                        // Uncoment to enable sound on line end
-                        // AddTimeToSFXList(CurrentLongNote.lastSegment);
-                    } else {
-                        abortLongNote = true;
-                        Miku_DialogManager.ShowDialog(Miku_DialogManager.DialogType.Info, StringVault.Info_LongNoteModeAborted);
-                    }					
-                }
+        //                workingTrack[CurrentLongNote.startTime].Add(CurrentLongNote.note);
+        //                abortLongNote = false;
+        //                Miku_DialogManager.ShowDialog(Miku_DialogManager.DialogType.Info, StringVault.Info_LongNoteModeFinalized);
 
-                if(abortLongNote) {
-                    // If aborted, remove the GameObject
-                    GameObject.DestroyImmediate(CurrentLongNote.gameObject);
-                    if(CurrentLongNote.mirroredObject != null) {
-                        GameObject.DestroyImmediate(CurrentLongNote.mirroredObject);
-                    }
+        //                UpdateTotalNotes();
+        //                RenderLine(CurrentLongNote.gameObject, CurrentLongNote.note.Segments);
+        //                AddTimeToSFXList(CurrentLongNote.startTime);
 
-                    /* if(CurrentLongNote.startTime > 0){
-                        _currentTime = CurrentLongNote.startTime;
-                        MoveCamera(true, _currentTime);
-                    }	*/				
-                    
-                } /* else {
-                    // Otherwise, just remove the segments markers
-                    // If debug mode, we let it on for testin purpose
-                    if(!Track.IsOnDebugMode) {
-                        for(int segm = 0; segm < CurrentLongNote.segments.Count; ++segm) {
-                            GameObject.Destroy(CurrentLongNote.segments[segm]);							
-                        }
-                    }				
-                } */
+        //                if(CurrentLongNote.mirroredNote != null) {
+        //                    workingTrack[CurrentLongNote.startTime].Add(CurrentLongNote.mirroredNote);
+        //                    UpdateTotalNotes();
+        //                    RenderLine(CurrentLongNote.mirroredObject, CurrentLongNote.mirroredNote.Segments);
+        //                }
+        //                // Uncoment to enable sound on line end
+        //                // AddTimeToSFXList(CurrentLongNote.lastSegment);
+        //            } else {
+        //                abortLongNote = true;
+        //                Miku_DialogManager.ShowDialog(Miku_DialogManager.DialogType.Info, StringVault.Info_LongNoteModeAborted);
+        //            }                    
+        //        }
 
-                Track.LogMessage("Note Duration "+CurrentLongNote.duration);
-                CurrentLongNote = new LongNote();
-                ToggleWorkingStateAlertOff();			
-            }
-        }
+        //        if(abortLongNote) {
+        //            // If aborted, remove the GameObject
+        //            GameObject.DestroyImmediate(CurrentLongNote.gameObject);
+        //            if(CurrentLongNote.mirroredObject != null) {
+        //                GameObject.DestroyImmediate(CurrentLongNote.mirroredObject);
+        //            }
+
+        //            /* if(CurrentLongNote.startTime > 0){
+        //                _currentTime = CurrentLongNote.startTime;
+        //                MoveCamera(true, _currentTime);
+        //            }    */                
+
+        //        } /* else {
+        //            // Otherwise, just remove the segments markers
+        //            // If debug mode, we let it on for testin purpose
+        //            if(!Track.IsOnDebugMode) {
+        //                for(int segm = 0; segm < CurrentLongNote.segments.Count; ++segm) {
+        //                    GameObject.Destroy(CurrentLongNote.segments[segm]);                            
+        //                }
+        //            }                
+        //        } */
+
+        //        Track.LogMessage("Note Duration "+CurrentLongNote.duration);
+        //        CurrentLongNote = new LongNote();
+        //        ToggleWorkingStateAlertOff();            
+        //    }
+        //}
 
         /// <summary>
         /// Add a Segment to the current longnote
+        /// not used anymore
         /// </summary>
-        void AddLongNoteSegment(GameObject note) {
-            // check if the insert time if less that the start time
-            if(_currentTime <= CurrentLongNote.startTime) {
-                Miku_DialogManager.ShowDialog(Miku_DialogManager.DialogType.Alert, StringVault.Alert_LongNoteStartPoint);
-                return;
-            }
+        //void AddLongNoteSegment(GameObject note) {
+        //    // check if the insert time if less that the start time
+        //    if(_currentTime <= CurrentLongNote.startTime) {
+        //        Miku_DialogManager.ShowDialog(Miku_DialogManager.DialogType.Alert, StringVault.Alert_LongNoteStartPoint);
+        //        return;
+        //    }
 
-            LongNote workingLongNote = CurrentLongNote;
-            // if there is not segments initialize the List
-            if(workingLongNote.segments == null) {
-                workingLongNote.segments = new List<GameObject>();
-                workingLongNote.segmentAxis = new List<int>();
-            }
+        //    LongNote workingLongNote = CurrentLongNote;
+        //    // if there is not segments initialize the List
+        //    if(workingLongNote.segments == null) {
+        //        workingLongNote.segments = new List<GameObject>();
+        //        workingLongNote.segmentAxis = new List<int>();
+        //    }
 
-            // check if there was a previos segment
-            if(workingLongNote.lastSegment > 0) {
-                // check if new segment insert larger that the previous segments
-                if(_currentTime <= workingLongNote.lastSegment) {
-                    if(!IsOnMirrorMode) {
-                        Miku_DialogManager.ShowDialog(Miku_DialogManager.DialogType.Alert, StringVault.Alert_LongNoteStartSegment);
-                    }					
-                    return;
-                }				
-            }
+        //    // check if there was a previos segment
+        //    if(workingLongNote.lastSegment > 0) {
+        //        // check if new segment insert larger that the previous segments
+        //        if(_currentTime <= workingLongNote.lastSegment) {
+        //            if(!IsOnMirrorMode) {
+        //                Miku_DialogManager.ShowDialog(Miku_DialogManager.DialogType.Alert, StringVault.Alert_LongNoteStartSegment);
+        //            }                    
+        //            return;
+        //        }                
+        //    }
 
-            // starting insert proccess
-            // updating duration
-            workingLongNote.duration = _currentTime - workingLongNote.startTime;
-            // updating the time of the lastSegment
-            workingLongNote.lastSegment = _currentTime;
-            // add segment object to the scene
-            // add the note game object to the screen
-            GameObject noteGO = GameObject.Instantiate(GetNoteMarkerByType(workingLongNote.note.Type, true));
-            noteGO.transform.localPosition = note.transform.position;
-            noteGO.transform.rotation =	Quaternion.identity;
-            noteGO.transform.localScale *= m_NoteSegmentMarkerRedution;
-            noteGO.transform.parent = workingLongNote.gameObject.transform.Find("LineArea");
-            noteGO.name = workingLongNote.note.Id+"_Segment";
-            // and finally add the gameObject to the segment list
-            workingLongNote.segments.Add(noteGO);
-            workingLongNote.segmentAxis.Add(YAxisInverse ? -1 : 1);
+        //    // starting insert proccess
+        //    // updating duration
+        //    workingLongNote.duration = _currentTime - workingLongNote.startTime;
+        //    // updating the time of the lastSegment
+        //    workingLongNote.lastSegment = _currentTime;
+        //    // add segment object to the scene
+        //    // add the note game object to the screen
+        //    GameObject noteGO = GameObject.Instantiate(GetNoteMarkerByType(workingLongNote.note.Type, true));
+        //    noteGO.transform.localPosition = note.transform.position;
+        //    noteGO.transform.rotation =    Quaternion.identity;
+        //    noteGO.transform.localScale *= m_NoteSegmentMarkerRedution;
+        //    noteGO.transform.parent = workingLongNote.gameObject.transform.Find("LineArea");
+        //    noteGO.name = workingLongNote.note.Id+"_Segment";
+        //    // and finally add the gameObject to the segment list
+        //    workingLongNote.segments.Add(noteGO);
+        //    workingLongNote.segmentAxis.Add(YAxisInverse ? -1 : 1);
 
-            if(isOnMirrorMode) {
-                GameObject mirroredNoteGO = GameObject.Instantiate(GetNoteMarkerByType(GetMirroreNoteMarkerType(workingLongNote.note.Type), true));
-                mirroredNoteGO.transform.localPosition = GetMirrorePosition(note.transform.position);
-                mirroredNoteGO.transform.rotation =	Quaternion.identity;
-                mirroredNoteGO.transform.localScale *= m_NoteSegmentMarkerRedution;
-                mirroredNoteGO.transform.parent = workingLongNote.mirroredObject.transform.Find("LineArea");
-                mirroredNoteGO.name = workingLongNote.mirroredNote.Id+"_Segment";
-            }
+        //    if(isOnMirrorMode) {
+        //        GameObject mirroredNoteGO = GameObject.Instantiate(GetNoteMarkerByType(GetMirroreNoteMarkerType(workingLongNote.note.Type), true));
+        //        mirroredNoteGO.transform.localPosition = GetMirrorePosition(note.transform.position);
+        //        mirroredNoteGO.transform.rotation =    Quaternion.identity;
+        //        mirroredNoteGO.transform.localScale *= m_NoteSegmentMarkerRedution;
+        //        mirroredNoteGO.transform.parent = workingLongNote.mirroredObject.transform.Find("LineArea");
+        //        mirroredNoteGO.name = workingLongNote.mirroredNote.Id+"_Segment";
+        //    }
 
-            CurrentLongNote = workingLongNote;
-        }
+        //    CurrentLongNote = workingLongNote;
+        //}
 
         /// <summary>
         /// Close the special section if active
@@ -4226,12 +4196,8 @@ namespace MiKu.NET {
         void CloseSpecialSection() {
             if(specialSectionStarted) {
                 specialSectionStarted = false;
-
-                // If not on LongNote mode whe pront the user of the section end
-                if(!isOnLongNoteMode) {
-                    Miku_DialogManager.ShowDialog(Miku_DialogManager.DialogType.Info, StringVault.Info_SpecialModeFinalized);
-                    ToggleWorkingStateAlertOff();
-                }
+                Miku_DialogManager.ShowDialog(Miku_DialogManager.DialogType.Info, StringVault.Info_SpecialModeFinalized);
+                ToggleWorkingStateAlertOff();
             }
         }
 
@@ -4242,10 +4208,10 @@ namespace MiKu.NET {
         /// <param name="forward">If true the close measure to return will be on the forward direction, otherwise it will be the close passed meassure</param>
         /// <returns>Returns <typeparamref name="float"/></returns>
         float GetCloseStepMeasure(float time, bool forward = true) {
-            float _CK = ( K*MBPM );
+            float _CK = (K * MBPM);
             float closeMeasure = 0;
-            if( forward) {
-                closeMeasure = time + ( _CK - (time%_CK ) );
+            if(forward) {
+                closeMeasure = time + (_CK - (time % _CK));
 
                 /* if(closeMeasure == time) {
                     closeMeasure = time + _CK;
@@ -4257,7 +4223,7 @@ namespace MiKu.NET {
                 return closeMeasure;
                 // time + ( _CK - (time%_CK ) );
             } else {
-                closeMeasure = time - ( time%_CK );
+                closeMeasure = time - (time % _CK);
 
                 /* if(closeMeasure == time ) {
                     closeMeasure = time - _CK;
@@ -4269,15 +4235,15 @@ namespace MiKu.NET {
 
                 return closeMeasure;
                 //time - ( time%_CK );
-            }		
+            }
         }
 
         float TimeToMeasure(float time) {
-            return ((time*BPM)/(MINUTE*MS)) / 4;
+            return ((time * BPM) / (MINUTE * MS)) / 4;
         }
 
-        float MeasureToTime(float measure){
-            return ((measure*(MINUTE*MS))/BPM) * 4;
+        float MeasureToTime(float measure) {
+            return ((measure * (MINUTE * MS)) / BPM) * 4;
         }
 
         void RefreshCurrentTime() {
@@ -4287,33 +4253,33 @@ namespace MiKu.NET {
 
             if(workingTrack.Count > 0) {
                 List<float> keys_tofilter = workingTrack.Keys.ToList();
-                keys_tofilter = keys_tofilter.Where(time => time >= timeRangeDuplicatesStart 
+                keys_tofilter = keys_tofilter.Where(time => time >= timeRangeDuplicatesStart
                     && time <= timeRangeDuplicatesEnd).ToList();
-            
+
                 if(keys_tofilter.Count > 0) {
                     CurrentTime = keys_tofilter[0];
                     return;
                 }
             }
-            
+
 
             List<float> workingEffects = GetCurrentEffectDifficulty();
             if(workingEffects.Count > 0) {
                 List<float> effects_tofilter;
-                effects_tofilter = workingEffects.Where(time => time >= timeRangeDuplicatesStart 
+                effects_tofilter = workingEffects.Where(time => time >= timeRangeDuplicatesStart
                         && time <= timeRangeDuplicatesEnd).ToList();
-                
+
                 if(effects_tofilter.Count > 0) {
                     CurrentTime = effects_tofilter[0];
                     return;
                 }
             }
-            
+
 
             List<float> jumps = GetCurrentMovementListByDifficulty(true);
             if(jumps.Count > 0) {
                 List<float> jumps_tofilter;
-                jumps_tofilter = jumps.Where(time => time >= timeRangeDuplicatesStart 
+                jumps_tofilter = jumps.Where(time => time >= timeRangeDuplicatesStart
                         && time <= timeRangeDuplicatesEnd).ToList();
 
                 if(jumps_tofilter.Count > 0) {
@@ -4325,20 +4291,20 @@ namespace MiKu.NET {
             List<float> crouchs = GetCurrentMovementListByDifficulty(false);
             if(crouchs.Count > 0) {
                 List<float> crouchs_tofilter;
-                crouchs_tofilter = crouchs.Where(time => time >= (timeRangeDuplicatesStart + 3) 
+                crouchs_tofilter = crouchs.Where(time => time >= (timeRangeDuplicatesStart + 3)
                         && time <= (timeRangeDuplicatesEnd + 3)).ToList();
-                
+
                 if(crouchs_tofilter.Count > 0) {
                     CurrentTime = crouchs_tofilter[0];
                     return;
                 }
             }
-            
-            
+
+
             List<Slide> slides = GetCurrentMovementListByDifficulty();
             if(slides.Count > 0) {
                 List<Slide> slides_tofilter;
-                slides_tofilter = slides.Where(s => s.time >= (timeRangeDuplicatesStart + 3) 
+                slides_tofilter = slides.Where(s => s.time >= (timeRangeDuplicatesStart + 3)
                         && s.time <= (timeRangeDuplicatesEnd + 3)).ToList();
 
                 if(slides_tofilter.Count > 0) {
@@ -4355,9 +4321,9 @@ namespace MiKu.NET {
             if(workingTrack.ContainsKey(CurrentTime)) {
                 List<Note> notes = workingTrack[CurrentTime];
                 int totalNotes = notes.Count;
-                
+
                 for(int i = 0; i < totalNotes; ++i) {
-                    Note toHighlight= notes[i];
+                    Note toHighlight = notes[i];
 
                     GameObject highlighter = GetHighlighter(toHighlight.Id);
                     if(highlighter) {
@@ -4375,7 +4341,7 @@ namespace MiKu.NET {
                 }
             } catch {
                 return null;
-            }			
+            }
 
             return null;
         }
@@ -4389,7 +4355,7 @@ namespace MiKu.NET {
                 float timeRangeDuplicatesStart = CurrentTime - MIN_TIME_OVERLAY_CHECK;
                 float timeRangeDuplicatesEnd = CurrentTime + MIN_TIME_OVERLAY_CHECK;
                 List<float> keys_tofilter = workingTrack.Keys.ToList();
-                keys_tofilter = keys_tofilter.Where(time => time >= timeRangeDuplicatesStart 
+                keys_tofilter = keys_tofilter.Where(time => time >= timeRangeDuplicatesStart
                             && time <= timeRangeDuplicatesEnd).ToList();
 
                 if(keys_tofilter.Count > 0) {
@@ -4404,14 +4370,14 @@ namespace MiKu.NET {
 
                         for(int i = 0; i < totalNotes; ++i) {
                             Note n = notes[i];
-                            if(isALTDown && n.Type != Note.NoteType.LeftHanded) { 
-                                continue; 
-                            }
-
-                            if(!isALTDown && n.Type == Note.NoteType.LeftHanded) {
+                            if(isALTDown && n.HandType != Note.NoteHandType.LeftHanded) {
                                 continue;
                             }
-                            
+
+                            if(!isALTDown && n.HandType == Note.NoteHandType.LeftHanded) {
+                                continue;
+                            }
+
                             n.Direction = direction;
                             AddNoteDirectionObject(notes[i]);
                         }
@@ -4420,7 +4386,7 @@ namespace MiKu.NET {
                 }
 
                 isBusy = false;
-            }			
+            }
         }
 
         /// <summary>
@@ -4440,28 +4406,28 @@ namespace MiKu.NET {
 
             List<float> keys_tofilter = workingTrack.Keys.ToList();
             List<float> effects_tofilter, jumps_tofilter, crouchs_tofilter, lights_tofilter;
-            List<Slide> slides_tofilter;		
+            List<Slide> slides_tofilter;
 
 
-            if(CurrentSelection.endTime > CurrentSelection.startTime) {				
-                keys_tofilter = keys_tofilter.Where(time => time >= CurrentSelection.startTime 
+            if(CurrentSelection.endTime > CurrentSelection.startTime) {
+                keys_tofilter = keys_tofilter.Where(time => time >= CurrentSelection.startTime
                     && time <= CurrentSelection.endTime).ToList();
 
-                effects_tofilter = workingEffects.Where(time => time >= CurrentSelection.startTime 
+                effects_tofilter = workingEffects.Where(time => time >= CurrentSelection.startTime
                     && time <= CurrentSelection.endTime).ToList();
 
-                jumps_tofilter = jumps.Where(time => time >= CurrentSelection.startTime 
+                jumps_tofilter = jumps.Where(time => time >= CurrentSelection.startTime
                     && time <= CurrentSelection.endTime).ToList();
 
-                crouchs_tofilter = crouchs.Where(time => time >= CurrentSelection.startTime 
+                crouchs_tofilter = crouchs.Where(time => time >= CurrentSelection.startTime
                     && time <= CurrentSelection.endTime).ToList();
-                
-                slides_tofilter = slides.Where(s => s.time >= CurrentSelection.startTime 
+
+                slides_tofilter = slides.Where(s => s.time >= CurrentSelection.startTime
                     && s.time <= CurrentSelection.endTime).ToList();
 
-                lights_tofilter = lights.Where(time => time >= CurrentSelection.startTime 
+                lights_tofilter = lights.Where(time => time >= CurrentSelection.startTime
                     && time <= CurrentSelection.endTime).ToList();
-                
+
             } else {
                 RefreshCurrentTime();
 
@@ -4485,7 +4451,7 @@ namespace MiKu.NET {
                     // If the time key exist, check how many notes are added
                     List<Note> notes = workingTrack[lookUpTime];
                     int totalNotes = notes.Count;
-                    
+
                     for(int i = 0; i < totalNotes; ++i) {
                         Note toRemove = notes[i];
 
@@ -4494,20 +4460,20 @@ namespace MiKu.NET {
                         if(targetToDelete) {
                             DestroyImmediate(targetToDelete);
                         }
-                        
+
                         s_instance.UpdateTotalNotes(false, true);
                     }
 
                     notes.Clear();
                     workingTrack.Remove(lookUpTime);
                     hitSFXSource.Remove(lookUpTime);
-                }				
-            }	
+                }
+            }
 
             for(int j = 0; j < effects_tofilter.Count; ++j) {
                 lookUpTime = effects_tofilter[j];
 
-                if(workingEffects.Contains(lookUpTime)) {					
+                if(workingEffects.Contains(lookUpTime)) {
                     workingEffects.Remove(lookUpTime);
                     targetToDelete = GameObject.Find(GetEffectIdFormated(lookUpTime));
                     if(targetToDelete) {
@@ -4519,7 +4485,7 @@ namespace MiKu.NET {
             for(int j = 0; j < jumps_tofilter.Count; ++j) {
                 lookUpTime = jumps_tofilter[j];
 
-                if(jumps.Contains(lookUpTime)) {	
+                if(jumps.Contains(lookUpTime)) {
                     RemoveMovementFromList(jumps, lookUpTime, JUMP_TAG);
                     /* jumps.Remove(lookUpTime);
                     targetToDelete = GameObject.Find(GetMovementIdFormated(lookUpTime, JUMP_TAG));
@@ -4532,7 +4498,7 @@ namespace MiKu.NET {
             for(int j = 0; j < crouchs_tofilter.Count; ++j) {
                 lookUpTime = crouchs_tofilter[j];
 
-                if(crouchs.Contains(lookUpTime)) {	
+                if(crouchs.Contains(lookUpTime)) {
                     RemoveMovementFromList(crouchs, lookUpTime, CROUCH_TAG);
                     /* crouchs.Remove(lookUpTime);
                     targetToDelete = GameObject.Find(GetMovementIdFormated(lookUpTime, CROUCH_TAG));
@@ -4544,7 +4510,7 @@ namespace MiKu.NET {
 
             for(int j = 0; j < slides_tofilter.Count; ++j) {
                 Slide currSlide = slides_tofilter[j];
-                
+
                 if(slides.Contains(currSlide)) {
                     lookUpTime = currSlide.time;
                     RemoveMovementFromList(slides, lookUpTime, GetSlideTagByType(currSlide.slideType));
@@ -4559,7 +4525,7 @@ namespace MiKu.NET {
             for(int j = 0; j < lights_tofilter.Count; ++j) {
                 lookUpTime = lights_tofilter[j];
 
-                if(lights.Contains(lookUpTime)) {					
+                if(lights.Contains(lookUpTime)) {
                     lights.Remove(lookUpTime);
                     targetToDelete = GameObject.Find(GetLightIdFormated(lookUpTime));
                     if(targetToDelete) {
@@ -4576,7 +4542,7 @@ namespace MiKu.NET {
             slides_tofilter.Clear();
             lights_tofilter.Clear();
             ClearSelectionMarker();
-            isBusy = false;	
+            isBusy = false;
         }
 
         /// <summary>
@@ -4594,21 +4560,21 @@ namespace MiKu.NET {
         /// </summary>
         void UpdateMiddleButtonSelector() {
             MiddleButtonSelectorType += 1;
-            
-            if(MiddleButtonSelectorType >2) {
+
+            if(MiddleButtonSelectorType > 2) {
                 MiddleButtonSelectorType = 0;
             }
 
             string _noteType = "Normal Type";
             if(MiddleButtonSelectorType == 0) {
                 _noteType = "Normal Type";
-            } else if(MiddleButtonSelectorType == 1) { 
+            } else if(MiddleButtonSelectorType == 1) {
                 _noteType = "Special Type";
-            } else { 
+            } else {
                 _noteType = "All";
             }
 
-            Miku_DialogManager.ShowDialog(Miku_DialogManager.DialogType.Alert, 
+            Miku_DialogManager.ShowDialog(Miku_DialogManager.DialogType.Alert,
                 string.Format(StringVault.Info_MiddleButtonType, _noteType)
             );
         }
@@ -4620,7 +4586,7 @@ namespace MiKu.NET {
             canAutoSave = !canAutoSave;
             lastSaveTime = 0;
 
-            Miku_DialogManager.ShowDialog(Miku_DialogManager.DialogType.Alert, 
+            Miku_DialogManager.ShowDialog(Miku_DialogManager.DialogType.Alert,
                 string.Format(
                     StringVault.Info_AutoSaveFunction,
                     (canAutoSave) ? "On" : "Off"
@@ -4639,12 +4605,11 @@ namespace MiKu.NET {
                     ""
                 ));
 
-                if(selectedNoteType == Note.NoteType.OneHandSpecial || selectedNoteType == Note.NoteType.BothHandsSpecial){
+                if(selectedNoteType == Note.NoteHandType.OneHandSpecial || selectedNoteType == Note.NoteHandType.BothHandsSpecial) {
                     SetNoteMarkerType(0);
                 }
             } else {
                 ToggleWorkingStateAlertOff();
-                FinalizeLongNoteMode();
             }
 
             notesArea.RefreshSelectedObjec();
@@ -4652,15 +4617,15 @@ namespace MiKu.NET {
 
         void ToggleGripSnapping() {
             notesArea.SnapToGrip = !notesArea.SnapToGrip;
-            Miku_DialogManager.ShowDialog(Miku_DialogManager.DialogType.Alert, 
+            Miku_DialogManager.ShowDialog(Miku_DialogManager.DialogType.Alert,
                 string.Format(
                     StringVault.Info_GridSnapp,
                     (notesArea.SnapToGrip) ? "On" : "Off"
                 )
             );
-        }		
+        }
 
-#region Statics Methods
+        #region Statics Methods
         /// <summary>
         /// Display the passed <paramref  name="message" /> on the console
         /// </summary>
@@ -4676,12 +4641,12 @@ namespace MiKu.NET {
                 }
 
                 Debug.Log(message);
-            }	
+            }
 
             if(logError) {
                 Serializer.WriteToLogFile("there was a error...");
                 Serializer.WriteToLogFile(message);
-            }		
+            }
         }
 
         /// <summary>
@@ -4697,12 +4662,12 @@ namespace MiKu.NET {
         /// </summary>
         /// <returns>Returns <typeparamref name="GameObject"/></returns>
         public static GameObject GetMirroredNoteMarker() {
-            Note.NoteType targedMirrored =  s_instance.selectedNoteType == Note.NoteType.LeftHanded ? Note.NoteType.RightHanded : Note.NoteType.LeftHanded;
+            Note.NoteHandType targedMirrored = s_instance.selectedNoteType == Note.NoteHandType.LeftHanded ? Note.NoteHandType.RightHanded : Note.NoteHandType.LeftHanded;
             return GameObject.Instantiate(s_instance.GetNoteMarkerByType(targedMirrored), Vector3.zero, Quaternion.identity);
         }
 
-        public static Note.NoteType GetMirroreNoteMarkerType(Note.NoteType tocheck) {
-            return tocheck == Note.NoteType.LeftHanded ? Note.NoteType.RightHanded : Note.NoteType.LeftHanded;
+        public static Note.NoteHandType GetMirroreNoteMarkerType(Note.NoteHandType tocheck) {
+            return tocheck == Note.NoteHandType.LeftHanded ? Note.NoteHandType.RightHanded : Note.NoteHandType.LeftHanded;
         }
 
         public static Vector3 GetMirrorePosition(Vector3 targetpPos) {
@@ -4716,22 +4681,130 @@ namespace MiKu.NET {
                 if(Track.YAxisInverse) {
                     mirroredPosition.y *= -1;
                 }
-                
+
                 return mirroredPosition;
             }
 
             return targetpPos;
         }
 
+        private static bool RemoveOverlappingNote(Dictionary<float, List<Note>> workingTrack, List<float> keys_tofilter, GameObject noteFromNoteArea) {
+            int totalFilteredTime = keys_tofilter.Count;
+            for(int filterList = 0; filterList < totalFilteredTime; ++filterList) {
+                // If the time key exist, check how many notes are added
+                float targetTime = keys_tofilter[filterList];
+                //print(targetTime+" "+CurrentTime);
+                List<Note> notes = workingTrack[targetTime];
+                int totalNotes = notes.Count;
+
+                // Check for overlaping notes and delete if close
+                for(int i = 0; i < totalNotes; ++i) {
+                    Note overlap = notes[i];
+
+                    if(ArePositionsOverlaping(noteFromNoteArea.transform.position,
+                        new Vector3(overlap.Position[0],
+                            overlap.Position[1],
+                            overlap.Position[2]
+                        ))) {
+                        GameObject nToDelete = GameObject.Find(overlap.Id);
+                        if(nToDelete) {
+                            DestroyImmediate(nToDelete);
+                        }
+
+                        Rail rail = IdDictionaries.GetRail(overlap.railId);
+                        rail.RemoveNote(overlap.noteId);
+
+                        notes.Remove(overlap);
+                        totalNotes--;
+                        s_instance.UpdateTotalNotes(false, true);
+                        //Rail railSegment = FindRailSegment(targetTime);
+
+                        if(totalNotes <= 0) {
+                            workingTrack.Remove(targetTime);
+                            s_instance.hitSFXSource.Remove(targetTime);
+                        } else {
+                            overlap = notes[0];
+                            if(overlap.HandType == Note.NoteHandType.OneHandSpecial) {
+                                nToDelete = GameObject.Find(overlap.Id);
+                                overlap.Id = FormatNoteName(targetTime, 0, overlap.HandType);
+                                nToDelete.name = overlap.Id;
+                            }
+                        }
+                        return true;
+                    }
+                }
+            }
+            return false;
+        }
+        private static bool ReachedMaxNotesOfCurrentType(Dictionary<float, List<Note>> workingTrack, List<float> keys_tofilter, GameObject noteFromNoteArea) {
+            int totalFilteredTime = keys_tofilter.Count;
+            for(int filterList = 0; filterList < totalFilteredTime; ++filterList) {
+                // If the time key exist, check how many notes are added
+                float targetTime = keys_tofilter[filterList];
+                //print(targetTime+" "+CurrentTime);
+                List<Note> notes = workingTrack[targetTime];
+                int totalNotes = notes.Count;
+
+                // if count is MAX_ALLOWED_NOTES then return because not more notes are allowed
+                if(totalNotes >= MAX_ALLOWED_NOTES) {
+                    //Track.LogMessage("Max number of notes reached");
+                    Miku_DialogManager.ShowDialog(Miku_DialogManager.DialogType.Alert, StringVault.Alert_MaxNumberOfNotes);
+                    return true;
+                } else {
+                    // Both hand notes only allowed 1 total
+                    // RightHanded/Left Handed notes only allowed 1 of their types
+                    Note specialsNotes = notes.Find(x => x.HandType == Note.NoteHandType.BothHandsSpecial || x.HandType == Note.NoteHandType.OneHandSpecial);
+                    if(specialsNotes != null || ((s_instance.selectedNoteType == Note.NoteHandType.BothHandsSpecial || s_instance.selectedNoteType == Note.NoteHandType.OneHandSpecial)
+                                                        && totalNotes >= MAX_SPECIAL_NOTES)) {
+                        //Track.LogMessage("Max number of both hands notes reached");
+                        Miku_DialogManager.ShowDialog(Miku_DialogManager.DialogType.Alert, StringVault.Alert_MaxNumberOfSpecialNotes);
+                        return true;
+                    } else {
+                        //if(s_instance.selectedNoteType != Note.NoteType.OneHandSpecial) {
+                        specialsNotes = notes.Find(x => x.HandType == s_instance.selectedNoteType);
+                        if(specialsNotes != null) {
+                            //Track.LogMessage("Max number of "+s_instance.selectedNoteType.ToString()+" notes reached");
+                            Miku_DialogManager.ShowDialog(Miku_DialogManager.DialogType.Alert, string.Format(StringVault.Alert_MaxNumberOfTypeNotes, s_instance.selectedNoteType.ToString()));
+                            return true;
+                        }
+                        //}                            
+                    }
+                }
+            }
+            return false;
+        }
+        private static void AdjustCurrentTimeToFoundNotes(Dictionary<float, List<Note>> workingTrack, List<float> keys_tofilter) {
+            int totalFilteredTime = keys_tofilter.Count;
+            for(int filterList = 0; filterList < totalFilteredTime; ++filterList) {
+                // If the time key exist, check how many notes are added
+                float targetTime = keys_tofilter[filterList];
+                //print(targetTime+" "+CurrentTime);
+                List<Note> notes = workingTrack[targetTime];
+                int totalNotes = notes.Count;
+
+                if(totalNotes > 0) {
+                    CurrentTime = targetTime;
+                }
+            }
+        }
+
+        public static bool IsRailNote(Note note) {
+            if(note.UsageType == Note.NoteUsageType.Line || note.UsageType == Note.NoteUsageType.Breaker) {
+                return true;
+            }
+            return false;
+        }
+
+
         /// <summary>
         /// Add note to chart
         /// </summary>
-        public static void AddNoteToChart(GameObject note) {
+        public static void AddNoteToChart(GameObject noteFromNoteArea) {
             if(PromtWindowOpen || s_instance.isBusy) return;
 
             if(CurrentTime < MIN_NOTE_START * MS) {
                 Miku_DialogManager.ShowDialog(
-                    Miku_DialogManager.DialogType.Alert, 
+                    Miku_DialogManager.DialogType.Alert,
                     string.Format(
                         StringVault.Info_NoteTooClose,
                         MIN_NOTE_START
@@ -4745,173 +4818,73 @@ namespace MiKu.NET {
             // We need to check the track difficulty selected
             Dictionary<float, List<Note>> workingTrack = s_instance.GetCurrentTrackDifficulty();
             if(workingTrack != null) {
-                if(s_instance.isOnLongNoteMode && s_instance.CurrentLongNote.gameObject != null) {
-                    if(CurrentTime == s_instance.CurrentLongNote.startTime) {
-                        if(!IsOnMirrorMode) {
-                            Miku_DialogManager.ShowDialog(Miku_DialogManager.DialogType.Alert, StringVault.Alert_LongNoteNotFinalized);
-                        }						
-                        return;
-                    } else {
-                        s_instance.AddLongNoteSegment(note);
-                        return;
-                    }
-                }
-
                 float timeRangeDuplicatesStart = CurrentTime - MIN_TIME_OVERLAY_CHECK;
                 float timeRangeDuplicatesEnd = CurrentTime + MIN_TIME_OVERLAY_CHECK;
                 List<float> keys_tofilter = workingTrack.Keys.ToList();
-                keys_tofilter = keys_tofilter.Where(time => time >= timeRangeDuplicatesStart 
+                keys_tofilter = keys_tofilter.Where(time => time >= timeRangeDuplicatesStart
                         && time <= timeRangeDuplicatesEnd).ToList();
-                
-                //if(workingTrack.ContainsKey(CurrentTime)) {
-                if(keys_tofilter.Count > 0) {
-
-                    int totalFilteredTime = keys_tofilter.Count;
-                    for(int filterList = 0; filterList < totalFilteredTime; ++filterList) {
-                        // If the time key exist, check how many notes are added
-                        float targetTime = keys_tofilter[filterList];
-                        //print(targetTime+" "+CurrentTime);
-                        List<Note> notes = workingTrack[targetTime];
-                        int totalNotes = notes.Count;
-
-                        // Check for overlaping notes and delete if close
-                        for(int i = 0; i < totalNotes; ++i) {
-                            Note overlap = notes[i];
-
-                            if(ArePositionsOverlaping(note.transform.position, 
-                                new Vector3(overlap.Position[0],
-                                    overlap.Position[1],
-                                    overlap.Position[2]
-                                ))) 
-                            {
-                                GameObject nToDelete = GameObject.Find(overlap.Id);
-                                if(nToDelete) {
-                                    DestroyImmediate(nToDelete);
-                                }
-
-                                notes.Remove(overlap);
-                                totalNotes--;
-                                s_instance.UpdateTotalNotes(false, true);
-
-                                if(totalNotes <= 0) {
-                                    workingTrack.Remove(targetTime);
-                                    s_instance.hitSFXSource.Remove(targetTime);
-                                } else {
-                                    overlap = notes[0];
-                                    if(overlap.Type == Note.NoteType.OneHandSpecial) {
-                                        nToDelete = GameObject.Find(overlap.Id);
-                                        overlap.Id = FormatNoteName(targetTime, 0, overlap.Type);
-                                        nToDelete.name = overlap.Id;
-                                    }								
-                                }
-                                return;
-                            }
-                        }
-
-                        if(totalNotes > 0) {
-                            CurrentTime = targetTime;
-                        }
-
-                        // if count is MAX_ALLOWED_NOTES then return because not more notes are allowed
-                        if(totalNotes >= MAX_ALLOWED_NOTES) {
-                            //Track.LogMessage("Max number of notes reached");
-                            Miku_DialogManager.ShowDialog(Miku_DialogManager.DialogType.Alert, StringVault.Alert_MaxNumberOfNotes);
-                            return;
-                        } else {
-                            // Both hand notes only allowed 1 total
-                            // RightHanded/Left Handed notes only allowed 1 of their types
-                            Note specialsNotes = notes.Find(x => x.Type == Note.NoteType.BothHandsSpecial || x.Type == Note.NoteType.OneHandSpecial);
-                            if(specialsNotes != null || ((s_instance.selectedNoteType == Note.NoteType.BothHandsSpecial || s_instance.selectedNoteType == Note.NoteType.OneHandSpecial )
-                                                                && totalNotes >= MAX_SPECIAL_NOTES)) {
-                                //Track.LogMessage("Max number of both hands notes reached");
-                                Miku_DialogManager.ShowDialog(Miku_DialogManager.DialogType.Alert, StringVault.Alert_MaxNumberOfSpecialNotes);
-                                return;
-                            } else {
-                                //if(s_instance.selectedNoteType != Note.NoteType.OneHandSpecial) {
-                                    specialsNotes = notes.Find(x => x.Type == s_instance.selectedNoteType);
-                                    if(specialsNotes != null) {
-                                        //Track.LogMessage("Max number of "+s_instance.selectedNoteType.ToString()+" notes reached");
-                                        Miku_DialogManager.ShowDialog(Miku_DialogManager.DialogType.Alert, string.Format(StringVault.Alert_MaxNumberOfTypeNotes, s_instance.selectedNoteType.ToString()));
-                                        return;
-                                    }
-                                //}							
-                            }									
-                        }
-                    }					
+                bool hasNotesWithinDeltaTime = keys_tofilter.Count != 0;
+                // if there are no notes to overlap, instantiate time in the dictionary
+                if(!hasNotesWithinDeltaTime) {
+                    workingTrack.Add(CurrentTime, new List<Note>());
+                    s_instance.AddTimeToSFXList(CurrentTime);
                 } else {
-                    if(!s_instance.isOnLongNoteMode) {
-                        // If the entry time does not exist we just added
-                        workingTrack.Add(CurrentTime, new List<Note>());
+                    // find and remove notes that overlaps and return if one was removed
+                    if(RemoveOverlappingNote(workingTrack, keys_tofilter, noteFromNoteArea)) {
 
-                        s_instance.AddTimeToSFXList(CurrentTime);
-                    }					
+                        return;
+                    }
+                    // check if max notes of current type are reached for the time delta and return if true
+                    if(ReachedMaxNotesOfCurrentType(workingTrack, keys_tofilter, noteFromNoteArea))
+                        return;
+
+                    AdjustCurrentTimeToFoundNotes(workingTrack, keys_tofilter);
                 }
 
                 // workingTrack[CurrentTime].Count
+                Note noteForChart = new Note(noteFromNoteArea.transform.position, Track.CurrentTime, FormatNoteName(CurrentTime, s_instance.TotalNotes + 1, s_instance.selectedNoteType));
+                noteForChart.HandType = s_instance.selectedNoteType;
 
-                Note n = new Note(note.transform.position, FormatNoteName(CurrentTime, s_instance.TotalNotes + 1, s_instance.selectedNoteType));
-                n.Type = s_instance.selectedNoteType;
-
-                // If is not on long note mode we add the note as usual
-                if(!s_instance.isOnLongNoteMode) {					
-
-                    // Check if the note placed if of special type 
-                    if(IsOfSpecialType(n)) {
-                        // If whe are no creating a special, Then we init the new special section
-                        if(!s_instance.specialSectionStarted) {
-                            s_instance.specialSectionStarted = true;
-                            s_instance.currentSpecialSectionID++;
-                            Miku_DialogManager.ShowDialog(Miku_DialogManager.DialogType.Info, StringVault.Info_SpecialModeStarted);
-                            s_instance.ToggleWorkingStateAlertOn(StringVault.Info_UserOnSpecialSection);
-                        }
-
-                        // Assing the Special ID to the note
-                        n.ComboId = s_instance.currentSpecialSectionID;		
-                        
-                        Track.LogMessage("Current Special ID: "+s_instance.currentSpecialSectionID);
+                // Check if the note placed if of special type 
+                if(IsOfSpecialType(noteForChart)) {
+                    // If whe are no creating a special, Then we init the new special section
+                    if(!s_instance.specialSectionStarted) {
+                        s_instance.specialSectionStarted = true;
+                        s_instance.currentSpecialSectionID++;
+                        Miku_DialogManager.ShowDialog(Miku_DialogManager.DialogType.Info, StringVault.Info_SpecialModeStarted);
+                        s_instance.ToggleWorkingStateAlertOn(StringVault.Info_UserOnSpecialSection);
                     }
-                    
-                    // Finally we added the note to the dictonary
-                    // ref of the note for easy of access to properties						
-                    if(workingTrack.ContainsKey(CurrentTime)) {
-                        // print("Trying currentTime "+CurrentTime);
-                        workingTrack[CurrentTime].Add(n);
-                        s_instance.AddNoteGameObjectToScene(n);
-                        s_instance.UpdateTotalNotes();	
-                    } else {
-                        Track.LogMessage("Time does not exist");
-                    }								
-                } else {
-                    if(s_instance.CurrentLongNote.note == null) {
-                        // Other wise, init the strut and beign the inserting of the LongNote mode
-                        LongNote longNote = s_instance.CurrentLongNote;
-                        longNote.startTime = CurrentTime;
-                        longNote.note = n;
-                        longNote.gameObject = s_instance.AddNoteGameObjectToScene(n);
-                        if(IsOnMirrorMode) {
-                            Note mirroredN = new Note(GetMirrorePosition(note.transform.position), FormatNoteName(CurrentTime, s_instance.TotalNotes + 2, GetMirroreNoteMarkerType(n.Type)));
-                            mirroredN.Type = GetMirroreNoteMarkerType(n.Type);
-                            longNote.mirroredNote = mirroredN;
-                            longNote.mirroredObject = s_instance.AddNoteGameObjectToScene(mirroredN);
-                        }
-                        longNote.lastSegment = 0;
-                        longNote.duration = 0;
-                        s_instance.CurrentLongNote = longNote;
-                        s_instance.StartLongNoteMode();
-                    }					
+
+                    // Assing the Special ID to the note
+                    noteForChart.ComboId = s_instance.currentSpecialSectionID;
+
+                    Track.LogMessage("Current Special ID: " + s_instance.currentSpecialSectionID);
                 }
+
+                // Finally we added the note to the dictonary
+                // ref of the note for easy of access to properties                        
+                if(workingTrack.ContainsKey(CurrentTime)) {
+                    // print("Trying currentTime "+CurrentTime);
+                    workingTrack[CurrentTime].Add(noteForChart);
+                    s_instance.AddNoteGameObjectToScene(noteForChart);
+                    s_instance.UpdateTotalNotes();
+                } else {
+                    Track.LogMessage("Time does not exist");
+                }
+
             }
         }
 
-        
-        public static void AddNoteToChart(GameObject[] notes) { 
-            Note.NoteType defaultType = s_instance.selectedNoteType;
 
-            int totalNotes = notes.Length;
+        public static void AddNoteToChart(GameObject[] noteAndMirror) {
+            Note.NoteHandType defaultType = s_instance.selectedNoteType;
+
+            int totalNotes = noteAndMirror.Length;
             for(int i = 0; i < totalNotes; ++i) {
-                GameObject nextNote = notes[i];
+                GameObject nextNote = noteAndMirror[i];
+                bool isMirrorNote = i > 0;
 
-                if(i > 0) {
+                if(isMirrorNote) {
                     s_instance.selectedNoteType = GetMirroreNoteMarkerType(s_instance.selectedNoteType);
                 }
 
@@ -4924,8 +4897,7 @@ namespace MiKu.NET {
         /// Add to hitEffectsSource list to manage the play of sfx
         /// </summary>
         /// <param name="_ms">Millesconds of the current position to use on the formating</param>
-        private void AddTimeToSFXList(float _ms)
-        {           
+        private void AddTimeToSFXList(float _ms) {
             if(!s_instance.hitSFXSource.Contains(_ms)) {
                 s_instance.hitSFXSource.Add(_ms);
             }
@@ -4935,10 +4907,10 @@ namespace MiKu.NET {
         /// Return a string formated to be use as the note id
         /// </summary>
         /// <param name="_ms">Millesconds of the current position to use on the formating</param>
-        /// <param name="index">Index of the note to use on the formating</param>	
-        /// <param name="noteType">The type of note to look for, default is <see cref="Note.NoteType.RightHanded" /></param>
-        public static string FormatNoteName(float _ms, int index, Note.NoteType noteType = Note.NoteType.RightHanded) {
-            return (_ms.ToString("R")+noteType.ToString()+index).ToString();
+        /// <param name="index">Index of the note to use on the formating</param>    
+        /// <param name="noteType">The type of note to look for, default is <see cref="Note.NoteHandType.RightHanded" /></param>
+        public static string FormatNoteName(float _ms, int index, Note.NoteHandType noteType = Note.NoteHandType.RightHanded) {
+            return (_ms.ToString("R") + noteType.ToString() + index).ToString();
         }
 
         /// <summary>
@@ -4949,17 +4921,17 @@ namespace MiKu.NET {
         /// <param name="playBeatSound">If false not sound effect will be played</summary>
         public static void AddNoteToDisabledList(GameObject note, bool playBeatSound = true) {
             s_instance.disabledNotes.Add(note);
-            note.SetActive(false);	
+            note.SetActive(false);
             Transform directionWrap = note.transform.parent.Find("DirectionWrap");
             if(directionWrap != null) {
                 directionWrap.gameObject.SetActive(false);
-            }		
+            }
             /* if(s_instance.lastHitNoteZ != note.transform.position.z && playBeatSound) {
                 s_instance.lastHitNoteZ = note.transform.position.z;
                 s_instance.PlaySFX(s_instance.m_HitMetaSound);
             } */
-            
-        }		
+
+        }
 
         /// <summary>
         /// Add the passed Note GameObject to the <see cref="resizedNotes" /> list of resized objects
@@ -4972,15 +4944,15 @@ namespace MiKu.NET {
             if(Track.IsPlaying || note == null) return;
             //string searchName = note.name.Equals("Lefthand Single Note") || note.name.Equals("Righthand Single Note") || turnOff ? note.transform.parent.name : note.name;
             string searchName = note.transform.parent.name;
-            
+
             int index = s_instance.resizedNotes.FindIndex(x => x != null && (x.name.Equals(searchName) || x.transform.parent.name.Equals(searchName)));
-            if(index < 0) {				
+            if(index < 0) {
                 s_instance.resizedNotes.Add(note);
                 Transform directionWrap = note.transform.parent.Find("DirectionWrap");
                 if(directionWrap != null) {
                     directionWrap.gameObject.SetActive(false);
                 }
-                
+
                 if(turnOff) {
                     note.GetComponent<MeshRenderer>().enabled = false;
                     /* GameObject highlighter = s_instance.GetHighlighter(searchName);
@@ -4990,9 +4962,9 @@ namespace MiKu.NET {
                 } else {
                     if(note.transform.localScale.x > MIN_NOTE_RESIZE) {
                         note.transform.localScale = note.transform.localScale * s_instance.m_CameraNearReductionFactor;
-                    }	
-                }							
-            }			
+                    }
+                }
+            }
         }
 
         /// <summary>
@@ -5000,11 +4972,11 @@ namespace MiKu.NET {
         /// also resize the GameObject after added
         /// </summary>
         /// <param name="note">The GameObject to add to the list</summary>
-        public static void RemoveNoteToReduceList(GameObject note,  bool turnOn = false) {
+        public static void RemoveNoteToReduceList(GameObject note, bool turnOn = false) {
             if(Track.IsPlaying || note == null) return;
             // string searchName = note.name.Equals("Lefthand Single Note") || note.name.Equals("Righthand Single Note") || turnOn ? note.transform.parent.name : note.name;
             string searchName = note.transform.parent.name;
-            
+
             int index = s_instance.resizedNotes.FindIndex(x => x != null && (x.name.Equals(searchName) || x.transform.parent.name.Equals(searchName)));
             if(index >= 0) {
                 s_instance.resizedNotes.RemoveAt(index);
@@ -5016,9 +4988,9 @@ namespace MiKu.NET {
                     note.GetComponent<MeshRenderer>().enabled = true;
                 } else {
                     if(note.transform.localScale.x < MAX_NOTE_RESIZE) {
-                        note.transform.localScale = note.transform.localScale / s_instance.m_CameraNearReductionFactor;	
+                        note.transform.localScale = note.transform.localScale / s_instance.m_CameraNearReductionFactor;
                     }
-                }							
+                }
             }
         }
 
@@ -5048,7 +5020,7 @@ namespace MiKu.NET {
                 }
 
                 // Assing the Special ID to the note
-                note.ComboId = s_instance.currentSpecialSectionID;						
+                note.ComboId = s_instance.currentSpecialSectionID;
             } else {
                 s_instance.specialSectionStarted = false;
             }
@@ -5078,7 +5050,7 @@ namespace MiKu.NET {
             float dist = Vector3.Distance(pos1, pos2);
             minDistance = (minDistance == 0) ? MIN_OVERLAP_DISTANCE : minDistance;
 
-            if(Mathf.Abs(dist) < minDistance) {				
+            if(Mathf.Abs(dist) < minDistance) {
                 return true;
             }
 
@@ -5086,12 +5058,12 @@ namespace MiKu.NET {
         }
 
         /// <summary>
-        /// Check if the passed note if of Special Type: <see cref="Note.NoteType.BothHandsSpecial" /> or <see cref="Note.NoteType.OneHandSpecial" />
+        /// Check if the passed note if of Special Type: <see cref="Note.NoteHandType.BothHandsSpecial" /> or <see cref="Note.NoteHandType.OneHandSpecial" />
         /// </summary>
         /// <param name="n"><see cref="Note"/> to check</param>
         /// <returns>Returns <typeparamref name="bool"/></returns>
         public static bool IsOfSpecialType(Note n) {
-            if(n.Type == Note.NoteType.OneHandSpecial || n.Type == Note.NoteType.BothHandsSpecial) { 
+            if(n.HandType == Note.NoteHandType.OneHandSpecial || n.HandType == Note.NoteHandType.BothHandsSpecial) {
                 return true;
             }
 
@@ -5107,7 +5079,7 @@ namespace MiKu.NET {
             s_instance.MoveCamera(true, s_instance.MStoUnit(s_instance._currentTime));
             if(PromtWindowOpen) {
                 s_instance.ClosePromtWindow();
-            }			
+            }
             s_instance.DrawTrackXSLines();
             s_instance.ResetResizedList();
             s_instance.ResetDisabledList();
@@ -5116,13 +5088,8 @@ namespace MiKu.NET {
         /// <summary>
         /// Toggle Effects for the current time
         /// </summary>
-        public static void ToggleEffectToChart(bool isOverwrite = false){
+        public static void ToggleEffectToChart(bool isOverwrite = false) {
             if(PromtWindowOpen || IsPlaying) return;
-
-            if(s_instance.isOnLongNoteMode && s_instance.CurrentLongNote.gameObject != null) {
-                Miku_DialogManager.ShowDialog(Miku_DialogManager.DialogType.Alert, StringVault.Alert_LongNoteNotFinalizedEffect);
-                return;
-            }
 
             // first we check if theres is any effect in that time period
             // We need to check the effect difficulty selected
@@ -5144,35 +5111,30 @@ namespace MiKu.NET {
                             string.Format(StringVault.Alert_MaxNumberOfEffects, MAX_FLASH_ALLOWED));
                         return;
                     }
-                    
+
                     for(int i = 0; i < workingEffects.Count; ++i) {
 
                         if(IsWithin(workingEffects[i], CurrentTime - MIN_FLASH_INTERVAL, CurrentTime + MIN_FLASH_INTERVAL)) {
                             Miku_DialogManager.ShowDialog(Miku_DialogManager.DialogType.Alert,
-                                string.Format(StringVault.Alert_EffectsInterval, (MIN_FLASH_INTERVAL/MS)));
+                                string.Format(StringVault.Alert_EffectsInterval, (MIN_FLASH_INTERVAL / MS)));
                             return;
                         }
                     }
-                    workingEffects.Add(CurrentTime);	
+                    workingEffects.Add(CurrentTime);
                     s_instance.AddEffectGameObjectToScene(CurrentTime);
 
                     if(!isOverwrite) {
                         Miku_DialogManager.ShowDialog(Miku_DialogManager.DialogType.Info, StringVault.Info_FlashOn);
-                    }			
-                }				
+                    }
+                }
             }
         }
 
         /// <summary>
         /// Toggle Bookmark for the current time
         /// </summary>
-        public static void ToggleBookmarkToChart(){
+        public static void ToggleBookmarkToChart() {
             if(PromtWindowOpen || s_instance.isBusy || IsPlaying) return;
-
-            if(s_instance.isOnLongNoteMode && s_instance.CurrentLongNote.gameObject != null) {
-                Miku_DialogManager.ShowDialog(Miku_DialogManager.DialogType.Alert, StringVault.Alert_LongNoteNotFinalizedBookmark);
-                return;
-            }			
 
             // first we check if theres is any effect in that time period
             // We need to check the effect difficulty selected
@@ -5191,7 +5153,7 @@ namespace MiKu.NET {
                 } else {
                     s_instance.currentPromt = PromtType.AddBookmarkAction;
                     s_instance.ShowPromtWindow(string.Empty);
-                }				
+                }
             }
         }
 
@@ -5203,18 +5165,13 @@ namespace MiKu.NET {
 
             if(CurrentTime < MIN_NOTE_START * MS) {
                 Miku_DialogManager.ShowDialog(
-                    Miku_DialogManager.DialogType.Alert, 
+                    Miku_DialogManager.DialogType.Alert,
                     string.Format(
                         StringVault.Info_NoteTooClose,
                         MIN_NOTE_START
                     )
                 );
 
-                return;
-            }
-
-            if(s_instance.isOnLongNoteMode && s_instance.CurrentLongNote.gameObject != null) {
-                Miku_DialogManager.ShowDialog(Miku_DialogManager.DialogType.Alert, StringVault.Alert_LongNoteNotFinalizedEffect);
                 return;
             }
 
@@ -5256,7 +5213,7 @@ namespace MiKu.NET {
             // first we check if theres is any effect in that time period
             // We need to check the effect difficulty selected
             if(workingElementVert != null) {
-                if(workingElementVert.Contains(CurrentTime)) {					
+                if(workingElementVert.Contains(CurrentTime)) {
                     workingElementVert.Remove(CurrentTime);
                     moveGO = GameObject.Find(s_instance.GetMovementIdFormated(CurrentTime, MoveTAG));
                     if(moveGO != null) {
@@ -5270,13 +5227,13 @@ namespace MiKu.NET {
 
                     s_instance.RemoveMovementSectionFromChart(MoveTAG, CurrentTime);
 
-                    workingElementVert.Add(CurrentTime);	
+                    workingElementVert.Add(CurrentTime);
                     s_instance.AddMovementGameObjectToScene(CurrentTime, MoveTAG);
 
                     if(!isOverwrite) {
-                        Miku_DialogManager.ShowDialog(Miku_DialogManager.DialogType.Info, onText);			
-                    }	
-                }				
+                        Miku_DialogManager.ShowDialog(Miku_DialogManager.DialogType.Info, onText);
+                    }
+                }
             }
 
             if(workingElementHorz != null) {
@@ -5284,19 +5241,19 @@ namespace MiKu.NET {
                 string CurrentTag = String.Empty;
                 if(currentSlide.initialized) {
                     CurrentTag = s_instance.GetSlideTagByType(currentSlide.slideType);
-                    //if(!isOverwrite) {									
+                    //if(!isOverwrite) {                                    
                     workingElementHorz.Remove(currentSlide);
                     moveGO = GameObject.Find(s_instance.GetMovementIdFormated(CurrentTime, CurrentTag));
                     if(moveGO != null) {
                         DestroyImmediate(moveGO);
-                    }			
-                    //}		
-                } 
+                    }
+                    //}        
+                }
 
                 if(CurrentTag.Equals(MoveTAG)) {
                     if(!isOverwrite) {
                         Miku_DialogManager.ShowDialog(Miku_DialogManager.DialogType.Info, offText);
-                    } 
+                    }
                 } else {
                     s_instance.RemoveMovementSectionFromChart(MoveTAG, CurrentTime);
 
@@ -5306,41 +5263,36 @@ namespace MiKu.NET {
 
                     switch(MoveTAG) {
                         case SLIDE_LEFT_TAG:
-                            slide.slideType = Note.NoteType.LeftHanded;
+                            slide.slideType = Note.NoteHandType.LeftHanded;
                             break;
                         case SLIDE_RIGHT_TAG:
-                            slide.slideType = Note.NoteType.RightHanded;
+                            slide.slideType = Note.NoteHandType.RightHanded;
                             break;
                         case SLIDE_LEFT_DIAG_TAG:
-                            slide.slideType = Note.NoteType.SeparateHandSpecial;
+                            slide.slideType = Note.NoteHandType.SeparateHandSpecial;
                             break;
                         case SLIDE_RIGHT_DIAG_TAG:
-                            slide.slideType = Note.NoteType.OneHandSpecial;
+                            slide.slideType = Note.NoteHandType.OneHandSpecial;
                             break;
                         default:
-                            slide.slideType = Note.NoteType.BothHandsSpecial;
+                            slide.slideType = Note.NoteHandType.BothHandsSpecial;
                             break;
                     }
 
-                    workingElementHorz.Add(slide);	
+                    workingElementHorz.Add(slide);
                     s_instance.AddMovementGameObjectToScene(CurrentTime, MoveTAG);
                     if(!isOverwrite) {
-                        Miku_DialogManager.ShowDialog(Miku_DialogManager.DialogType.Info, onText);	
+                        Miku_DialogManager.ShowDialog(Miku_DialogManager.DialogType.Info, onText);
                     }
                 }
-            } 		
-        }		
+            }
+        }
 
         /// <summary>
         /// Toggle Lights for the current time
         /// </summary>
-        public static void ToggleLightsToChart(bool isOverwrite = false){
+        public static void ToggleLightsToChart(bool isOverwrite = false) {
             if(PromtWindowOpen || IsPlaying) return;
-
-            if(s_instance.isOnLongNoteMode && s_instance.CurrentLongNote.gameObject != null) {
-                Miku_DialogManager.ShowDialog(Miku_DialogManager.DialogType.Alert, StringVault.Alert_LongNoteNotFinalizedEffect);
-                return;
-            }
 
             // first we check if theres is any effect in that time period
             // We need to check the effect difficulty selected
@@ -5355,116 +5307,128 @@ namespace MiKu.NET {
 
                     if(!isOverwrite) {
                         Miku_DialogManager.ShowDialog(
-                            Miku_DialogManager.DialogType.Info, 
+                            Miku_DialogManager.DialogType.Info,
                             string.Format(StringVault.Info_LightsEffect, "OFF")
                         );
                     }
-                } else {					
+                } else {
                     for(int i = 0; i < lights.Count; ++i) {
 
                         if(IsWithin(lights[i], CurrentTime - MIN_FLASH_INTERVAL, CurrentTime + MIN_FLASH_INTERVAL)) {
                             Miku_DialogManager.ShowDialog(Miku_DialogManager.DialogType.Alert,
-                                string.Format(StringVault.Alert_EffectsInterval, (MIN_FLASH_INTERVAL/MS)));
+                                string.Format(StringVault.Alert_EffectsInterval, (MIN_FLASH_INTERVAL / MS)));
                             return;
                         }
                     }
-                    lights.Add(CurrentTime);	
+                    lights.Add(CurrentTime);
                     s_instance.AddLightGameObjectToScene(CurrentTime);
 
                     if(!isOverwrite) {
                         Miku_DialogManager.ShowDialog(
-                            Miku_DialogManager.DialogType.Info, 
+                            Miku_DialogManager.DialogType.Info,
                             string.Format(StringVault.Info_LightsEffect, "ON")
                         );
-                    }			
-                }				
+                    }
+                }
             }
         }
 
-        public static bool IsWithin(float value, float minimum, float maximum)
-        {
+        public static bool IsWithin(float value, float minimum, float maximum) {
             return value > minimum && value < maximum;
         }
 
         public static bool NeedSaveAction() {
             return (s_instance.lastSaveTime > SAVE_TIME_CHECK);
         }
-#endregion
+        #endregion
 
-        public void ToggleMovementSectionToChart(int MoveTAGIndex){
-             ToggleMovementSectionToChart(GetMoveTagTypeByIndex(MoveTAGIndex));
-        }	
+        public void ToggleMovementSectionToChart(int MoveTAGIndex) {
+            ToggleMovementSectionToChart(GetMoveTagTypeByIndex(MoveTAGIndex));
+        }
 
         /// <summary>
         /// Set the note marker type to be used
         /// </summary>
-        /// <param name="noteType">The type of note to use. Default is 0 that is equal to <see cref="Note.NoteType.LeftHanded" /></param>
+        /// <param name="noteType">The type of note to use. Default is 0 that is equal to <see cref="Note.NoteHandType.LeftHanded" /></param>
         public void SetNoteMarkerType(int noteType = 0) {
             if(GetNoteMarkerTypeIndex(selectedNoteType) != noteType) {
                 CloseSpecialSection();
-                FinalizeLongNoteMode();
-            }			
+            }
 
             switch(noteType) {
                 case 0:
-                    selectedNoteType = Note.NoteType.LeftHanded;
+                    selectedNoteType = Note.NoteHandType.LeftHanded;
                     break;
                 case 1:
-                    selectedNoteType = Note.NoteType.RightHanded;					
+                    selectedNoteType = Note.NoteHandType.RightHanded;
                     break;
                 case 2:
-                    selectedNoteType = Note.NoteType.OneHandSpecial;
+                    selectedNoteType = Note.NoteHandType.OneHandSpecial;
                     if(isOnMirrorMode) {
                         isOnMirrorMode = false;
                     }
                     break;
-                default: 
-                    selectedNoteType = Note.NoteType.BothHandsSpecial;
+                case 3:
+                    selectedNoteType = Note.NoteHandType.BothHandsSpecial;
                     if(isOnMirrorMode) {
                         isOnMirrorMode = false;
                     }
                     break;
-            }			
+
+                default:
+                    selectedNoteType = Note.NoteHandType.BothHandsSpecial;
+                    if(isOnMirrorMode) {
+                        isOnMirrorMode = false;
+                    }
+                    break;
+            }
         }
 
         /// <summary>
         /// Returns note marker game object, based on the type selected
         /// </summary>
-        /// <param name="noteType">The type of note to look for, default is <see cref="Note.NoteType.LeftHanded" /></param>
+        /// <param name="noteType">The type of note to look for, default is <see cref="Note.NoteHandType.LeftHanded" /></param>
         /// <returns>Returns <typeparamref name="GameObject"/></returns>
-        GameObject GetNoteMarkerByType(Note.NoteType noteType = Note.NoteType.LeftHanded, bool isSegment = false) {
+        GameObject GetNoteMarkerByType(Note.NoteHandType noteType = Note.NoteHandType.LeftHanded, bool isSegment = false) {
+            GameObject result = m_LeftHandNoteMarker;
             switch(noteType) {
-                case Note.NoteType.LeftHanded:
-                    return isSegment ? m_LefthandNoteMarkerSegment : m_LefthandNoteMarker;
-                case Note.NoteType.RightHanded:
-                    return isSegment ? m_RighthandNoteMarkerSegment : m_RighthandNoteMarker;
-                case Note.NoteType.BothHandsSpecial:
-                    return isSegment ? m_Special2NoteMarkerSegment : m_SpecialBothHandsNoteMarker;
+                case Note.NoteHandType.LeftHanded:
+                    result = m_LeftHandNoteMarker;
+                    break;
+                case Note.NoteHandType.RightHanded:
+                    result = m_RightHandNoteMarker;
+                    break;
+                case Note.NoteHandType.OneHandSpecial:
+                    result = m_Special1HandNoteMarker;
+                    break;
+                case Note.NoteHandType.BothHandsSpecial:
+                    result = m_Special2HandsNoteMarker;
+                    break;
             }
-
-            return isSegment ? m_Special1NoteMarkerSegment : m_SpecialOneHandNoteMarker;
+            return result;
         }
 
         /// <summary>
         /// Returns index of the NoteType
         /// </summary>
-        /// <param name="noteType">The type of note to look for, default is <see cref="Note.NoteType.LeftHanded" /></param>
+        /// <param name="noteType">The type of note to look for, default is <see cref="Note.NoteHandType.LeftHanded" /></param>
         /// <returns>Returns <typeparamref name="int"/></returns>
-        int GetNoteMarkerTypeIndex(Note.NoteType noteType = Note.NoteType.LeftHanded) {
+        int GetNoteMarkerTypeIndex(Note.NoteHandType noteType = Note.NoteHandType.LeftHanded) {
             switch(noteType) {
-                case Note.NoteType.LeftHanded:
+                case Note.NoteHandType.LeftHanded:
                     return 0;
-                case Note.NoteType.RightHanded:
+                case Note.NoteHandType.RightHanded:
                     return 1;
-                case Note.NoteType.OneHandSpecial:
+                case Note.NoteHandType.OneHandSpecial:
                     return 2;
+                case Note.NoteHandType.BothHandsSpecial:
+                    return 3;
             }
-
-            return 3;
+            return 0; // default
         }
 
         /// <summary>
-        /// Update the position on the Current Place notes when any of the const changes		
+        /// Update the position on the Current Place notes when any of the const changes        
         /// </summary>
         /// <remarks>
         /// some constants include BMP, Speed, etc.
@@ -5475,21 +5439,20 @@ namespace MiKu.NET {
 
             try {
                 // Get the current working track
-                Dictionary<float, List<Note>> workingTrack = GetCurrentTrackDifficulty();	
-                float newTime, newPos;		
+                Dictionary<float, List<Note>> workingTrack = GetCurrentTrackDifficulty();
+                float newTime, newPos;
 
                 if(workingTrack != null && workingTrack.Count > 0) {
                     // New Dictionary on where the new data will be update
                     Dictionary<float, List<Note>> updateData = new Dictionary<float, List<Note>>();
 
                     // Iterate each entry on the Dictionary and get the note to update
-                    foreach( KeyValuePair<float, List<Note>> kvp in workingTrack )
-                    {
+                    foreach(KeyValuePair<float, List<Note>> kvp in workingTrack) {
                         List<Note> _notes = kvp.Value;
                         List<Note> updateList = new List<Note>();
 
                         // The new update time
-                        newTime = UpdateTimeToBPM(kvp.Key, fromBPM);		
+                        newTime = UpdateTimeToBPM(kvp.Key, fromBPM);
 
                         // Iterate each note and update its info
                         for(int i = 0; i < _notes.Count; i++) {
@@ -5504,18 +5467,18 @@ namespace MiKu.NET {
                             noteGO.transform.position = new Vector3(
                                 noteGO.transform.position.x,
                                 noteGO.transform.position.y,
-                                newPos );							
+                                newPos);
 
                             // Update data
-                            n.Id = FormatNoteName(newTime, i, n.Type);
+                            n.Id = FormatNoteName(newTime, i, n.HandType);
                             updateList.Add(n);
-                            noteGO.name = n.Id;		
+                            noteGO.name = n.Id;
 
-                            if(n.Segments != null && n.Segments.GetLength(0) > 0) {		
+                            if(n.Segments != null && n.Segments.GetLength(0) > 0) {
                                 for(int j = 0; j < n.Segments.GetLength(0); ++j) {
                                     Vector3 segmentPos = transform.InverseTransformPoint(
                                             n.Segments[j, 0],
-                                            n.Segments[j, 1], 
+                                            n.Segments[j, 1],
                                             n.Segments[j, 2]
                                     );
 
@@ -5541,7 +5504,7 @@ namespace MiKu.NET {
                                 RenderLine(noteGO, n.Segments, true);
                             } */
                         }
-                        
+
                         // Add update note to new list
                         updateData.Add(newTime, updateList);
                     }
@@ -5564,12 +5527,12 @@ namespace MiKu.NET {
                             effectGO.transform.position = new Vector3(
                                 effectGO.transform.position.x,
                                 effectGO.transform.position.y,
-                                newPos );
+                                newPos);
                             effectGO.name = GetEffectIdFormated(newTime);
-                            
+
                             updatedEffects.Add(newTime);
-                        } 
-                        
+                        }
+
                     }
 
                     workingEffects.Clear();
@@ -5583,21 +5546,21 @@ namespace MiKu.NET {
                     for(int i = 0; i < bookmarks.Count; ++i) {
                         currBookmark = bookmarks[i];
                         newTime = UpdateTimeToBPM(currBookmark.time, fromBPM);
-                        newPos = MStoUnit(newTime);						
+                        newPos = MStoUnit(newTime);
 
                         GameObject bookmarkGO = GameObject.Find(GetBookmarkIdFormated(currBookmark.time));
                         if(bookmarkGO != null) {
                             bookmarkGO.transform.position = new Vector3(
                                 bookmarkGO.transform.position.x,
                                 bookmarkGO.transform.position.y,
-                                newPos );
+                                newPos);
                             bookmarkGO.name = GetBookmarkIdFormated(newTime);
                             //currBookmark.time = newTime;
                             Bookmark copyBookmark = new Bookmark();
                             copyBookmark.name = currBookmark.name;
                             copyBookmark.time = newTime;
                             updateBookmarks.Add(copyBookmark);
-                        } 					
+                        }
                     }
 
                     bookmarks.Clear();
@@ -5616,7 +5579,7 @@ namespace MiKu.NET {
                             moveSectGO.transform.position = new Vector3(
                                 moveSectGO.transform.position.x,
                                 moveSectGO.transform.position.y,
-                                newPos );
+                                newPos);
                             moveSectGO.name = GetMovementIdFormated(newTime, JUMP_TAG);
 
                             updatedJumps.Add(newTime);
@@ -5639,7 +5602,7 @@ namespace MiKu.NET {
                             moveSectGO.transform.position = new Vector3(
                                 moveSectGO.transform.position.x,
                                 moveSectGO.transform.position.y,
-                                newPos );
+                                newPos);
                             moveSectGO.name = GetMovementIdFormated(newTime, CROUCH_TAG);
 
                             updatedCrouchs.Add(newTime);
@@ -5657,18 +5620,18 @@ namespace MiKu.NET {
                         Slide currSlide = slides[i];
                         newTime = UpdateTimeToBPM(slides[i].time, fromBPM);
                         newPos = MStoUnit(newTime);
-                        
+
                         GameObject moveSectGO = GameObject.Find(GetMovementIdFormated(currSlide.time, GetSlideTagByType(currSlide.slideType)));
                         if(moveSectGO != null) {
                             moveSectGO.transform.position = new Vector3(
                                 moveSectGO.transform.position.x,
                                 moveSectGO.transform.position.y,
-                                newPos );
+                                newPos);
                             moveSectGO.name = GetMovementIdFormated(newTime, GetSlideTagByType(currSlide.slideType));
 
                             currSlide.time = newTime;
                             updateSlides.Add(currSlide);
-                        } 
+                        }
                     }
 
                     slides.Clear();
@@ -5688,12 +5651,12 @@ namespace MiKu.NET {
                             effectGO.transform.position = new Vector3(
                                 effectGO.transform.position.x,
                                 effectGO.transform.position.y,
-                                newPos );
+                                newPos);
                             effectGO.name = GetLightIdFormated(newTime);
-                            
+
                             updatedLights.Add(newTime);
-                        } 
-                        
+                        }
+
                     }
 
                     lights.Clear();
@@ -5706,7 +5669,7 @@ namespace MiKu.NET {
                 Serializer.WriteToLogFile("BPM update error");
                 Serializer.WriteToLogFile(ex.ToString());
             }
-            
+
 
             ///_currentTime = UpdateTimeToBPM(_currentTime);
             /*_currentTime = _currentTime - (K);
@@ -5724,12 +5687,12 @@ namespace MiKu.NET {
         float UpdateTimeToBPM(float ms, float fromBPM = 0) {
             //return ms - ( ( (MS*MINUTE)/CurrentChart.BPM ) - K );
             if(ms > 0) {
-                fromBPM = ( fromBPM > 0) ? fromBPM : lastBPM;
-                return (K * ms) / ((MS*MINUTE)/fromBPM);
+                fromBPM = (fromBPM > 0) ? fromBPM : lastBPM;
+                return (K * ms) / ((MS * MINUTE) / fromBPM);
             } else {
                 return ms;
             }
-            
+
             //return (BPM * ms) / lastBPM;
         }
 
@@ -5748,21 +5711,20 @@ namespace MiKu.NET {
 
         /// <summary>
         /// Delete all the GameObject notes of the Current Difficulty.
-        /// Also clear its corresponding List and Dictonary Entry		
+        /// Also clear its corresponding List and Dictonary Entry        
         /// </summary>
         void ClearNotePositions() {
             isBusy = true;
 
             // Get the current working track
-            Dictionary<float, List<Note>> workingTrack = GetCurrentTrackDifficulty();		
+            Dictionary<float, List<Note>> workingTrack = GetCurrentTrackDifficulty();
 
             if(workingTrack != null && workingTrack.Count > 0) {
                 // New Empty Dictionary on where the new data will be update
                 Dictionary<float, List<Note>> updateData = new Dictionary<float, List<Note>>();
 
                 // Iterate each entry on the Dictionary and get the note to update
-                foreach( KeyValuePair<float, List<Note>> kvp in workingTrack )
-                {
+                foreach(KeyValuePair<float, List<Note>> kvp in workingTrack) {
                     List<Note> _notes = kvp.Value;
 
                     // Iterate each note and update its info
@@ -5773,7 +5735,7 @@ namespace MiKu.NET {
                         GameObject noteGO = GameObject.Find(n.Id);
                         GameObject.DestroyImmediate(noteGO);
                     }
-                    
+
                     // And Finally clear the list
                     _notes.Clear();
                 }
@@ -5852,7 +5814,7 @@ namespace MiKu.NET {
 
         /// <summary>
         /// Only delete all the GameObject notes of the Current Difficulty.
-        /// Its corresponding List and Dictonary Entry remains unchanged	
+        /// Its corresponding List and Dictonary Entry remains unchanged    
         /// </summary>
         void DeleteNotesGameObjects() {
             isBusy = true;
@@ -5862,8 +5824,7 @@ namespace MiKu.NET {
 
             if(workingTrack != null && workingTrack.Count > 0) {
                 // Iterate each entry on the Dictionary and get the note to update
-                foreach( KeyValuePair<float, List<Note>> kvp in workingTrack )
-                {
+                foreach(KeyValuePair<float, List<Note>> kvp in workingTrack) {
                     List<Note> _notes = kvp.Value;
 
                     // Iterate each note and update its info
@@ -5936,7 +5897,7 @@ namespace MiKu.NET {
                     GameObject.DestroyImmediate(lightGO);
                 }
             }
-            
+
             hitSFXSource.Clear();
             isBusy = false;
         }
@@ -5948,7 +5909,6 @@ namespace MiKu.NET {
         void SetCurrentTrackDifficulty(TrackDifficulty difficulty) {
             currentSpecialSectionID = -1;
             CloseSpecialSection();
-            FinalizeLongNoteMode();
 
             DeleteNotesGameObjects();
             CurrentDifficulty = difficulty;
@@ -5956,7 +5916,7 @@ namespace MiKu.NET {
             // m_DifficultyDisplay.text = CurrentDifficulty.ToString();
             m_statsDifficultyText.text = CurrentDifficulty.ToString();
 
-            resizedNotes.Clear();			
+            resizedNotes.Clear();
 
             // Reset the current time
             _currentTime = 0;
@@ -6032,7 +5992,7 @@ namespace MiKu.NET {
         /// <summary>
         /// Update the current track difficulty data based on the selected difficulty
         /// </summary>
-        void UpdateCurrentTrackDifficulty( Dictionary<float, List<Note>> newData ) {
+        void UpdateCurrentTrackDifficulty(Dictionary<float, List<Note>> newData) {
 
             switch(CurrentDifficulty) {
                 case TrackDifficulty.Normal:
@@ -6068,7 +6028,7 @@ namespace MiKu.NET {
         /// <summary>
         /// Update the current effects difficulty data based on the selected difficulty
         /// </summary>
-        void UpdateCurrentEffectDifficulty<T>( List<T> newData, bool IsBookmark = false ) {
+        void UpdateCurrentEffectDifficulty<T>(List<T> newData, bool IsBookmark = false) {
 
             if(!IsBookmark) {
                 switch(CurrentDifficulty) {
@@ -6106,7 +6066,7 @@ namespace MiKu.NET {
         /// <summary>
         /// Update the current effects difficulty data based on the selected difficulty
         /// </summary>
-        void UpdateCurrentMovementDifficulty<T>( List<T> newData, string MOV_TAG ) {
+        void UpdateCurrentMovementDifficulty<T>(List<T> newData, string MOV_TAG) {
 
             switch(CurrentDifficulty) {
                 case TrackDifficulty.Normal:
@@ -6119,7 +6079,7 @@ namespace MiKu.NET {
                     } else {
                         CurrentChart.Slides.Normal.Clear();
                         CurrentChart.Slides.Normal = newData as List<Slide>;
-                    }					
+                    }
                     break;
                 case TrackDifficulty.Hard:
                     if(MOV_TAG.Equals(JUMP_TAG)) {
@@ -6131,7 +6091,7 @@ namespace MiKu.NET {
                     } else {
                         CurrentChart.Slides.Hard.Clear();
                         CurrentChart.Slides.Hard = newData as List<Slide>;
-                    }	
+                    }
                     break;
                 case TrackDifficulty.Expert:
                     if(MOV_TAG.Equals(JUMP_TAG)) {
@@ -6187,7 +6147,7 @@ namespace MiKu.NET {
         /// <summary>
         /// Update the current lights difficulty data based on the selected difficulty
         /// </summary>
-        void UpdateCurrentLightsDifficulty( List<float> newData ) {
+        void UpdateCurrentLightsDifficulty(List<float> newData) {
             switch(CurrentDifficulty) {
                 case TrackDifficulty.Normal:
                     CurrentChart.Lights.Normal.Clear();
@@ -6243,7 +6203,7 @@ namespace MiKu.NET {
                     if(directionWrap != null) {
                         directionWrap.gameObject.SetActive(true);
                     }
-                }				
+                }
             }
 
             resizedNotes.Clear();
@@ -6260,7 +6220,7 @@ namespace MiKu.NET {
                     m_SFXAudioSource.clip = soundToPlay;
                     m_SFXAudioSource.PlayOneShot(m_SFXAudioSource.clip);
                 }
-            }						
+            }
         }
 
         /// <summary>
@@ -6275,7 +6235,7 @@ namespace MiKu.NET {
         /// Show the info window that notifie the user of the current working section
         /// </summary>
         /// <param name="message">The message to show</param>
-        void ToggleWorkingStateAlertOn(string message){
+        void ToggleWorkingStateAlertOn(string message) {
             if(!m_StateInfoObject.activeSelf) {
                 m_StateInfoObject.SetActive(false);
                 m_StateInfoText.SetText(message);
@@ -6296,7 +6256,7 @@ namespace MiKu.NET {
         /// <summary>
         /// Hide the info window that notifie the user of the current working section
         /// </summary>
-        void ToggleWorkingStateAlertOff(){
+        void ToggleWorkingStateAlertOff() {
             if(m_StateInfoObject.activeSelf) {
                 m_StateInfoObject.SetActive(false);
             }
@@ -6430,15 +6390,15 @@ namespace MiKu.NET {
         /// handler to get the Slide Tag relative to its type
         /// </summary>
         /// <param name="SlideType">The type of the slide</param>
-        string GetSlideTagByType(Note.NoteType SlideType) {
+        string GetSlideTagByType(Note.NoteHandType SlideType) {
             switch(SlideType) {
-                case Note.NoteType.LeftHanded:
+                case Note.NoteHandType.LeftHanded:
                     return SLIDE_LEFT_TAG;
-                case Note.NoteType.RightHanded:
+                case Note.NoteHandType.RightHanded:
                     return SLIDE_RIGHT_TAG;
-                case Note.NoteType.SeparateHandSpecial:
+                case Note.NoteHandType.SeparateHandSpecial:
                     return SLIDE_LEFT_DIAG_TAG;
-                case Note.NoteType.OneHandSpecial:
+                case Note.NoteHandType.OneHandSpecial:
                     return SLIDE_RIGHT_DIAG_TAG;
                 default:
                     return SLIDE_CENTER_TAG;
@@ -6449,18 +6409,18 @@ namespace MiKu.NET {
         /// handler to get the Slide Type relative to its tag
         /// </summary>
         /// <param name="TagName">The Tag of the slide</param>
-        Note.NoteType GetSlideTypeByTag(string TagName) {
+        Note.NoteHandType GetSlideTypeByTag(string TagName) {
             switch(TagName) {
                 case SLIDE_LEFT_TAG:
-                    return Note.NoteType.LeftHanded;
+                    return Note.NoteHandType.LeftHanded;
                 case SLIDE_RIGHT_TAG:
-                    return Note.NoteType.RightHanded;
+                    return Note.NoteHandType.RightHanded;
                 case SLIDE_LEFT_DIAG_TAG:
-                    return Note.NoteType.SeparateHandSpecial;
+                    return Note.NoteHandType.SeparateHandSpecial;
                 case SLIDE_RIGHT_DIAG_TAG:
-                    return Note.NoteType.OneHandSpecial;
+                    return Note.NoteHandType.OneHandSpecial;
                 default:
-                    return Note.NoteType.BothHandsSpecial;
+                    return Note.NoteHandType.BothHandsSpecial;
             }
         }
 
@@ -6499,11 +6459,11 @@ namespace MiKu.NET {
                 if(_currentPlayTime - effectMS <= 3000) {
                     m_flashLight
                         .DOIntensity(3, 0.3f)
-                        .SetLoops(2, LoopType.Yoyo); 
-                }			 
-                
-                Track.LogMessage("Effect left in stack: "+effectsStacks.Count);
-            }			
+                        .SetLoops(2, LoopType.Yoyo);
+                }
+
+                Track.LogMessage("Effect left in stack: " + effectsStacks.Count);
+            }
         }
 
         /// <summary>
@@ -6519,8 +6479,8 @@ namespace MiKu.NET {
 
                 if(_currentPlayTime - SFX_MS <= 100) {
                     PlaySFX(m_HitMetaSound);
-                }							 
-            }			
+                }
+            }
         }
 
         /// <summary>
@@ -6537,15 +6497,15 @@ namespace MiKu.NET {
                 // Offset to only play beats close to the time
                 if(_currentPlayTime - SFX_MS <= 100 && Metronome.isPlaying) {
                     PlaySFX(m_MetronomeSound, true);
-                }							 
-            }			
+                }
+            }
         }
 
         /// <summary>
         /// Delete the movement GameObjects at the passed time, filtering the passed Tag
         /// </summary>
-        public void RemoveMovementSectionFromChart(string MoveTAG, float ms){
-            List <Slide> slideList;
+        public void RemoveMovementSectionFromChart(string MoveTAG, float ms) {
+            List<Slide> slideList;
             switch(MoveTAG) {
                 case JUMP_TAG:
                     slideList = GetCurrentMovementListByDifficulty();
@@ -6571,7 +6531,7 @@ namespace MiKu.NET {
                     break;
             }
 
-            
+
         }
 
         private void RemoveMovementFromList<T>(List<T> workingList, float ms, string MoveTAG) {
@@ -6582,7 +6542,7 @@ namespace MiKu.NET {
                 }
 
                 endList.Remove(ms);
-                
+
             } else if(workingList is List<Slide>) {
                 List<Slide> endList = workingList as List<Slide>;
                 Slide index = endList.Find(x => x.time == ms && x.slideType == GetSlideTypeByTag(MoveTAG));
@@ -6591,7 +6551,7 @@ namespace MiKu.NET {
                 }
                 endList.Remove(index);
             }
-            
+
             GameObject effectGO = GameObject.Find(GetMovementIdFormated(ms, MoveTAG));
             if(effectGO != null) {
                 DestroyImmediate(effectGO);
@@ -6602,15 +6562,15 @@ namespace MiKu.NET {
             m_VolumeSlider.value = PlayerPrefs.GetFloat(MUSIC_VOLUME_PREF_KEY, 1f);
             m_SFXVolumeSlider.value = PlayerPrefs.GetFloat(SFX_VOLUME_PREF_KEY, 1f);
             LatencyOffset = PlayerPrefs.GetFloat(LATENCY_PREF_KEY, 0);
-            syncnhWithAudio = ( PlayerPrefs.GetInt(SONG_SYNC_PREF_KEY, 0) > 0) ? true : false;
+            syncnhWithAudio = (PlayerPrefs.GetInt(SONG_SYNC_PREF_KEY, 0) > 0) ? true : false;
             if(PlayerPrefs.GetInt(VSYNC_PREF_KEY, 1) > 0) {
                 ToggleVsycn();
             }
             m_CameraMoverScript.panSpeed = PlayerPrefs.GetFloat(PANNING_PREF_KEY, 0.15f);
             m_CameraMoverScript.turnSpeed = PlayerPrefs.GetFloat(ROTATION_PREF_KEY, 1.5f);
             MiddleButtonSelectorType = PlayerPrefs.GetInt(MIDDLE_BUTTON_SEL_KEY, 0);
-            canAutoSave = ( PlayerPrefs.GetInt(AUTOSAVE_KEY, 1) > 0) ? true : false;
-            doScrollSound = ( PlayerPrefs.GetInt(SCROLLSOUND_KEY, 1) > 0) ? true : false;
+            canAutoSave = (PlayerPrefs.GetInt(AUTOSAVE_KEY, 1) > 0) ? true : false;
+            doScrollSound = (PlayerPrefs.GetInt(SCROLLSOUND_KEY, 1) > 0) ? true : false;
         }
 
         private void SaveEditorUserPrefs() {
@@ -6629,8 +6589,7 @@ namespace MiKu.NET {
         /// <summary>
         /// Abort the spectrum tread is it has not finished
         /// </summary>
-        private void DoAbortThread()
-        {
+        private void DoAbortThread() {
             try {
                 if(analyzerThread != null && analyzerThread.ThreadState == ThreadState.Running) {
                     analyzerThread.Abort();
@@ -6644,12 +6603,12 @@ namespace MiKu.NET {
 
         private void ToggleSelectionArea(bool isOFF = false) {
             if(isOFF) {
-                ToggleWorkingStateAlertOff();		
+                ToggleWorkingStateAlertOff();
             } else {
                 CurrentSelection.startTime = CurrentTime;
                 ToggleWorkingStateAlertOn(StringVault.Info_UserOnSelectionMode);
             }
-            
+
         }
 
         private void SelectAll() {
@@ -6673,14 +6632,14 @@ namespace MiKu.NET {
 
                 if(CurrentSelection.endTime >= CurrentSelection.startTime) {
                     selectionEndPos.z = MStoUnit(CurrentSelection.endTime);
-                }				
+                }
 
                 m_selectionMarker.SetPosition(0, selectionStartPos);
-                m_selectionMarker.SetPosition(1, selectionEndPos);;
+                m_selectionMarker.SetPosition(1, selectionEndPos); ;
             }
         }
 
-#region Setters & Getters
+        #region Setters & Getters
 
         /// <value>
         /// The BPM that the track will have
@@ -6822,7 +6781,7 @@ namespace MiKu.NET {
         {
             get
             {
-                return ( s_instance != null ) ? s_instance.isInitilazed : false;
+                return (s_instance != null) ? s_instance.isInitilazed : false;
             }
 
             set
@@ -6912,12 +6871,22 @@ namespace MiKu.NET {
             }
         }
 
-        public static TrackInfo TrackInfo {
-            get {
+        public static TrackInfo TrackInfo
+        {
+            get
+            {
                 return s_instance.trackInfo;
             }
-        }        
+        }
 
+        public static Track Instance
+        {
+            get
+            {
+                return s_instance;
+            }
+        }
         #endregion
     }
+
 }
