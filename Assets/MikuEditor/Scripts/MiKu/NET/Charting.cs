@@ -8,7 +8,7 @@ namespace MiKu.NET.Charting {
     /// <summary>
     /// Notes Class for the note representation
     /// </summary>
-    public class Note {
+    public class EditorNote {
         public enum NoteDirection {
             None,      
             Right,            
@@ -70,7 +70,7 @@ namespace MiKu.NET.Charting {
 		/// </value>
         public NoteDirection Direction { get; set; }
 
-        public Note(UnityEngine.Vector3 pos, string idRoot = "", int idCmb = -1, NoteType t = NoteType.OneHandSpecial, NoteDirection d = NoteDirection.None) {
+        public EditorNote(UnityEngine.Vector3 pos, string idRoot = "", int idCmb = -1, NoteType t = NoteType.OneHandSpecial, NoteDirection d = NoteDirection.None) {
             if(idRoot != null) {
                 Id = idRoot.ToString();
             }
@@ -86,44 +86,44 @@ namespace MiKu.NET.Charting {
     /// <summary>
     /// Class for the beats Representaion
     /// </summary>
-    public class Beats {
+    public class EditorBeats {
 
         /// <value>
         /// Notes for the easy dificulty
         /// </value>
-        public Dictionary<float, List<Note>> Easy { get; set; } 
+        public Dictionary<float, List<EditorNote>> Easy { get; set; } 
 
         /// <value>
         /// Notes for the normal dificulty
         /// </value>
-        public Dictionary<float, List<Note>> Normal { get; set; } 
+        public Dictionary<float, List<EditorNote>> Normal { get; set; } 
 
         /// <value>
         /// Notes for the hard dificulty
         /// </value>
-        public Dictionary<float, List<Note>> Hard { get; set; } 
+        public Dictionary<float, List<EditorNote>> Hard { get; set; } 
 
         /// <value>
         /// Notes for the expert dificulty
         /// </value>
-        public Dictionary<float, List<Note>> Expert { get; set; } 
+        public Dictionary<float, List<EditorNote>> Expert { get; set; } 
 
         /// <value>
         /// Notes for the Master dificulty
         /// </value>
-        public Dictionary<float, List<Note>> Master { get; set; } 
+        public Dictionary<float, List<EditorNote>> Master { get; set; } 
 
          /// <value>
         /// Notes for the Custom dificulty
         /// </value>
-        public Dictionary<float, List<Note>> Custom { get; set; } 
+        public Dictionary<float, List<EditorNote>> Custom { get; set; } 
     }
 
     [Serializable]
     /// <summary>
     /// Class for the Effects Representaion
     /// </summary>
-    public class Effects {
+    public class EditorEffects {
         /// <value>
         /// Effects for the easy dificulty
         /// </value>
@@ -159,7 +159,7 @@ namespace MiKu.NET.Charting {
     /// <summary>
     /// Class for the Lights Representaion
     /// </summary>
-    public class Lights {
+    public class EditorLights {
         /// <value>
         /// Lights for the easy dificulty
         /// </value>
@@ -192,7 +192,7 @@ namespace MiKu.NET.Charting {
     }
 
     [Serializable]
-    public struct Bookmark {
+    public struct EditorBookmark {
         public float time;
         public string name;
     }
@@ -201,15 +201,15 @@ namespace MiKu.NET.Charting {
     /// <summary>
     /// Class for the Bookmars Representaion
     /// </summary>
-    public class Bookmarks {
+    public class EditorBookmarks {
         /// <value>
         /// Effects for the beatmap
         /// </value>
-        public List<Bookmark> BookmarksList { get; set; }
+        public List<EditorBookmark> BookmarksList { get; set; }
 
-        public Bookmarks() {
+        public EditorBookmarks() {
             if(BookmarksList == null) {
-                BookmarksList = new List<Bookmark>();
+                BookmarksList = new List<EditorBookmark>();
             }
         }
     }
@@ -218,7 +218,7 @@ namespace MiKu.NET.Charting {
     /// <summary>
     /// Class for the Jumps Representaion
     /// </summary>
-    public class Jumps {
+    public class EditorJumps {
         /// <value>
         /// Jumps for the easy dificulty
         /// </value>
@@ -254,7 +254,7 @@ namespace MiKu.NET.Charting {
     /// <summary>
     /// Class for the Crouch Representaion
     /// </summary>
-    public class Crouchs {
+    public class EditorCrouchs {
         /// <value>
         /// Crouchs for the easy dificulty
         /// </value>
@@ -287,9 +287,9 @@ namespace MiKu.NET.Charting {
     }
 
     [Serializable]
-    public struct Slide {
+    public struct EditorSlide {
         public float time;
-        public Note.NoteType slideType;
+        public EditorNote.NoteType slideType;
 
         public bool initialized;
     }    
@@ -298,40 +298,40 @@ namespace MiKu.NET.Charting {
     /// <summary>
     /// Class for the Slides Representaion
     /// </summary>
-    public class Slides {
+    public class EditorSlides {
         /// <value>
         /// Slides for the easy dificulty
         /// </value>
-        public List<Slide> Easy { get; set; }
+        public List<EditorSlide> Easy { get; set; }
 
         /// <value>
         /// Slides for the Normal dificulty
         /// </value>
-        public List<Slide> Normal { get; set; }
+        public List<EditorSlide> Normal { get; set; }
 
         /// <value>
         /// Slides for the Hard dificulty
         /// </value>
-        public List<Slide> Hard { get; set; }
+        public List<EditorSlide> Hard { get; set; }
 
         /// <value>
         /// Slides for the Expert dificulty
         /// </value>
-        public List<Slide> Expert { get; set; }
+        public List<EditorSlide> Expert { get; set; }
 
         /// <value>
         /// Slides for the Expert dificulty
         /// </value>
-        public List<Slide> Master { get; set; }
+        public List<EditorSlide> Master { get; set; }
 
         /// <value>
         /// Slides for the Custom dificulty
         /// </value>
-        public List<Slide> Custom { get; set; }
+        public List<EditorSlide> Custom { get; set; }
     }
 
     [Serializable]
-    public struct Drum {
+    public struct EditorDrum {
         public float time;
         public int playType;
         public string audio;
@@ -341,43 +341,43 @@ namespace MiKu.NET.Charting {
     /// <summary>
     /// Class for the Slides Representaion
     /// </summary>
-    public class DrumData {
+    public class EditorDrumData {
         /// <value>
         /// Drum for the easy dificulty
         /// </value>
-        public List<Drum> Easy { get; set; }
+        public List<EditorDrum> Easy { get; set; }
 
         /// <value>
         /// Drum for the Normal dificulty
         /// </value>
-        public List<Drum> Normal { get; set; }
+        public List<EditorDrum> Normal { get; set; }
 
         /// <value>
         /// Drum for the Hard dificulty
         /// </value>
-        public List<Drum> Hard { get; set; }
+        public List<EditorDrum> Hard { get; set; }
 
         /// <value>
         /// Drum for the Expert dificulty
         /// </value>
-        public List<Drum> Expert { get; set; }
+        public List<EditorDrum> Expert { get; set; }
 
         /// <value>
         /// Drum for the Expert dificulty
         /// </value>
-        public List<Drum> Master { get; set; }
+        public List<EditorDrum> Master { get; set; }
 
         /// <value>
         /// Drum for the Custom dificulty
         /// </value>
-        public List<Drum> Custom { get; set; }
+        public List<EditorDrum> Custom { get; set; }
     }
 
     [Serializable]
     /// <summary>
     /// Serilazable class of the Chart made from the user
     /// </summary>
-    public class Chart {
+    public class EditorChart {
 
         /// <value>
 		/// Name of the chart
@@ -432,42 +432,42 @@ namespace MiKu.NET.Charting {
         /// <value>
 		/// List of beats that made the Chart
 		/// </value>
-        public Beats Track { get; set; }
+        public EditorBeats Track { get; set; }
 
         /// <value>
         /// List of the effects for the chart
         /// </value>
-        public Effects Effects { get; set; }
+        public EditorEffects Effects { get; set; }
 
         /// <value>
         /// List of the bookmars for the chart
         /// </value>
-        public Bookmarks Bookmarks { get; set; }
+        public EditorBookmarks Bookmarks { get; set; }
 
         /// <value>
         /// List of the Jumps for the chart
         /// </value>
-        public Jumps Jumps { get; set; }
+        public EditorJumps Jumps { get; set; }
 
         /// <value>
         /// List of the Crouchs for the chart
         /// </value>
-        public Crouchs Crouchs { get; set; }
+        public EditorCrouchs Crouchs { get; set; }
 
         /// <value>
         /// List of the Slides for the chart
         /// </value>
-        public Slides Slides { get; set; }  
+        public EditorSlides Slides { get; set; }  
 
         /// <value>
         /// List of the Lights for the chart
         /// </value>
-        public Lights Lights { get; set; }      
+        public EditorLights Lights { get; set; }      
 
         /// <value>
         /// List of the Drum for the chart
         /// </value>
-        public DrumData DrumSamples { get; set; }  
+        public EditorDrumData DrumSamples { get; set; }  
 
         /// <value>
         /// The path of the file on disk

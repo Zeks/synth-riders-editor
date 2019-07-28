@@ -235,7 +235,7 @@ public class Miku_LoadFileHelper : MonoBehaviour {
 
 				// If not has effect data
 				if(Serializer.ChartData.Effects == null) {
-					Effects defaultEffects = new Effects();
+					EditorEffects defaultEffects = new EditorEffects();
 					defaultEffects.Easy = new List<float>();
 					defaultEffects.Normal = new List<float>();
 					defaultEffects.Hard = new List<float>();
@@ -247,7 +247,7 @@ public class Miku_LoadFileHelper : MonoBehaviour {
 				}
 
 				if(Serializer.ChartData.Jumps == null) {
-					Jumps defaultJumps = new Jumps();
+					EditorJumps defaultJumps = new EditorJumps();
 					defaultJumps.Easy = new List<float>();
 					defaultJumps.Normal = new List<float>();
 					defaultJumps.Hard = new List<float>();
@@ -259,7 +259,7 @@ public class Miku_LoadFileHelper : MonoBehaviour {
 				}
 
 				if(Serializer.ChartData.Crouchs == null) {
-					Crouchs defaultCrouchs = new Crouchs();
+					EditorCrouchs defaultCrouchs = new EditorCrouchs();
 					defaultCrouchs.Easy = new List<float>();
 					defaultCrouchs.Normal = new List<float>();
 					defaultCrouchs.Hard = new List<float>();
@@ -271,19 +271,19 @@ public class Miku_LoadFileHelper : MonoBehaviour {
 				}
 
 				if(Serializer.ChartData.Slides == null) {
-					Slides defaultSlides = new Slides();
-					defaultSlides.Easy = new List<Slide>();
-					defaultSlides.Normal = new List<Slide>();
-					defaultSlides.Hard = new List<Slide>();
-					defaultSlides.Expert = new List<Slide>();
-					defaultSlides.Master = new List<Slide>();
-					defaultSlides.Custom = new List<Slide>();
+					EditorSlides defaultSlides = new EditorSlides();
+					defaultSlides.Easy = new List<EditorSlide>();
+					defaultSlides.Normal = new List<EditorSlide>();
+					defaultSlides.Hard = new List<EditorSlide>();
+					defaultSlides.Expert = new List<EditorSlide>();
+					defaultSlides.Master = new List<EditorSlide>();
+					defaultSlides.Custom = new List<EditorSlide>();
 
 					Serializer.ChartData.Slides = defaultSlides;
 				}
 
 				if(Serializer.ChartData.Lights == null) {
-					Lights defaultLights= new Lights();
+					EditorLights defaultLights= new EditorLights();
 					defaultLights.Easy = new List<float>();
 					defaultLights.Normal = new List<float>();
 					defaultLights.Hard = new List<float>();
@@ -295,7 +295,7 @@ public class Miku_LoadFileHelper : MonoBehaviour {
 				}
 
 				if(Serializer.ChartData.Bookmarks == null) { 
-					Serializer.ChartData.Bookmarks = new Bookmarks();
+					Serializer.ChartData.Bookmarks = new EditorBookmarks();
 				}
 
 				InitFormsSelection(true);	
@@ -502,16 +502,16 @@ public class Miku_LoadFileHelper : MonoBehaviour {
 	public void StartEditor(bool isEdit = false) {
 		if(Serializer.Initialized) {
 			if(Serializer.ChartData == null) {
-				Chart chart = new Chart();
-				Beats defaultBeats = new Beats();
-				defaultBeats.Easy = new Dictionary<float, List<Note>>();
-				defaultBeats.Normal = new Dictionary<float, List<Note>>();
-				defaultBeats.Hard = new Dictionary<float, List<Note>>();
-				defaultBeats.Expert = new Dictionary<float, List<Note>>();
-				defaultBeats.Master = new Dictionary<float, List<Note>>();
-				defaultBeats.Custom = new Dictionary<float, List<Note>>();
+				EditorChart chart = new EditorChart();
+				EditorBeats defaultBeats = new EditorBeats();
+				defaultBeats.Easy = new Dictionary<float, List<EditorNote>>();
+				defaultBeats.Normal = new Dictionary<float, List<EditorNote>>();
+				defaultBeats.Hard = new Dictionary<float, List<EditorNote>>();
+				defaultBeats.Expert = new Dictionary<float, List<EditorNote>>();
+				defaultBeats.Master = new Dictionary<float, List<EditorNote>>();
+				defaultBeats.Custom = new Dictionary<float, List<EditorNote>>();
 
-				Effects defaultEffects = new Effects();
+				EditorEffects defaultEffects = new EditorEffects();
 				defaultEffects.Easy = new List<float>();
 				defaultEffects.Normal = new List<float>();
 				defaultEffects.Hard = new List<float>();
@@ -519,7 +519,7 @@ public class Miku_LoadFileHelper : MonoBehaviour {
 				defaultEffects.Master = new List<float>();
 				defaultEffects.Custom = new List<float>();
 
-				Jumps defaultJumps = new Jumps();
+				EditorJumps defaultJumps = new EditorJumps();
 				defaultJumps.Easy = new List<float>();
 				defaultJumps.Normal = new List<float>();
 				defaultJumps.Hard = new List<float>();
@@ -527,7 +527,7 @@ public class Miku_LoadFileHelper : MonoBehaviour {
 				defaultJumps.Master = new List<float>();
 				defaultJumps.Custom = new List<float>();
 
-				Crouchs defaultCrouchs = new Crouchs();
+				EditorCrouchs defaultCrouchs = new EditorCrouchs();
 				defaultCrouchs.Easy = new List<float>();
 				defaultCrouchs.Normal = new List<float>();
 				defaultCrouchs.Hard = new List<float>();
@@ -535,15 +535,15 @@ public class Miku_LoadFileHelper : MonoBehaviour {
 				defaultCrouchs.Master = new List<float>();
 				defaultCrouchs.Custom = new List<float>();
 
-				Slides defaultSlides = new Slides();
-				defaultSlides.Easy = new List<Slide>();
-				defaultSlides.Normal = new List<Slide>();
-				defaultSlides.Hard = new List<Slide>();
-				defaultSlides.Expert = new List<Slide>();
-				defaultSlides.Master = new List<Slide>();
-				defaultSlides.Custom = new List<Slide>();
+				EditorSlides defaultSlides = new EditorSlides();
+				defaultSlides.Easy = new List<EditorSlide>();
+				defaultSlides.Normal = new List<EditorSlide>();
+				defaultSlides.Hard = new List<EditorSlide>();
+				defaultSlides.Expert = new List<EditorSlide>();
+				defaultSlides.Master = new List<EditorSlide>();
+				defaultSlides.Custom = new List<EditorSlide>();
 
-				Lights defaultLights= new Lights();
+				EditorLights defaultLights= new EditorLights();
 				defaultLights.Easy = new List<float>();
 				defaultLights.Normal = new List<float>();
 				defaultLights.Hard = new List<float>();
@@ -567,7 +567,7 @@ public class Miku_LoadFileHelper : MonoBehaviour {
 				chart.Jumps = defaultJumps;
 				chart.Crouchs = defaultCrouchs;
 				chart.Slides = defaultSlides;
-				chart.Bookmarks = new Bookmarks();
+				chart.Bookmarks = new EditorBookmarks();
 				chart.Name = nameField.text;
 				chart.Author = authorField.text;
 				chart.AudioName = trackField.text;

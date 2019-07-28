@@ -26,7 +26,7 @@ namespace MiKu.NET {
         public bool IsAdminMode = true;
 
         // Chart created if new or loaded
-        public static Chart ChartData { get; set; }
+        public static EditorChart ChartData { get; set; }
 
         private const string save_path = "/CustomSongs/";
         private const string temp_path = "/temp/";
@@ -318,7 +318,7 @@ namespace MiKu.NET {
                     memStream.Seek(0, SeekOrigin.Begin);
                     StreamReader reader = new StreamReader( memStream );
                     string jsonDATA = reader.ReadToEnd();
-                    ChartData = JsonConvert.DeserializeObject<Chart>(jsonDATA);
+                    ChartData = JsonConvert.DeserializeObject<EditorChart>(jsonDATA);
                 } catch(Exception) {
                     Debug.Log("File made in version previous to 1.8, trying BinaryFormatter");
                     // Section for load of files previos to version 1.8					
@@ -330,7 +330,7 @@ namespace MiKu.NET {
                     memStream.Seek(0, SeekOrigin.Begin);
                     
                     BinaryFormatter bf = new BinaryFormatter();
-                    ChartData = (Chart) bf.Deserialize(memStream);	
+                    ChartData = (EditorChart) bf.Deserialize(memStream);	
                 }
 
             } catch(Exception) {
@@ -338,7 +338,7 @@ namespace MiKu.NET {
                 try {
                     FileStream file = File.OpenRead(filePath);
                     BinaryFormatter bf = new BinaryFormatter();
-                    ChartData = (Chart) bf.Deserialize(file);
+                    ChartData = (EditorChart) bf.Deserialize(file);
                     file.Close();
                 } catch(Exception e) {
                     Debug.LogError("Deserialization Error");
@@ -386,7 +386,7 @@ namespace MiKu.NET {
             }
 
             try {
-                Chart tmp= isBeatSong ? BeatSynthConverter.Convert(filePath) : JsonConvert.DeserializeObject<Chart>(File.ReadAllText(filePath));
+                EditorChart tmp= isBeatSong ? BeatSynthConverter.Convert(filePath) : JsonConvert.DeserializeObject<EditorChart>(File.ReadAllText(filePath));
                    ChartData = tmp;
                 ChartData.AudioName = null;
                 ChartData.FilePath = string.Empty;
@@ -497,7 +497,7 @@ namespace MiKu.NET {
                         memStream.Seek(0, SeekOrigin.Begin);
                         
                         BinaryFormatter bf = new BinaryFormatter();
-                        Chart data = (Chart) bf.Deserialize(memStream);	
+                        EditorChart data = (EditorChart) bf.Deserialize(memStream);	
 
                         using (ZipFile zip = ZipFile.Read(synthFile))
                         {	
