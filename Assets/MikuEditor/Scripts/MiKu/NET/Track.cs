@@ -1515,7 +1515,7 @@ namespace MiKu.NET {
         /// </summary>
         private void InitChart() {
             if(Serializer.Initialized) {
-                CurrentChart = Serializer.ChartData;
+                CurrentChart = ChartConverter.editorChart;
                 BPM = CurrentChart.BPM;	
 
                 if(CurrentChart.Track.Master == null) {
@@ -2053,6 +2053,8 @@ namespace MiKu.NET {
                     ""
                 )
             );
+            ChartConverter.editorChart = null;
+            ChartConverter.gameChart = null;
         }
 
         /// <summary>
@@ -2308,7 +2310,9 @@ namespace MiKu.NET {
         public void SaveChartAction() {
             CurrentChart.BPM = BPM;
             CurrentChart.Offset = StartOffset;
-            Serializer.ChartData = CurrentChart;
+            ChartConverter converter = new ChartConverter();
+            converter.ConvertEditorChartToGameChart(CurrentChart);
+            Serializer.ChartData = ChartConverter.gameChart;
             Serializer.ChartData.EditorVersion = EditorVersion;
 
             TimeSpan t = TimeSpan.FromSeconds(TrackDuration);
@@ -2349,7 +2353,9 @@ namespace MiKu.NET {
         private void ExportToJSON() {
             CurrentChart.BPM = BPM;
             CurrentChart.Offset = StartOffset;
-            Serializer.ChartData = CurrentChart;
+            ChartConverter converter = new ChartConverter();
+            converter.ConvertEditorChartToGameChart(CurrentChart);
+            Serializer.ChartData = ChartConverter.gameChart;
             Serializer.ChartData.EditorVersion = EditorVersion;
             
             if(Serializer.SerializeToJSON()) {

@@ -212,42 +212,46 @@ public class Miku_LoadFileHelper : MonoBehaviour {
         if(Serializer.Initialized) {
 			// bool fileLoadSuccess = Serializer.LoadFronFile(absoluteUri, isJSON, absoluteUri.Contains(".dat"));
 			bool fileLoadSuccess = isJSON ? Serializer.LoadFronFile(absoluteUri, isJSON, absoluteUri.Contains(".dat")) : Serializer.LoadFronFile(absoluteUri);
-			if(fileLoadSuccess) {
+            ChartConverter converter = new ChartConverter();
+            converter.ConvertGameChartToEditorChart(Serializer.ChartData);
+
+
+            if(fileLoadSuccess) {
 
 				editPanelAnimator.Play("Panel In");
 				editModePanelAnimator.Play("Panel Out");
 
-				editNameField.text = Serializer.ChartData.Name;
-				editAuthorField.text = Serializer.ChartData.Author;
-				editTrackField.text = (Serializer.ChartData.AudioData != null) ? string.Empty : Serializer.ChartData.AudioName;
-				editMapperField.text = Serializer.ChartData.Beatmapper;
+				editNameField.text = ChartConverter.editorChart.Name;
+				editAuthorField.text = ChartConverter.editorChart.Author;
+				editTrackField.text = (ChartConverter.editorChart.AudioData != null) ? string.Empty : ChartConverter.editorChart.AudioName;
+				editMapperField.text = ChartConverter.editorChart.Beatmapper;
 				if(!isJSON) {
-					Serializer.ChartData.FilePath = absoluteUri;
+                    ChartConverter.editorChart.FilePath = absoluteUri;
 				}				
 
 				// For the artwork texture
-				if(Serializer.ChartData.ArtworkBytes == null) {
-					Serializer.ChartData.Artwork = "Default Artwork";
-					Serializer.ChartData.ArtworkBytes = defaultArtworkData;								
+				if(ChartConverter.editorChart.ArtworkBytes == null) {
+                    ChartConverter.editorChart.Artwork = "Default Artwork";
+                    ChartConverter.editorChart.ArtworkBytes = defaultArtworkData;								
 				} 
 
-				SetSpriteToImage(editArtworkField, Serializer.ChartData.ArtworkBytes);
+				SetSpriteToImage(editArtworkField, ChartConverter.editorChart.ArtworkBytes);
 
 				// If not has effect data
-				if(Serializer.ChartData.Effects == null) {
-					Effects defaultEffects = new Effects();
+				if(ChartConverter.editorChart.Effects == null) {
+					EditorEffects defaultEffects = new EditorEffects();
 					defaultEffects.Easy = new List<float>();
 					defaultEffects.Normal = new List<float>();
 					defaultEffects.Hard = new List<float>();
 					defaultEffects.Expert = new List<float>();
 					defaultEffects.Master = new List<float>();
 					defaultEffects.Custom = new List<float>();
-					
-					Serializer.ChartData.Effects = defaultEffects;
+
+                    ChartConverter.editorChart.Effects = defaultEffects;
 				}
 
-				if(Serializer.ChartData.Jumps == null) {
-					Jumps defaultJumps = new Jumps();
+				if(ChartConverter.editorChart.Jumps == null) {
+					EditorJumps defaultJumps = new EditorJumps();
 					defaultJumps.Easy = new List<float>();
 					defaultJumps.Normal = new List<float>();
 					defaultJumps.Hard = new List<float>();
@@ -255,47 +259,47 @@ public class Miku_LoadFileHelper : MonoBehaviour {
 					defaultJumps.Master = new List<float>();
 					defaultJumps.Custom = new List<float>();
 
-					Serializer.ChartData.Jumps = defaultJumps;
+                    ChartConverter.editorChart.Jumps = defaultJumps;
 				}
 
-				if(Serializer.ChartData.Crouchs == null) {
-					Crouchs defaultCrouchs = new Crouchs();
+				if(ChartConverter.editorChart.Crouchs == null) {
+                    EditorCrouchs defaultCrouchs = new EditorCrouchs();
 					defaultCrouchs.Easy = new List<float>();
 					defaultCrouchs.Normal = new List<float>();
 					defaultCrouchs.Hard = new List<float>();
 					defaultCrouchs.Expert = new List<float>();
 					defaultCrouchs.Master = new List<float>();
 					defaultCrouchs.Custom = new List<float>();
-					
-					Serializer.ChartData.Crouchs = defaultCrouchs;
+
+                    ChartConverter.editorChart.Crouchs = defaultCrouchs;
 				}
 
-				if(Serializer.ChartData.Slides == null) {
-					Slides defaultSlides = new Slides();
-					defaultSlides.Easy = new List<Slide>();
-					defaultSlides.Normal = new List<Slide>();
-					defaultSlides.Hard = new List<Slide>();
-					defaultSlides.Expert = new List<Slide>();
-					defaultSlides.Master = new List<Slide>();
-					defaultSlides.Custom = new List<Slide>();
+				if(ChartConverter.editorChart.Slides == null) {
+                    EditorSlides defaultSlides = new EditorSlides();
+					defaultSlides.Easy = new List<EditorSlide>();
+					defaultSlides.Normal = new List<EditorSlide>();
+					defaultSlides.Hard = new List<EditorSlide>();
+					defaultSlides.Expert = new List<EditorSlide>();
+					defaultSlides.Master = new List<EditorSlide>();
+					defaultSlides.Custom = new List<EditorSlide>();
 
-					Serializer.ChartData.Slides = defaultSlides;
+                    ChartConverter.editorChart.Slides = defaultSlides;
 				}
 
-				if(Serializer.ChartData.Lights == null) {
-					Lights defaultLights= new Lights();
+				if(ChartConverter.editorChart.Lights == null) {
+                    EditorLights defaultLights = new EditorLights();
 					defaultLights.Easy = new List<float>();
 					defaultLights.Normal = new List<float>();
 					defaultLights.Hard = new List<float>();
 					defaultLights.Expert = new List<float>();
 					defaultLights.Master = new List<float>();
 					defaultLights.Custom = new List<float>();
-					
-					Serializer.ChartData.Lights = defaultLights;
+
+                    ChartConverter.editorChart.Lights = defaultLights;
 				}
 
-				if(Serializer.ChartData.Bookmarks == null) { 
-					Serializer.ChartData.Bookmarks = new Bookmarks();
+				if(ChartConverter.editorChart.Bookmarks == null) {
+                    ChartConverter.editorChart.Bookmarks = new EditorBookmarks();
 				}
 
 				InitFormsSelection(true);	
@@ -501,7 +505,7 @@ public class Miku_LoadFileHelper : MonoBehaviour {
 	/// </sumary>
 	public void StartEditor(bool isEdit = false) {
 		if(Serializer.Initialized) {
-			if(Serializer.ChartData == null) {
+			if(ChartConverter.editorChart == null) {
 				EditorChart chart = new EditorChart();
 				EditorBeats defaultBeats = new EditorBeats();
 				defaultBeats.Easy = new Dictionary<float, List<EditorNote>>();
@@ -585,25 +589,25 @@ public class Miku_LoadFileHelper : MonoBehaviour {
 				chart.Tags = new List<string>();
 				chart.Lights = defaultLights;
 				
-				Serializer.ChartData = chart;
+				ChartConverter.editorChart = chart;
 			}
 
 			if(artworkEdited) {
-				Serializer.ChartData.Artwork = artWorkField;
-				Serializer.ChartData.ArtworkBytes = loadedArtwork;
+                ChartConverter.editorChart.Artwork = artWorkField;
+                ChartConverter.editorChart.ArtworkBytes = loadedArtwork;
 			}
 
 			if(audioEdited) {
-				// Serializer.ChartData.AudioData = audioData;
-				Serializer.ChartData.AudioFrecuency = loadedClip.frequency;
-				Serializer.ChartData.AudioChannels = loadedClip.channels;
+                // Serializer.ChartData.AudioData = audioData;
+                ChartConverter.editorChart.AudioFrecuency = loadedClip.frequency;
+                ChartConverter.editorChart.AudioChannels = loadedClip.channels;
 			}
 
 			if(isEdit) {
-				Serializer.ChartData.Name = editNameField.text;
-				Serializer.ChartData.Author = editAuthorField.text;
-				Serializer.ChartData.AudioName = editTrackField.text;
-				Serializer.ChartData.Beatmapper = editMapperField.text;
+				ChartConverter.editorChart.Name = editNameField.text;
+				ChartConverter.editorChart.Author = editAuthorField.text;
+				ChartConverter.editorChart.AudioName = editTrackField.text;
+                ChartConverter.editorChart.Beatmapper = editMapperField.text;
 			}
 			// Complete editor process
 			// Serializer.SerializeToFile();			
@@ -629,9 +633,11 @@ public class Miku_LoadFileHelper : MonoBehaviour {
 		
 		newAudioSelected = false;
 		Serializer.ChartData = null;
+        ChartConverter.editorChart = null;
+        ChartConverter.gameChart = null;
 
-		//
-		loadedArtwork = null;
+        //
+        loadedArtwork = null;
 		artworkEdited = false;
 		audioEdited = false;
 		audioData = null;

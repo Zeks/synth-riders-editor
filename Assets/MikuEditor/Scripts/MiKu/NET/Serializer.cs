@@ -319,6 +319,9 @@ namespace MiKu.NET {
                     StreamReader reader = new StreamReader( memStream );
                     string jsonDATA = reader.ReadToEnd();
                     ChartData = JsonConvert.DeserializeObject<Chart>(jsonDATA);
+                    ChartConverter converter = new ChartConverter();
+                    converter.ConvertGameChartToEditorChart(ChartData);
+
                 } catch(Exception) {
                     Debug.Log("File made in version previous to 1.8, trying BinaryFormatter");
                     // Section for load of files previos to version 1.8					
@@ -330,7 +333,9 @@ namespace MiKu.NET {
                     memStream.Seek(0, SeekOrigin.Begin);
                     
                     BinaryFormatter bf = new BinaryFormatter();
-                    ChartData = (Chart) bf.Deserialize(memStream);	
+                    ChartData = (Chart) bf.Deserialize(memStream);
+                    ChartConverter converter = new ChartConverter();
+                    converter.ConvertGameChartToEditorChart(ChartData);
                 }
 
             } catch(Exception) {
@@ -339,6 +344,8 @@ namespace MiKu.NET {
                     FileStream file = File.OpenRead(filePath);
                     BinaryFormatter bf = new BinaryFormatter();
                     ChartData = (Chart) bf.Deserialize(file);
+                    ChartConverter converter = new ChartConverter();
+                    converter.ConvertGameChartToEditorChart(ChartData);
                     file.Close();
                 } catch(Exception e) {
                     Debug.LogError("Deserialization Error");
