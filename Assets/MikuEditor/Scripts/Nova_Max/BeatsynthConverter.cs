@@ -10,11 +10,11 @@ public static class BeatSynthConverter
 {
     private static float sqrttwo = (float)Math.Sqrt(2);
 
-    public static EditorChart Convert(string path, int distancex = 50, int distancey = 35, int offsety = 10, int dynamic = 20, int repeat = 200)
+    public static Chart Convert(string path, int distancex = 50, int distancey = 35, int offsety = 10, int dynamic = 20, int repeat = 200)
     {
         path = path.Substring(0, path.LastIndexOf(@"\"));
 
-        EditorChart synthSong = new EditorChart();
+        Chart synthSong = new Chart();
 
         if (File.Exists(path + @"\info.dat"))
         {
@@ -57,7 +57,7 @@ public static class BeatSynthConverter
                     BeatSong beatSong = JsonConvert.DeserializeObject<BeatSong>(beatSongStr);
 
                     //convert notes
-                    Dictionary<float, List<EditorNote>> track = new Dictionary<float, List<EditorNote>>();
+                    Dictionary<float, List<Note>> track = new Dictionary<float, List<Note>>();
                     for (int j = 0; j < beatSong._notes.Count; j++)
                     {
                         int time = (int)Math.Round(beatSong._notes[j]._time * 60000f / info._beatsPerMinute);
@@ -78,14 +78,14 @@ public static class BeatSynthConverter
 
                         Vector3 pos = new Vector3(_offset + (distancex / 150f) * (beatSong._notes[j]._lineIndex - 1.5f), y_offset + (distancey / 100f) * (beatSong._notes[j]._lineLayer - 1f) + offsety * 0.01f, (time) * 0.02f);
 
-                        EditorNote.NoteType type;
+                        Note.NoteType type;
                         if (beatSong._notes[j]._type == 0)
                         {
-                            type = EditorNote.NoteType.LeftHanded;
+                            type = Note.NoteType.LeftHanded;
                         }
                         else if (beatSong._notes[j]._type == 1)
                         {
-                            type = EditorNote.NoteType.RightHanded;
+                            type = Note.NoteType.RightHanded;
                         }
                         else//bombs
                         {
@@ -94,11 +94,11 @@ public static class BeatSynthConverter
 
                         string id = i.ToString() + "," + j.ToString();
 
-                        EditorNote note = new EditorNote(pos, id,-1, type);
+                        Note note = new Note(pos, id,-1, type);
 
                         if (!track.ContainsKey(time))
                         {
-                            List<EditorNote> notes = new List<EditorNote>();
+                            List<Note> notes = new List<Note>();
                             notes.Add(note);
 
                             track.Add(time, notes);
@@ -111,7 +111,7 @@ public static class BeatSynthConverter
 
                     //convert obstacles
                     List<float> crouches = new List<float>();
-                    List<EditorSlide> slides = new List<EditorSlide>();
+                    List<Slide> slides = new List<Slide>();
                     for (int j = 0; j < beatSong._obstacles.Count; j++)
                     {
                         int time = (int)Math.Round(beatSong._obstacles[j]._time * 60000f / info._beatsPerMinute);
@@ -125,21 +125,21 @@ public static class BeatSynthConverter
                             }
                             else
                             {
-                                EditorSlide slide = new EditorSlide();
+                                Slide slide = new Slide();
                                 slide.time = n;
                                 if (beatSong._obstacles[j]._width == 1)
                                 {
                                     if (beatSong._obstacles[j]._lineIndex == 0)//one on the left
                                     {
-                                        slide.slideType = (EditorNote.NoteType)4;
+                                        slide.slideType = (Note.NoteType)4;
                                     }
                                     else if (beatSong._obstacles[j]._lineIndex == 3)//one on the right
                                     {
-                                        slide.slideType = (EditorNote.NoteType)2;
+                                        slide.slideType = (Note.NoteType)2;
                                     }
                                     else//one middle right or middle left
                                     {
-                                        slide.slideType = (EditorNote.NoteType)3;
+                                        slide.slideType = (Note.NoteType)3;
                                     }
                                     slides.Add(slide);
                                 }
@@ -147,15 +147,15 @@ public static class BeatSynthConverter
                                 {
                                     if (beatSong._obstacles[j]._lineIndex == 0)//two on the left
                                     {
-                                        slide.slideType = (EditorNote.NoteType)1;
+                                        slide.slideType = (Note.NoteType)1;
                                     }
                                     else if (beatSong._obstacles[j]._lineIndex == 1)//two in the middle
                                     {
-                                        slide.slideType = (EditorNote.NoteType)3;
+                                        slide.slideType = (Note.NoteType)3;
                                     }
                                     else if (beatSong._obstacles[j]._lineIndex == 2)//two on the right
                                     {
-                                        slide.slideType = (EditorNote.NoteType)0;
+                                        slide.slideType = (Note.NoteType)0;
                                     }
                                     slides.Add(slide);
                                 }

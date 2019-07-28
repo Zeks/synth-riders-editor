@@ -235,7 +235,7 @@ public class Miku_LoadFileHelper : MonoBehaviour {
 
 				// If not has effect data
 				if(Serializer.ChartData.Effects == null) {
-					EditorEffects defaultEffects = new EditorEffects();
+					Effects defaultEffects = new Effects();
 					defaultEffects.Easy = new List<float>();
 					defaultEffects.Normal = new List<float>();
 					defaultEffects.Hard = new List<float>();
@@ -247,7 +247,7 @@ public class Miku_LoadFileHelper : MonoBehaviour {
 				}
 
 				if(Serializer.ChartData.Jumps == null) {
-					EditorJumps defaultJumps = new EditorJumps();
+					Jumps defaultJumps = new Jumps();
 					defaultJumps.Easy = new List<float>();
 					defaultJumps.Normal = new List<float>();
 					defaultJumps.Hard = new List<float>();
@@ -259,7 +259,7 @@ public class Miku_LoadFileHelper : MonoBehaviour {
 				}
 
 				if(Serializer.ChartData.Crouchs == null) {
-					EditorCrouchs defaultCrouchs = new EditorCrouchs();
+					Crouchs defaultCrouchs = new Crouchs();
 					defaultCrouchs.Easy = new List<float>();
 					defaultCrouchs.Normal = new List<float>();
 					defaultCrouchs.Hard = new List<float>();
@@ -271,19 +271,19 @@ public class Miku_LoadFileHelper : MonoBehaviour {
 				}
 
 				if(Serializer.ChartData.Slides == null) {
-					EditorSlides defaultSlides = new EditorSlides();
-					defaultSlides.Easy = new List<EditorSlide>();
-					defaultSlides.Normal = new List<EditorSlide>();
-					defaultSlides.Hard = new List<EditorSlide>();
-					defaultSlides.Expert = new List<EditorSlide>();
-					defaultSlides.Master = new List<EditorSlide>();
-					defaultSlides.Custom = new List<EditorSlide>();
+					Slides defaultSlides = new Slides();
+					defaultSlides.Easy = new List<Slide>();
+					defaultSlides.Normal = new List<Slide>();
+					defaultSlides.Hard = new List<Slide>();
+					defaultSlides.Expert = new List<Slide>();
+					defaultSlides.Master = new List<Slide>();
+					defaultSlides.Custom = new List<Slide>();
 
 					Serializer.ChartData.Slides = defaultSlides;
 				}
 
 				if(Serializer.ChartData.Lights == null) {
-					EditorLights defaultLights= new EditorLights();
+					Lights defaultLights= new Lights();
 					defaultLights.Easy = new List<float>();
 					defaultLights.Normal = new List<float>();
 					defaultLights.Hard = new List<float>();
@@ -295,7 +295,7 @@ public class Miku_LoadFileHelper : MonoBehaviour {
 				}
 
 				if(Serializer.ChartData.Bookmarks == null) { 
-					Serializer.ChartData.Bookmarks = new EditorBookmarks();
+					Serializer.ChartData.Bookmarks = new Bookmarks();
 				}
 
 				InitFormsSelection(true);	
