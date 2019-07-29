@@ -1,0 +1,22 @@
+fileFormatVersion: 2
+guid: b1421b7b31f46d04fb358b1d5e192b71
+timeCreated: 1507831142
+licenseType: Free
+TrueTypeFontImporter:
+  serializedVersion: 4
+  fontSize: 16
+  forceTextureCase: -2
+  characterSpacing: 0
+  characterPadding: 1
+  includeFontData: 1
+  fontName: 'Amboy '
+  fontNames:
+  - 'Amboy '
+  fallbackFontReferences:
+  - {fileID: 12800000, guid: 7e2f1814f49dbf441b3fcfebb3a0dfec, type: 3}
+  customCharacters: 
+  fontRenderingMode: 0
+  ascentCalculationMode: 1
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
