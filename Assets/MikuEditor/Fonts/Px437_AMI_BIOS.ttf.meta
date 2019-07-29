@@ -1,0 +1,21 @@
+fileFormatVersion: 2
+guid: 355fb3233c72d73409dbbd9b2d1edbd7
+timeCreated: 1509546111
+licenseType: Free
+TrueTypeFontImporter:
+  serializedVersion: 4
+  fontSize: 16
+  forceTextureCase: -2
+  characterSpacing: 0
+  characterPadding: 1
+  includeFontData: 1
+  fontName: Px437 AMI BIOS
+  fontNames:
+  - Px437 AMI BIOS
+  fallbackFontReferences: []
+  customCharacters: 
+  fontRenderingMode: 0
+  ascentCalculationMode: 1
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

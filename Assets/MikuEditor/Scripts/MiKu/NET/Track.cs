@@ -456,6 +456,9 @@ namespace MiKu.NET {
         [SerializeField]
         private TMP_Dropdown m_DifficultyDisplay;
 
+        [SerializeField]
+        private GridManager gridManager;
+
         [Space(20)]
         [SerializeField]
         private Animator m_PromtWindowAnimator;
@@ -731,6 +734,7 @@ namespace MiKu.NET {
         private const string MIDDLE_BUTTON_SEL_KEY = "com.synth.editor.MiddleButtonSel";
         private const string AUTOSAVE_KEY = "com.synth.editor.AutoSave"; 
         private const string SCROLLSOUND_KEY = "com.synth.editor.ScrollSound";
+        private const string GRIDSIZE_KEY = "com.synth.editor.GridSize";
 
         // 
         private WaitForSeconds pointEightWait;
@@ -1218,6 +1222,8 @@ namespace MiKu.NET {
 
                 if(isCTRLDown) {
                     m_SFXVolumeSlider.value += 0.1f;
+                } else if(isALTDown) {
+                    gridManager.ChangeGridSize();
                 } else {
                     m_VolumeSlider.value += 0.1f;
                 }
@@ -1231,9 +1237,11 @@ namespace MiKu.NET {
                 && keyHoldTime > nextKeyHold && !PromtWindowOpen ){
                 
                 nextKeyHold = keyHoldTime + keyHoldDelta;
-
+            
                 if(isCTRLDown) {
                     m_SFXVolumeSlider.value -= 0.1f;
+                } else if(isALTDown) {
+                    gridManager.ChangeGridSize(false);
                 } else {
                     m_VolumeSlider.value -= 0.1f;
                 }
@@ -6631,6 +6639,8 @@ namespace MiKu.NET {
             MiddleButtonSelectorType = PlayerPrefs.GetInt(MIDDLE_BUTTON_SEL_KEY, 0);
             canAutoSave = ( PlayerPrefs.GetInt(AUTOSAVE_KEY, 1) > 0) ? true : false;
             doScrollSound = ( PlayerPrefs.GetInt(SCROLLSOUND_KEY, 1) > 0) ? true : false;
+            gridManager.SeparationSize = (PlayerPrefs.GetFloat(GRIDSIZE_KEY, 0.1365f));
+            gridManager.DrawGridLines();
         }
 
         private void SaveEditorUserPrefs() {
@@ -6644,6 +6654,7 @@ namespace MiKu.NET {
             PlayerPrefs.SetInt(MIDDLE_BUTTON_SEL_KEY, MiddleButtonSelectorType);
             PlayerPrefs.SetInt(AUTOSAVE_KEY, (canAutoSave) ? 1 : 0);
             PlayerPrefs.SetInt(SCROLLSOUND_KEY, (doScrollSound) ? 1 : 0);
+            PlayerPrefs.SetFloat(GRIDSIZE_KEY, gridManager.SeparationSize);
         }
 
         /// <summary>
