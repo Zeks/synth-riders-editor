@@ -6,19 +6,28 @@ using System.Linq;
 
 namespace MiKu.NET.Charting {
 
-    
+    // this is here just so there's no need to do if x == null for each foreach
     public static class LinqHelper{
         public static IEnumerable<T> OrEmptyIfNull<T>(this IEnumerable<T> source) {
             return source ?? Enumerable.Empty<T>();
         }
     }
 
-    class ChartConverter{
-        public static EditorChart editorChart;
-        public static Chart gameChart;
+    // this class manages the conversion of Editor's structures into game's structures and vice versa
+    // the decoupling will allow the editor's code to evolve unrestricted by deserialization concerns on both ends
+    // i.e. Editors structures are fully independent and are passed to game's structures (in ExportedClasses) on load/save
+    // whenever a chart is getting deserialized from game's structures, this class needs to be used as intermediary 
+    // between improrted data and working set in the actual editor
+    // same for the file save operation.
+    class ChartConverter {
+
+        // these need to be nulled each time a context switch is performed 
+        // aka: getting back to main menu, or closing the song open window without procceeding further
+        public static EditorChart editorChart; // holder for editor's chart
+        public static Chart gameChart; // holder for game's chart
 
 
-        //PassGameDrumDataToEditor
+        // Converts NoteType enums between game and the editor
         private EditorNote.NoteType ConvertGameNoteTypeToEditorNoteType(Note.NoteType type) {
             switch(type) {
                 case Note.NoteType.BothHandsSpecial:
@@ -38,7 +47,8 @@ namespace MiKu.NET.Charting {
             }
 
         }
-
+        
+        // Converts NoteType enums between game and the editor
         private Note.NoteType ConvertEditorNoteTypeToGameNoteType(EditorNote.NoteType type) {
             switch(type) {
                 case EditorNote.NoteType.BothHandsSpecial:
@@ -59,6 +69,7 @@ namespace MiKu.NET.Charting {
 
         }
 
+        // Adds EditorDrum instance to a list of game's drums
         void PassEditorDrumDataToGame(EditorDrum editorDrum, List<Drum> drums) {
             if(drums == null)
                 return;
@@ -69,7 +80,8 @@ namespace MiKu.NET.Charting {
         };
             drums.Add(drum);
         }
-        //PassGameSlideDataToEditor
+        
+        // Adds EditorSlide instance to a list of game's slides
         void PassEditorSlideDataToGame(EditorSlide editorSlide , List<Slide> slides) {
             if(slides == null)
                 return;
@@ -81,7 +93,8 @@ namespace MiKu.NET.Charting {
             };
             slides.Add(slide);
         }
-        //PassGameNoteDataToEditor
+
+        // Fully passes the Editor's single difficulty note data to game's note data
         void PassEditorNoteDataToGame(Dictionary<float, List<EditorNote>> editorValue, Dictionary<float, List<Note>> exportValue) {
             if(editorValue == null)
                 return;
@@ -101,6 +114,7 @@ namespace MiKu.NET.Charting {
             }
         }
 
+        // Fully passes the Game's single difficulty note data to Editor's note data
         void PassGameNoteDataToEditor(Dictionary<float, List<Note>> gameDictionary, Dictionary<float, List<EditorNote>> editorDictionary) {
             if(gameDictionary == null)
                 return;
@@ -119,7 +133,8 @@ namespace MiKu.NET.Charting {
                 }
             }
         }
-
+        
+        // Pre-Instantiates necessary structs for exported data
         void InstantiateExportedChartDataStructures() {
             gameChart = new Chart();
 
@@ -197,10 +212,13 @@ namespace MiKu.NET.Charting {
                 gameChart.Bookmarks = new Bookmarks();
             }
         }
-
+        
+        // Converts the Editor's chart into Game's chart and stores this new chart into a static instance
         public bool ConvertEditorChartToGameChart(EditorChart chart) {
             
             editorChart = chart;
+
+            // instantiating the Game's chart data
             InstantiateExportedChartDataStructures();
             
             // properties that can possible be null
@@ -250,7 +268,8 @@ namespace MiKu.NET.Charting {
             }
 
 
-            // these use the built in data structures and are passed 1 to 1
+            // strictly speaking _exported_ difficulties shouldn't be nulls 
+            // but it's better to have mirror code to the importer and still check
             if(editorChart.Crouchs.Easy != null)
                 gameChart.Crouchs.Easy = editorChart.Crouchs.Easy;
             if(editorChart.Crouchs.Expert != null)
@@ -264,7 +283,7 @@ namespace MiKu.NET.Charting {
             if(editorChart.Crouchs.Custom != null)
                 gameChart.Crouchs.Custom = editorChart.Crouchs.Custom;
 
-            // these use the built in data structures and are passed 1 to 1
+
             if(editorChart.Effects.Easy != null)
                 gameChart.Effects.Easy = editorChart.Effects.Easy;
             if(editorChart.Effects.Expert != null)
@@ -278,7 +297,6 @@ namespace MiKu.NET.Charting {
             if(editorChart.Effects.Custom != null)
                 gameChart.Effects.Custom = editorChart.Effects.Custom;
 
-            // these use the built in data structures and are passed 1 to 1
             if(editorChart.Jumps.Easy != null)
                 gameChart.Jumps.Easy = editorChart.Jumps.Easy;
             if(editorChart.Jumps.Expert != null)
@@ -292,7 +310,7 @@ namespace MiKu.NET.Charting {
             if(editorChart.Jumps.Easy != null)
                 gameChart.Jumps.Custom = editorChart.Jumps.Custom;
 
-            // these use the built in data structures and are passed 1 to 1
+            // Lights holder may itself be null, needs a check
             if(editorChart.Lights != null) { 
                 if(editorChart.Lights.Easy != null)
                     gameChart.Lights.Easy = editorChart.Lights.Easy;
@@ -307,6 +325,7 @@ namespace MiKu.NET.Charting {
                 if(editorChart.Lights.Custom != null)
                     gameChart.Lights.Custom = editorChart.Lights.Custom;
             }
+
             // passing values of drums into new lists 1 by 1
             //var drumSamples = editorChart.DrumSamples;
             //foreach(var editorValue in drumSamples.Custom) {
@@ -328,7 +347,7 @@ namespace MiKu.NET.Charting {
             //    PassEditorDrumDataToGame(editorValue, gameChart.DrumSamples.Master);
             //}
 
-            // passing values of slide into new lists 1 by 1
+            // slides holder may itself be null, checking
             var slides = editorChart.Slides;
             if(slides != null) { 
                 foreach(var editorValue in slides.Custom.OrEmptyIfNull()) {
@@ -350,17 +369,18 @@ namespace MiKu.NET.Charting {
                     PassEditorSlideDataToGame(editorValue, gameChart.Slides.Master);
                 }
             }
+
             // passing one dictionary of notes into another 
             PassEditorNoteDataToGame(editorChart.Track.Custom, gameChart.Track.Custom);
-            PassEditorNoteDataToGame(editorChart.Track.Easy, gameChart.Track.Easy);
+            PassEditorNoteDataToGame(editorChart.Track.Easy,   gameChart.Track.Easy);
             PassEditorNoteDataToGame(editorChart.Track.Normal, gameChart.Track.Normal);
-            PassEditorNoteDataToGame(editorChart.Track.Hard, gameChart.Track.Hard);
+            PassEditorNoteDataToGame(editorChart.Track.Hard,   gameChart.Track.Hard);
             PassEditorNoteDataToGame(editorChart.Track.Expert, gameChart.Track.Expert);
             PassEditorNoteDataToGame(editorChart.Track.Master, gameChart.Track.Master);
             return true;
         }
 
-
+        // Pre-Instantiates necessary structs for imported data
         void InstantiateEditorChartDataStructures() {
             editorChart = new EditorChart();
 
@@ -439,7 +459,7 @@ namespace MiKu.NET.Charting {
             }
         }
 
-
+        // Adds Drum instance to a list of editor's drums
         void PassGameDrumDataToEditor(Drum editorDrum, List<EditorDrum> drums) {
             if(drums == null)
                 return;
@@ -451,6 +471,8 @@ namespace MiKu.NET.Charting {
             };
             drums.Add(drum);
         }
+
+        // Adds Slide instance to a list of editor's slides
         void PassGameSlideDataToEditor(Slide editorSlide, List<EditorSlide> slides) {
             if(slides == null)
                 return;
@@ -463,11 +485,12 @@ namespace MiKu.NET.Charting {
             slides.Add(slide);
         }
 
-
+        // Converts the game's chart into editor's chart and stores this new chart into a static instance
         public bool ConvertGameChartToEditorChart(Chart chart) {
 
             gameChart = chart;
 
+            // pre-instantiating editor's structures
             InstantiateEditorChartDataStructures();
 
             // possible nulls
@@ -517,7 +540,9 @@ namespace MiKu.NET.Charting {
             }
 
 
-            // these use the built in data structures and are passed 1 to 1
+            // since the editor can load legacy files, some instances of difficulties tend to be nulls
+            // this needs a separate check each time 
+
             if(gameChart.Crouchs.Easy != null)
                 editorChart.Crouchs.Easy = gameChart.Crouchs.Easy;
             if(gameChart.Crouchs.Expert != null)
@@ -531,7 +556,6 @@ namespace MiKu.NET.Charting {
             if(gameChart.Crouchs.Custom != null)
                 editorChart.Crouchs.Custom = gameChart.Crouchs.Custom;
 
-            // these use the built in data structures and are passed 1 to 1
             if(gameChart.Effects.Easy != null)
                 editorChart.Effects.Easy = gameChart.Effects.Easy;
             if(gameChart.Effects.Expert != null)
@@ -545,7 +569,6 @@ namespace MiKu.NET.Charting {
             if(gameChart.Effects.Custom != null)
                 editorChart.Effects.Custom = gameChart.Effects.Custom;
 
-            // these use the built in data structures and are passed 1 to 1
             if(gameChart.Jumps.Easy != null)
                 editorChart.Jumps.Easy = gameChart.Jumps.Easy;
             if(gameChart.Jumps.Expert != null)
@@ -559,7 +582,7 @@ namespace MiKu.NET.Charting {
             if(gameChart.Jumps.Easy != null)
                 editorChart.Jumps.Custom = gameChart.Jumps.Custom;
 
-            // these use the built in data structures and are passed 1 to 1
+            // Lights holder may itself be null, needs a check
             if(gameChart.Lights != null) {
                 if(gameChart.Lights.Easy != null)
                     editorChart.Lights.Easy = gameChart.Lights.Easy;
@@ -596,7 +619,7 @@ namespace MiKu.NET.Charting {
             //    PassGameDrumDataToEditor(editorValue, editorChart.DrumSamples.Master);
             //}
 
-            // passing values of slide into new lists 1 by 1
+            // Slides holder may itself be null, needs a check
             if(gameChart.Slides == null) {
                 editorChart.Slides = null;
             } else {

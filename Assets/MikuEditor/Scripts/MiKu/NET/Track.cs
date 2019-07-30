@@ -1515,6 +1515,7 @@ namespace MiKu.NET {
         /// </summary>
         private void InitChart() {
             if(Serializer.Initialized) {
+                // reading the currently available data from converter into the Track
                 CurrentChart = ChartConverter.editorChart;
                 BPM = CurrentChart.BPM;	
 
@@ -2053,6 +2054,8 @@ namespace MiKu.NET {
                     ""
                 )
             );
+            
+            // need to null these on any song switch
             ChartConverter.editorChart = null;
             ChartConverter.gameChart = null;
         }
@@ -2310,6 +2313,8 @@ namespace MiKu.NET {
         public void SaveChartAction() {
             CurrentChart.BPM = BPM;
             CurrentChart.Offset = StartOffset;
+            // converting the current chart data into the structs readable by the game
+            // for subsequent serialization into files
             ChartConverter converter = new ChartConverter();
             converter.ConvertEditorChartToGameChart(CurrentChart);
             Serializer.ChartData = ChartConverter.gameChart;
@@ -2353,6 +2358,8 @@ namespace MiKu.NET {
         private void ExportToJSON() {
             CurrentChart.BPM = BPM;
             CurrentChart.Offset = StartOffset;
+            // converting the current chart data into the structs readable by the game
+            // for subsequent serialization into files
             ChartConverter converter = new ChartConverter();
             converter.ConvertEditorChartToGameChart(CurrentChart);
             Serializer.ChartData = ChartConverter.gameChart;
