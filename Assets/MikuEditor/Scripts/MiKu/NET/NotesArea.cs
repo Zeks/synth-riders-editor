@@ -32,8 +32,8 @@ namespace MiKu.NET {
         private Color m_confortableColor = Color.blue;
         [SerializeField]
         private Color m_moderateColor = Color.yellow;
-        [SerializeField] 
-        private Color m_intenseColor = Color.red;		
+        [SerializeField]
+        private Color m_intenseColor = Color.red;
 
         private GameObject selectedNote;
         private GameObject mirroredNote;
@@ -77,7 +77,7 @@ namespace MiKu.NET {
             boundBoxTransform = m_boundBox.transform;
             boundBoxSpriteRenderer = m_boundBox.GetComponent<SpriteRenderer>();
             m_boundBox.SetActive(false);
-        }		
+        }
 
         void OnDisable() {
             if(selectedNote != null) {
@@ -101,44 +101,41 @@ namespace MiKu.NET {
 
                 coll.enabled = false;
 
-                m_boundBox.SetActive(true);	
+                m_boundBox.SetActive(true);
 
                 if(Track.IsOnMirrorMode) {
                     mirroredNote = Track.GetMirroredNoteMarker();
                 }
-            }					
+            }
         }
 
         void DisableSelectedNote() {
             if(selectedNote != null) {
                 GameObject.DestroyImmediate(selectedNote);
-                m_boundBox.SetActive(false); 
-            }	
+                m_boundBox.SetActive(false);
+            }
 
             if(mirroredNote != null) {
                 GameObject.DestroyImmediate(mirroredNote);
-            }		
+            }
         }
 
-        void OnApplicationFocus(bool hasFocus)
-        {
+        void OnApplicationFocus(bool hasFocus) {
             if(hasFocus) {
                 isCTRLDown = false;
-            } 
+            }
         }
 
-        void Update()
-        {
-            if(Input.GetKeyDown(KeyCode.LeftAlt) || Input.GetKeyDown(KeyCode.RightAlt))
-            {
+        void Update() {
+            if(Input.GetKeyDown(KeyCode.LeftAlt) || Input.GetKeyDown(KeyCode.RightAlt)) {
                 isCTRLDown = true;
             }
 
             if(Input.GetKeyUp(KeyCode.LeftAlt) || Input.GetKeyUp(KeyCode.RightAlt)) {
                 isCTRLDown = false;
             }
-            
-            if (!isCTRLDown && Input.GetMouseButtonDown(0) && selectedNote != null) {
+
+            if(!isCTRLDown && Input.GetMouseButtonDown(0) && selectedNote != null) {
                 if(Track.IsOnMirrorMode) {
                     System.Array.Clear(multipleNotes, 0, 2);
                     multipleNotes[0] = selectedNote;
@@ -146,11 +143,11 @@ namespace MiKu.NET {
                     Track.AddNoteToChart(multipleNotes);
                 } else {
                     Track.AddNoteToChart(selectedNote);
-                }				
+                }
             }
         }
 
-        void FixedUpdate() {	
+        void FixedUpdate() {
             ray = Camera.main.ScreenPointToRay(Input.mousePosition);
             if(Physics.Raycast(ray, out hit, Mathf.Infinity, targetMask.value)) {
                 EnabledSelectedNote();
@@ -173,12 +170,12 @@ namespace MiKu.NET {
                     if(Track.YAxisInverse) {
                         mirroredPosition.y *= -1;
                     }
-                    
+
                     mirroredNote.transform.position = mirroredPosition;
                 }
 
                 //float toCenter = Mathf.Abs(Vector3.Distance(transform.position, finalPosition));
-                SetBoundaireBoxColor(DistanceToCenter(finalPosition));					
+                SetBoundaireBoxColor(DistanceToCenter(finalPosition));
             } else {
                 DisableSelectedNote();
             }
@@ -203,14 +200,14 @@ namespace MiKu.NET {
                 }
 
                 coll.enabled = false;
-            }			
+            }
         }
 
         private void SetBoundaireBoxColor(float distanceToCenter) {
             boundBoxSpriteRenderer.color = GetColorToDistance(distanceToCenter);
         }
 
-#region Static Methods
+        #region Static Methods
         public static float DistanceToCenter(Vector3 targetPoint) {
             return Mathf.Abs(Vector3.Distance(s_instance.transform.position, targetPoint));
         }
@@ -227,7 +224,7 @@ namespace MiKu.NET {
 
             return s_instance.m_intenseColor;
         }
-#endregion
-        
+        #endregion
+
     }
 }

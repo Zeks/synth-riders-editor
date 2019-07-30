@@ -7,7 +7,7 @@ using System.Linq;
 namespace MiKu.NET.Charting {
 
     // this is here just so there's no need to do if x == null for each foreach
-    public static class LinqHelper{
+    public static class LinqHelper {
         public static IEnumerable<T> OrEmptyIfNull<T>(this IEnumerable<T> source) {
             return source ?? Enumerable.Empty<T>();
         }
@@ -47,7 +47,7 @@ namespace MiKu.NET.Charting {
             }
 
         }
-        
+
         // Converts NoteType enums between game and the editor
         private Note.NoteType ConvertEditorNoteTypeToGameNoteType(EditorNote.NoteHandType type) {
             switch(type) {
@@ -73,16 +73,17 @@ namespace MiKu.NET.Charting {
         void PassEditorDrumDataToGame(EditorDrum editorDrum, List<Drum> drums) {
             if(drums == null)
                 return;
-            Drum drum = new Drum() {
+            Drum drum = new Drum()
+            {
                 time = editorDrum.time,
                 audio = editorDrum.audio,
                 playType= editorDrum.playType
-        };
+            };
             drums.Add(drum);
         }
-        
+
         // Adds EditorSlide instance to a list of game's slides
-        void PassEditorSlideDataToGame(EditorSlide editorSlide , List<Slide> slides) {
+        void PassEditorSlideDataToGame(EditorSlide editorSlide, List<Slide> slides) {
             if(slides == null)
                 return;
             Slide slide = new Slide()
@@ -106,7 +107,7 @@ namespace MiKu.NET.Charting {
                     exportValue.Add(entry.Key, new List<Note>());
 
                 foreach(var editorNote in entry.Value) {
-                    Note exportNote = new Note(new UnityEngine.Vector3 {x = editorNote.Position[0],y = editorNote.Position[1],z = editorNote.Position[2]},
+                    Note exportNote = new Note(new UnityEngine.Vector3 { x = editorNote.Position[0], y = editorNote.Position[1], z = editorNote.Position[2] },
                         editorNote.Id, editorNote.ComboId, ConvertEditorNoteTypeToGameNoteType(editorNote.HandType));
                     exportNote.Segments = editorNote.Segments;
                     exportValue[entry.Key].Add(exportNote);
@@ -133,7 +134,7 @@ namespace MiKu.NET.Charting {
                 }
             }
         }
-        
+
         // Pre-Instantiates necessary structs for exported data
         void InstantiateExportedChartDataStructures() {
             gameChart = new Chart();
@@ -212,15 +213,15 @@ namespace MiKu.NET.Charting {
                 gameChart.Bookmarks = new Bookmarks();
             }
         }
-        
+
         // Converts the Editor's chart into Game's chart and stores this new chart into a static instance
         public bool ConvertEditorChartToGameChart(EditorChart chart) {
-            
+
             editorChart = chart;
 
             // instantiating the Game's chart data
             InstantiateExportedChartDataStructures();
-            
+
             // properties that can possible be null
             if(editorChart.Artwork != null)
                 gameChart.Artwork = editorChart.Artwork;
@@ -311,7 +312,7 @@ namespace MiKu.NET.Charting {
                 gameChart.Jumps.Custom = editorChart.Jumps.Custom;
 
             // Lights holder may itself be null, needs a check
-            if(editorChart.Lights != null) { 
+            if(editorChart.Lights != null) {
                 if(editorChart.Lights.Easy != null)
                     gameChart.Lights.Easy = editorChart.Lights.Easy;
                 if(editorChart.Lights.Expert != null)
@@ -349,7 +350,7 @@ namespace MiKu.NET.Charting {
 
             // slides holder may itself be null, checking
             var slides = editorChart.Slides;
-            if(slides != null) { 
+            if(slides != null) {
                 foreach(var editorValue in slides.Custom.OrEmptyIfNull()) {
                     PassEditorSlideDataToGame(editorValue, gameChart.Slides.Custom);
                 }
@@ -372,9 +373,9 @@ namespace MiKu.NET.Charting {
 
             // passing one dictionary of notes into another 
             PassEditorNoteDataToGame(editorChart.Track.Custom, gameChart.Track.Custom);
-            PassEditorNoteDataToGame(editorChart.Track.Easy,   gameChart.Track.Easy);
+            PassEditorNoteDataToGame(editorChart.Track.Easy, gameChart.Track.Easy);
             PassEditorNoteDataToGame(editorChart.Track.Normal, gameChart.Track.Normal);
-            PassEditorNoteDataToGame(editorChart.Track.Hard,   gameChart.Track.Hard);
+            PassEditorNoteDataToGame(editorChart.Track.Hard, gameChart.Track.Hard);
             PassEditorNoteDataToGame(editorChart.Track.Expert, gameChart.Track.Expert);
             PassEditorNoteDataToGame(editorChart.Track.Master, gameChart.Track.Master);
             return true;

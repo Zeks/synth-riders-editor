@@ -20,16 +20,14 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
-namespace MiKu.NET
-{
-    
+namespace MiKu.NET {
+
     public class RailNoteWrapper {
         public RailNoteWrapper(EditorNote note) {
             thisNote = note;
         }
 
-        public RailNoteWrapper()
-        {
+        public RailNoteWrapper() {
         }
 
         public EditorNote thisNote;
@@ -37,10 +35,8 @@ namespace MiKu.NET
         public RailNoteWrapper nextNote;
     }
 
-    public class Rail
-    {
-        public Rail()
-        {
+    public class Rail {
+        public Rail() {
             railId = railCounter++;
         }
 
@@ -48,55 +44,45 @@ namespace MiKu.NET
             IdDictionaries.RemoveRail(railId);
         }
 
-        public bool TimeInInterval(float time)
-        {
-            if (time > startTime && time < endTime) 
+        public bool TimeInInterval(float time) {
+            if(time > startTime && time < endTime)
                 return true;
             return false;
         }
 
-        public bool IsBreakerNote(EditorNote.NoteUsageType type)
-        {
-            if (type == EditorNote.NoteUsageType.Breaker)
-            {
+        public bool IsBreakerNote(EditorNote.NoteUsageType type) {
+            if(type == EditorNote.NoteUsageType.Breaker) {
                 return true;
             }
             return false;
         }
 
         public void RemoveNote(int id) {
-            if (notesByID.ContainsKey(id))
+            if(notesByID.ContainsKey(id))
                 return;
 
             Rail potentialRemovedRail = null;
             RailNoteWrapper removedNote = notesByID[id];
 
             // need to check that this note isn't the leader and assign a new one
-            if (leader.thisNote.noteId == id)
-            {
+            if(leader.thisNote.noteId == id) {
                 RailNoteWrapper oldLeader = leader;
                 RailNoteWrapper oldNextNote = leader.nextNote;
-                if (oldNextNote == null)
-                {
+                if(oldNextNote == null) {
                     scheduleForDeletion = true;
-                }
-                else
-                {
+                } else {
                     leader = oldNextNote;
                     oldNextNote.previousNote = null;
                 }
-            }
-            else {
+            } else {
                 // need to check that we're not removing the breaker
                 // if we do, make the previous note a breaker
                 // user can always change the type of it later
-                if (IsBreakerNote(removedNote.thisNote.UsageType))
-                {
+                if(IsBreakerNote(removedNote.thisNote.UsageType)) {
                     RailNoteWrapper previousNote = removedNote.previousNote;
                     previousNote.thisNote.UsageType = removedNote.thisNote.UsageType;
                     previousNote.nextNote = null;
-                }
-                else {
+                } else {
                     RailNoteWrapper previousNote = removedNote.previousNote;
                     previousNote.nextNote = removedNote.nextNote; // it's fine if nextNote is null
                 }
@@ -123,8 +109,7 @@ namespace MiKu.NET
             Destroy(potentialRemovedRail);
         }
 
-        public void AddNote(EditorNote note)
-        {
+        public void AddNote(EditorNote note) {
             // extending past the railbraker needs to make a new note railbreaker
 
             Rail potentialNewRail = null;
@@ -132,16 +117,14 @@ namespace MiKu.NET
             RailNoteWrapper wrapper = new RailNoteWrapper(note);
             RailNoteWrapper previous = GetPreviousNote(note.TimePoint);
             // adding new leader
-            if (previous == null)
-            {
+            if(previous == null) {
                 RailNoteWrapper previousLeader = leader;
                 leader = wrapper;
                 wrapper.nextNote = previousLeader;
                 previousLeader.previousNote = wrapper;
             }
             // adding new tail or non breaker
-            else if (previous.nextNote == null || !IsBreakerNote(note.UsageType))
-            {
+            else if(previous.nextNote == null || !IsBreakerNote(note.UsageType)) {
                 RailNoteWrapper previousLeftPoint = previous;
                 RailNoteWrapper previousRightPoint = previous.nextNote;
                 bool previousIsBreaker = IsBreakerNote(previousLeftPoint.thisNote.UsageType);
@@ -149,8 +132,7 @@ namespace MiKu.NET
                 previous.nextNote = wrapper;
                 wrapper.nextNote = previousRightPoint;
                 wrapper.previousNote = previousLeftPoint;
-                if (previousIsBreaker)
-                {
+                if(previousIsBreaker) {
                     previousLeftPoint.thisNote.UsageType = EditorNote.NoteUsageType.Line;
                     wrapper.thisNote.UsageType = EditorNote.NoteUsageType.Breaker;
                 }
@@ -179,13 +161,12 @@ namespace MiKu.NET
             List<float> keys = notesByTime.Keys.ToList();
             keys.Reverse();
             float first = keys.FirstOrDefault(x => x < time);
-            if (EqualityComparer<float>.Default.Equals(first, default(float)))
+            if(EqualityComparer<float>.Default.Equals(first, default(float)))
                 return null;
             return notesByTime[first];
         }
 
-        EditorNote.NoteHandType GetNoteHandType()
-        {
+        EditorNote.NoteHandType GetNoteHandType() {
             return noteType;
         }
 
@@ -195,20 +176,19 @@ namespace MiKu.NET
 
         public static void Reinstantiate(Rail rail) {
             // need to somehow indicate that rail is too shor or too long, maybe with a color
-            if (rail.duration < Track.MIN_LINE_DURATION ||
+            if(rail.duration < Track.MIN_LINE_DURATION ||
                 rail.duration > Track.MAX_LINE_DURATION) {
                 return;
             }
 
-            if (!Track.Instance.AddTimeToCurrentTrack(rail.startTime))
+            if(!Track.Instance.AddTimeToCurrentTrack(rail.startTime))
                 return;
 
             // longNote.segments is basically a temprorary prototype GameObjects that need to be used
             // to initialize the actual Note object with Note.segments
             // since I am doing my own housekeeping in the Rail, I can skip LongNote.segments altogether
             // and go straight to rendered note setup
-            if (rail.linkedObject == null)
-            {
+            if(rail.linkedObject == null) {
                 if(rail.linkedObject != null)
                     GameObject.DestroyImmediate(rail.linkedObject);
 
@@ -217,12 +197,11 @@ namespace MiKu.NET
 
             var leaderNote = rail.leader.thisNote;
             leaderNote.Segments = new float[rail.notesByID.Count, 3];
-            
+
             List<float> keys = rail.notesByTime.Keys.ToList();
             keys.Sort();
 
-            for (int i = 0; i < keys.Count; ++i)
-            {
+            for(int i = 0; i < keys.Count; ++i) {
                 leaderNote.Segments[i, 0] = rail.notesByTime[keys[i]].thisNote.Position[0];
                 leaderNote.Segments[i, 1] = rail.notesByTime[keys[i]].thisNote.Position[1];
                 leaderNote.Segments[i, 2] = rail.notesByTime[keys[i]].thisNote.Position[2];
@@ -248,19 +227,17 @@ namespace MiKu.NET
             return false;
         }
 
-        bool Merge(Rail firstRail, Rail secondRail)
-        {
+        bool Merge(Rail firstRail, Rail secondRail) {
             // need to check that second is past the first and that rail types are the same
-            if (firstRail.GetNoteHandType() != secondRail.GetNoteHandType())
+            if(firstRail.GetNoteHandType() != secondRail.GetNoteHandType())
                 return false;
 
-            if (firstRail.startTime > secondRail.startTime)
+            if(firstRail.startTime > secondRail.startTime)
                 return false;
 
             List<int> keys = secondRail.notesByID.Keys.ToList();
             // temporarily using just note addition, ideally would need shortcut
-            for (int i = 0; i < keys.Count; i++)
-            {
+            for(int i = 0; i < keys.Count; i++) {
                 firstRail.AddNote(notesByID[i].thisNote);
             }
             return true;
@@ -268,13 +245,13 @@ namespace MiKu.NET
 
         void RecalcDuration() {
             List<float> keys = notesByTime.Keys.ToList();
-            if (keys.Count == 0)
+            if(keys.Count == 0)
                 return;
 
             keys.Sort();
             var lastTime = keys[keys.Count - 1];
             var firstTime = keys[0];
-            if (keys.Count == 0)
+            if(keys.Count == 0)
                 duration = 0;
             else
                 duration = lastTime - firstTime;

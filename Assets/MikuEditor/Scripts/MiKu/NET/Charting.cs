@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace MiKu.NET.Charting { 
+namespace MiKu.NET.Charting {
 
     [Serializable]
     /// <summary>
@@ -10,18 +10,18 @@ namespace MiKu.NET.Charting {
     /// </summary>
     public class EditorNote {
         public enum NoteDirection {
-            None,      
-            Right,            
+            None,
+            Right,
             RightBottom,
             Bottom,
-            LeftBottom, 
+            LeftBottom,
             Left,
             LeftTop,
             Top,
             RightTop,
         }
-         
-        public enum NoteHandType {            
+
+        public enum NoteHandType {
             RightHanded,
             LeftHanded,
             OneHandSpecial,
@@ -30,16 +30,14 @@ namespace MiKu.NET.Charting {
             NoHand,
         };
 
-        public enum NoteUsageType
-        {
+        public enum NoteUsageType {
             None,
             Ball,
             Line,
             Breaker
         };
 
-        ~EditorNote()
-        {
+        ~EditorNote() {
             IdDictionaries.RemoveNote(noteId);
         }
 
@@ -57,21 +55,24 @@ namespace MiKu.NET.Charting {
         /// <value>
 		/// ID for cache use, when set the format used is Note_{value passed}
 		/// </value>
-        public string Id { 
-            get {
+        public string Id
+        {
+            get
+            {
                 return _id;
-            } 
-            
-            set {
+            }
+
+            set
+            {
                 _id = string.Format("Note_{0}", value);
             }
         }
 
-        
+
 
         /// <value>
-		/// Combo Id that the note bellow to, is 0 based meaing that -1 means that the note doesnt belong to any combo
-		/// </value>
+        /// Combo Id that the note bellow to, is 0 based meaing that -1 means that the note doesnt belong to any combo
+        /// </value>
         public int ComboId { get; set; }
 
         /// <value>
@@ -79,21 +80,21 @@ namespace MiKu.NET.Charting {
 		/// </value>
         public float[] Position { get; set; }
 
-        
+
 
         /// <value>
         /// Segments of the line tha form the note
         /// </value>
-        public float[,] Segments  {get; set; }
+        public float[,] Segments { get; set; }
 
         /// <value>
 		/// Type of the note's hand
 		/// </value>
         public NoteHandType HandType { get; set; }
-        
+
         /// <value>
-		/// Type of the note usage
-		/// </value>
+        /// Type of the note usage
+        /// </value>
         public NoteUsageType UsageType { get; set; }
 
         /// <value>
@@ -141,32 +142,32 @@ namespace MiKu.NET.Charting {
         /// <value>
         /// Notes for the easy dificulty
         /// </value>
-        public Dictionary<float, List<EditorNote>> Easy { get; set; } 
+        public Dictionary<float, List<EditorNote>> Easy { get; set; }
 
         /// <value>
         /// Notes for the normal dificulty
         /// </value>
-        public Dictionary<float, List<EditorNote>> Normal { get; set; } 
+        public Dictionary<float, List<EditorNote>> Normal { get; set; }
 
         /// <value>
         /// Notes for the hard dificulty
         /// </value>
-        public Dictionary<float, List<EditorNote>> Hard { get; set; } 
+        public Dictionary<float, List<EditorNote>> Hard { get; set; }
 
         /// <value>
         /// Notes for the expert dificulty
         /// </value>
-        public Dictionary<float, List<EditorNote>> Expert { get; set; } 
+        public Dictionary<float, List<EditorNote>> Expert { get; set; }
 
         /// <value>
         /// Notes for the Master dificulty
         /// </value>
-        public Dictionary<float, List<EditorNote>> Master { get; set; } 
+        public Dictionary<float, List<EditorNote>> Master { get; set; }
 
-         /// <value>
+        /// <value>
         /// Notes for the Custom dificulty
         /// </value>
-        public Dictionary<float, List<EditorNote>> Custom { get; set; } 
+        public Dictionary<float, List<EditorNote>> Custom { get; set; }
     }
 
     [Serializable]
@@ -342,7 +343,7 @@ namespace MiKu.NET.Charting {
         public EditorNote.NoteHandType slideType;
 
         public bool initialized;
-    }    
+    }
 
     [Serializable]
     /// <summary>
@@ -507,17 +508,17 @@ namespace MiKu.NET.Charting {
         /// <value>
         /// List of the Slides for the chart
         /// </value>
-        public EditorSlides Slides { get; set; }  
+        public EditorSlides Slides { get; set; }
 
         /// <value>
         /// List of the Lights for the chart
         /// </value>
-        public EditorLights Lights { get; set; }      
+        public EditorLights Lights { get; set; }
 
         /// <value>
         /// List of the Drum for the chart
         /// </value>
-        public EditorDrumData DrumSamples { get; set; }  
+        public EditorDrumData DrumSamples { get; set; }
 
         /// <value>
         /// The path of the file on disk
@@ -544,5 +545,5 @@ namespace MiKu.NET.Charting {
         public float CustomDifficultySpeed { get; set; }
 
         public List<string> Tags { get; set; }
-    }    
+    }
 }

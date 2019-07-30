@@ -2033,7 +2033,7 @@ namespace MiKu.NET {
                     ""
                 )
             );
-            
+
             // need to null these on any song switch
             ChartConverter.editorChart = null;
             ChartConverter.gameChart = null;
@@ -4888,7 +4888,7 @@ namespace MiKu.NET {
             }
         }
 
-            EditorNote.NoteHandType defaultType = s_instance.selectedNoteType;
+        EditorNote.NoteHandType defaultType = s_instance.selectedNoteType;
 
         public static void AddNoteToChart(GameObject[] noteAndMirror) {
             EditorNote.NoteHandType defaultType = s_instance.selectedNoteType;
