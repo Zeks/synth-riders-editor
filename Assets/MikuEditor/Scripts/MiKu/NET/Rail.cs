@@ -24,7 +24,7 @@ namespace MiKu.NET
 {
     
     public class RailNoteWrapper {
-        public RailNoteWrapper(Note note) {
+        public RailNoteWrapper(EditorNote note) {
             thisNote = note;
         }
 
@@ -32,7 +32,7 @@ namespace MiKu.NET
         {
         }
 
-        public Note thisNote;
+        public EditorNote thisNote;
         public RailNoteWrapper previousNote;
         public RailNoteWrapper nextNote;
     }
@@ -55,9 +55,9 @@ namespace MiKu.NET
             return false;
         }
 
-        public bool IsBreakerNote(Note.NoteUsageType type)
+        public bool IsBreakerNote(EditorNote.NoteUsageType type)
         {
-            if (type == Note.NoteUsageType.Breaker)
+            if (type == EditorNote.NoteUsageType.Breaker)
             {
                 return true;
             }
@@ -123,7 +123,7 @@ namespace MiKu.NET
             Destroy(potentialRemovedRail);
         }
 
-        public void AddNote(Note note)
+        public void AddNote(EditorNote note)
         {
             // extending past the railbraker needs to make a new note railbreaker
 
@@ -151,8 +151,8 @@ namespace MiKu.NET
                 wrapper.previousNote = previousLeftPoint;
                 if (previousIsBreaker)
                 {
-                    previousLeftPoint.thisNote.UsageType = Note.NoteUsageType.Line;
-                    wrapper.thisNote.UsageType = Note.NoteUsageType.Breaker;
+                    previousLeftPoint.thisNote.UsageType = EditorNote.NoteUsageType.Line;
+                    wrapper.thisNote.UsageType = EditorNote.NoteUsageType.Breaker;
                 }
             }
             // adding new note in the middle, need to handle breaker case
@@ -184,7 +184,7 @@ namespace MiKu.NET
             return notesByTime[first];
         }
 
-        Note.NoteHandType GetNoteHandType()
+        EditorNote.NoteHandType GetNoteHandType()
         {
             return noteType;
         }
@@ -287,7 +287,7 @@ namespace MiKu.NET
         public float endTime;
         public float duration;
 
-        public Note.NoteHandType noteType;
+        public EditorNote.NoteHandType noteType;
 
         bool scheduleForDeletion = false;
 

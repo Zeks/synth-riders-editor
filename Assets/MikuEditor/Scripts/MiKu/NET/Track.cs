@@ -763,12 +763,12 @@ namespace MiKu.NET {
         private CursorLockMode currentLockeMode;
 
         public bool AddTimeToCurrentTrack(float time) {
-            Dictionary<float, List<Note>> workingTrack = s_instance.GetCurrentTrackDifficulty();
+            Dictionary<float, List<EditorNote>> workingTrack = s_instance.GetCurrentTrackDifficulty();
             if(workingTrack == null)
                 return false;
 
             if(!workingTrack.ContainsKey(time)) {
-                workingTrack.Add(time, new List<Note>());
+                workingTrack.Add(time, new List<EditorNote>());
             }
             return true;
         }
@@ -4701,18 +4701,18 @@ namespace MiKu.NET {
             return targetpPos;
         }
 
-        private static bool RemoveOverlappingNote(Dictionary<float, List<Note>> workingTrack, List<float> keys_tofilter, GameObject noteFromNoteArea) {
+        private static bool RemoveOverlappingNote(Dictionary<float, List<EditorNote>> workingTrack, List<float> keys_tofilter, GameObject noteFromNoteArea) {
             int totalFilteredTime = keys_tofilter.Count;
             for(int filterList = 0; filterList < totalFilteredTime; ++filterList) {
                 // If the time key exist, check how many notes are added
                 float targetTime = keys_tofilter[filterList];
                 //print(targetTime+" "+CurrentTime);
-                List<Note> notes = workingTrack[targetTime];
+                List<EditorNote> notes = workingTrack[targetTime];
                 int totalNotes = notes.Count;
 
                 // Check for overlaping notes and delete if close
                 for(int i = 0; i < totalNotes; ++i) {
-                    Note overlap = notes[i];
+                    EditorNote overlap = notes[i];
 
                     if(ArePositionsOverlaping(noteFromNoteArea.transform.position,
                         new Vector3(overlap.Position[0],
@@ -4737,7 +4737,7 @@ namespace MiKu.NET {
                             s_instance.hitSFXSource.Remove(targetTime);
                         } else {
                             overlap = notes[0];
-                            if(overlap.HandType == Note.NoteHandType.OneHandSpecial) {
+                            if(overlap.HandType == EditorNote.NoteHandType.OneHandSpecial) {
                                 nToDelete = GameObject.Find(overlap.Id);
                                 overlap.Id = FormatNoteName(targetTime, 0, overlap.HandType);
                                 nToDelete.name = overlap.Id;
@@ -4749,13 +4749,13 @@ namespace MiKu.NET {
             }
             return false;
         }
-        private static bool ReachedMaxNotesOfCurrentType(Dictionary<float, List<Note>> workingTrack, List<float> keys_tofilter, GameObject noteFromNoteArea) {
+        private static bool ReachedMaxNotesOfCurrentType(Dictionary<float, List<EditorNote>> workingTrack, List<float> keys_tofilter, GameObject noteFromNoteArea) {
             int totalFilteredTime = keys_tofilter.Count;
             for(int filterList = 0; filterList < totalFilteredTime; ++filterList) {
                 // If the time key exist, check how many notes are added
                 float targetTime = keys_tofilter[filterList];
                 //print(targetTime+" "+CurrentTime);
-                List<Note> notes = workingTrack[targetTime];
+                List<EditorNote> notes = workingTrack[targetTime];
                 int totalNotes = notes.Count;
 
                 // if count is MAX_ALLOWED_NOTES then return because not more notes are allowed
@@ -4766,8 +4766,8 @@ namespace MiKu.NET {
                 } else {
                     // Both hand notes only allowed 1 total
                     // RightHanded/Left Handed notes only allowed 1 of their types
-                    Note specialsNotes = notes.Find(x => x.HandType == Note.NoteHandType.BothHandsSpecial || x.HandType == Note.NoteHandType.OneHandSpecial);
-                    if(specialsNotes != null || ((s_instance.selectedNoteType == Note.NoteHandType.BothHandsSpecial || s_instance.selectedNoteType == Note.NoteHandType.OneHandSpecial)
+                    EditorNote specialsNotes = notes.Find(x => x.HandType == EditorNote.NoteHandType.BothHandsSpecial || x.HandType == EditorNote.NoteHandType.OneHandSpecial);
+                    if(specialsNotes != null || ((s_instance.selectedNoteType == EditorNote.NoteHandType.BothHandsSpecial || s_instance.selectedNoteType == EditorNote.NoteHandType.OneHandSpecial)
                                                         && totalNotes >= MAX_SPECIAL_NOTES)) {
                         //Track.LogMessage("Max number of both hands notes reached");
                         Miku_DialogManager.ShowDialog(Miku_DialogManager.DialogType.Alert, StringVault.Alert_MaxNumberOfSpecialNotes);
@@ -4786,13 +4786,13 @@ namespace MiKu.NET {
             }
             return false;
         }
-        private static void AdjustCurrentTimeToFoundNotes(Dictionary<float, List<Note>> workingTrack, List<float> keys_tofilter) {
+        private static void AdjustCurrentTimeToFoundNotes(Dictionary<float, List<EditorNote>> workingTrack, List<float> keys_tofilter) {
             int totalFilteredTime = keys_tofilter.Count;
             for(int filterList = 0; filterList < totalFilteredTime; ++filterList) {
                 // If the time key exist, check how many notes are added
                 float targetTime = keys_tofilter[filterList];
                 //print(targetTime+" "+CurrentTime);
-                List<Note> notes = workingTrack[targetTime];
+                List<EditorNote> notes = workingTrack[targetTime];
                 int totalNotes = notes.Count;
 
                 if(totalNotes > 0) {
@@ -4801,8 +4801,8 @@ namespace MiKu.NET {
             }
         }
 
-        public static bool IsRailNote(Note note) {
-            if(note.UsageType == Note.NoteUsageType.Line || note.UsageType == Note.NoteUsageType.Breaker) {
+        public static bool IsRailNote(EditorNote note) {
+            if(note.UsageType == EditorNote.NoteUsageType.Line || note.UsageType == EditorNote.NoteUsageType.Breaker) {
                 return true;
             }
             return false;
@@ -4839,7 +4839,7 @@ namespace MiKu.NET {
                 bool hasNotesWithinDeltaTime = keys_tofilter.Count != 0;
                 // if there are no notes to overlap, instantiate time in the dictionary
                 if(!hasNotesWithinDeltaTime) {
-                    workingTrack.Add(CurrentTime, new List<Note>());
+                    workingTrack.Add(CurrentTime, new List<EditorNote>());
                     s_instance.AddTimeToSFXList(CurrentTime);
                 } else {
                     // find and remove notes that overlaps and return if one was removed
@@ -4888,7 +4888,7 @@ namespace MiKu.NET {
             }
         }
 
-            EditorNote.NoteType defaultType = s_instance.selectedNoteType;
+            EditorNote.NoteHandType defaultType = s_instance.selectedNoteType;
 
         public static void AddNoteToChart(GameObject[] noteAndMirror) {
             EditorNote.NoteHandType defaultType = s_instance.selectedNoteType;
@@ -5390,7 +5390,7 @@ namespace MiKu.NET {
                     break;
 
                 default:
-                    selectedNoteType = Note.NoteHandType.BothHandsSpecial;
+                    selectedNoteType = EditorNote.NoteHandType.BothHandsSpecial;
                     if(isOnMirrorMode) {
                         isOnMirrorMode = false;
                     }
@@ -5435,7 +5435,7 @@ namespace MiKu.NET {
                     return 1;
                 case EditorNote.NoteHandType.OneHandSpecial:
                     return 2;
-                case Note.NoteHandType.BothHandsSpecial:
+                case EditorNote.NoteHandType.BothHandsSpecial:
                     return 3;
             }
             return 0; // default

@@ -28,40 +28,40 @@ namespace MiKu.NET.Charting {
 
 
         // Converts NoteType enums between game and the editor
-        private EditorNote.NoteType ConvertGameNoteTypeToEditorNoteType(Note.NoteType type) {
+        private EditorNote.NoteHandType ConvertGameNoteTypeToEditorNoteType(Note.NoteType type) {
             switch(type) {
                 case Note.NoteType.BothHandsSpecial:
-                    return EditorNote.NoteType.BothHandsSpecial;
+                    return EditorNote.NoteHandType.BothHandsSpecial;
                 case Note.NoteType.LeftHanded:
-                    return EditorNote.NoteType.LeftHanded;
+                    return EditorNote.NoteHandType.LeftHanded;
                 case Note.NoteType.NoHand:
-                    return EditorNote.NoteType.NoHand;
+                    return EditorNote.NoteHandType.NoHand;
                 case Note.NoteType.OneHandSpecial:
-                    return EditorNote.NoteType.OneHandSpecial;
+                    return EditorNote.NoteHandType.OneHandSpecial;
                 case Note.NoteType.RightHanded:
-                    return EditorNote.NoteType.RightHanded;
+                    return EditorNote.NoteHandType.RightHanded;
                 case Note.NoteType.SeparateHandSpecial:
-                    return EditorNote.NoteType.SeparateHandSpecial;
+                    return EditorNote.NoteHandType.SeparateHandSpecial;
                 default:
-                    return EditorNote.NoteType.BothHandsSpecial;
+                    return EditorNote.NoteHandType.BothHandsSpecial;
             }
 
         }
         
         // Converts NoteType enums between game and the editor
-        private Note.NoteType ConvertEditorNoteTypeToGameNoteType(EditorNote.NoteType type) {
+        private Note.NoteType ConvertEditorNoteTypeToGameNoteType(EditorNote.NoteHandType type) {
             switch(type) {
-                case EditorNote.NoteType.BothHandsSpecial:
+                case EditorNote.NoteHandType.BothHandsSpecial:
                     return Note.NoteType.BothHandsSpecial;
-                case EditorNote.NoteType.LeftHanded:
+                case EditorNote.NoteHandType.LeftHanded:
                     return Note.NoteType.LeftHanded;
-                case EditorNote.NoteType.NoHand:
+                case EditorNote.NoteHandType.NoHand:
                     return Note.NoteType.NoHand;
-                case EditorNote.NoteType.OneHandSpecial:
+                case EditorNote.NoteHandType.OneHandSpecial:
                     return Note.NoteType.OneHandSpecial;
-                case EditorNote.NoteType.RightHanded:
+                case EditorNote.NoteHandType.RightHanded:
                     return Note.NoteType.RightHanded;
-                case EditorNote.NoteType.SeparateHandSpecial:
+                case EditorNote.NoteHandType.SeparateHandSpecial:
                     return Note.NoteType.SeparateHandSpecial;
                 default:
                     return Note.NoteType.BothHandsSpecial;
@@ -107,7 +107,7 @@ namespace MiKu.NET.Charting {
 
                 foreach(var editorNote in entry.Value) {
                     Note exportNote = new Note(new UnityEngine.Vector3 {x = editorNote.Position[0],y = editorNote.Position[1],z = editorNote.Position[2]},
-                        editorNote.Id, editorNote.ComboId, ConvertEditorNoteTypeToGameNoteType(editorNote.Type));
+                        editorNote.Id, editorNote.ComboId, ConvertEditorNoteTypeToGameNoteType(editorNote.HandType));
                     exportNote.Segments = editorNote.Segments;
                     exportValue[entry.Key].Add(exportNote);
                 }
@@ -126,7 +126,7 @@ namespace MiKu.NET.Charting {
                     editorDictionary.Add(entry.Key, new List<EditorNote>());
 
                 foreach(var gameNote in entry.Value) {
-                    EditorNote exportNote = new EditorNote(new UnityEngine.Vector3 { x = gameNote.Position[0], y = gameNote.Position[1], z = gameNote.Position[2] },
+                    EditorNote exportNote = new EditorNote(new UnityEngine.Vector3 { x = gameNote.Position[0], y = gameNote.Position[1], z = gameNote.Position[2] }, entry.Key,
                         gameNote.Id, gameNote.ComboId, ConvertGameNoteTypeToEditorNoteType(gameNote.Type));
                     exportNote.Segments = gameNote.Segments;
                     editorDictionary[entry.Key].Add(exportNote);
@@ -479,7 +479,7 @@ namespace MiKu.NET.Charting {
             EditorSlide slide = new EditorSlide()
             {
                 initialized = editorSlide.initialized,
-                slideType = (EditorNote.NoteType)editorSlide.slideType,
+                slideType = (EditorNote.NoteHandType)editorSlide.slideType,
                 time = editorSlide.time
             };
             slides.Add(slide);

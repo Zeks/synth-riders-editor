@@ -38,7 +38,7 @@ namespace MiKu.NET.Charting {
             Breaker
         };
 
-        ~Note()
+        ~EditorNote()
         {
             IdDictionaries.RemoveNote(noteId);
         }
@@ -122,13 +122,13 @@ namespace MiKu.NET.Charting {
             timePoint = time;
             ComboId = idCmb;
             HandType = t;
-            UsageType = Note.NoteUsageType.Ball;
+            UsageType = EditorNote.NoteUsageType.Ball;
             Position = new float[3] { pos.x, pos.y, pos.z };
             Direction = d;
         }
-        public Note() {
+        public EditorNote() {
             noteId = noteCounter++;
-            UsageType = Note.NoteUsageType.Ball;
+            UsageType = EditorNote.NoteUsageType.Ball;
         }
     }
 
