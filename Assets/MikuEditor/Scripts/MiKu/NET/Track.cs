@@ -74,8 +74,8 @@ namespace MiKu.NET {
 
     public struct LongNote {
         public float startTime;
-        public Note note;
-        public Note mirroredNote;
+        public EditorNote note;
+        public EditorNote mirroredNote;
         public GameObject gameObject;
         public GameObject mirroredObject;
         public float duration;
@@ -92,11 +92,11 @@ namespace MiKu.NET {
     public struct ClipBoardStruct {
         public float startTime;
         public float lenght;
-        public Dictionary<float, List<Note>> notes;
+        public Dictionary<float, List<EditorNote>> notes;
         public List<float> effects;
         public List<float> jumps;
         public List<float> crouchs;
-        public List<Slide> slides;
+        public List<EditorSlide> slides;
         public List<float> lights;
     }
 
@@ -602,7 +602,7 @@ namespace MiKu.NET {
         private bool isPlaying = false;
 
         // Current chart meta data
-        private Chart currentChart;
+        private EditorChart currentChart;
 
         // Current difficulty selected for edition
         private TrackDifficulty currentDifficulty = TrackDifficulty.Easy;
@@ -628,7 +628,7 @@ namespace MiKu.NET {
         private AudioSource audioSource;
 
         // The current selected type of note marker
-        private Note.NoteHandType selectedNoteType = Note.NoteHandType.RightHanded;
+        private EditorNote.NoteHandType selectedNoteType = EditorNote.NoteHandType.RightHanded;
 
         // Has the chart been Initiliazed
         private bool isInitilazed = false;
@@ -855,11 +855,11 @@ namespace MiKu.NET {
                 CurrentSelection = new SelectionArea();
                 //
                 CurrentClipBoard = new ClipBoardStruct();
-                CurrentClipBoard.notes = new Dictionary<float, List<Note>>();
+                CurrentClipBoard.notes = new Dictionary<float, List<EditorNote>>();
                 CurrentClipBoard.effects = new List<float>();
                 CurrentClipBoard.jumps = new List<float>();
                 CurrentClipBoard.crouchs = new List<float>();
-                CurrentClipBoard.slides = new List<Slide>();
+                CurrentClipBoard.slides = new List<EditorSlide>();
                 CurrentClipBoard.lights = new List<float>();
 
                 if(m_selectionMarker != null) {
@@ -1067,7 +1067,7 @@ namespace MiKu.NET {
                     if(isCTRLDown) {
                         ToggleMovementSectionToChart(SLIDE_LEFT_TAG);
                     } else {
-                        SetNoteMarkerType(GetNoteMarkerTypeIndex(Note.NoteHandType.LeftHanded));
+                        SetNoteMarkerType(GetNoteMarkerTypeIndex(EditorNote.NoteHandType.LeftHanded));
                         markerWasUpdated = true;
                     }
                 }
@@ -1079,7 +1079,7 @@ namespace MiKu.NET {
                     if(isCTRLDown) {
                         ToggleMovementSectionToChart(SLIDE_RIGHT_TAG);
                     } else {
-                        SetNoteMarkerType(GetNoteMarkerTypeIndex(Note.NoteHandType.RightHanded));
+                        SetNoteMarkerType(GetNoteMarkerTypeIndex(EditorNote.NoteHandType.RightHanded));
                         markerWasUpdated = true;
                     }
                 }
@@ -1091,7 +1091,7 @@ namespace MiKu.NET {
                     if(isCTRLDown) {
                         ToggleMovementSectionToChart(SLIDE_CENTER_TAG);
                     } else {
-                        SetNoteMarkerType(GetNoteMarkerTypeIndex(Note.NoteHandType.OneHandSpecial));
+                        SetNoteMarkerType(GetNoteMarkerTypeIndex(EditorNote.NoteHandType.OneHandSpecial));
                         markerWasUpdated = true;
                     }
                 }
@@ -1103,7 +1103,7 @@ namespace MiKu.NET {
                     if(isCTRLDown) {
                         ToggleMovementSectionToChart(SLIDE_LEFT_DIAG_TAG);
                     } else {
-                        SetNoteMarkerType(GetNoteMarkerTypeIndex(Note.NoteHandType.BothHandsSpecial));
+                        SetNoteMarkerType(GetNoteMarkerTypeIndex(EditorNote.NoteHandType.BothHandsSpecial));
                         markerWasUpdated = true;
                     }
                 }
@@ -1392,21 +1392,21 @@ namespace MiKu.NET {
 
             if(isSHIFDown && !promtWindowOpen && !isPlaying) {
                 if(Input.GetKeyDown(KeyCode.D)) {
-                    ToggleNoteDirectionMarker(Note.NoteDirection.Right);
+                    ToggleNoteDirectionMarker(EditorNote.NoteDirection.Right);
                 } else if(Input.GetKeyDown(KeyCode.C)) {
-                    ToggleNoteDirectionMarker(Note.NoteDirection.RightBottom);
+                    ToggleNoteDirectionMarker(EditorNote.NoteDirection.RightBottom);
                 } else if(Input.GetKeyDown(KeyCode.X)) {
-                    ToggleNoteDirectionMarker(Note.NoteDirection.Bottom);
+                    ToggleNoteDirectionMarker(EditorNote.NoteDirection.Bottom);
                 } else if(Input.GetKeyDown(KeyCode.Z)) {
-                    ToggleNoteDirectionMarker(Note.NoteDirection.LeftBottom);
+                    ToggleNoteDirectionMarker(EditorNote.NoteDirection.LeftBottom);
                 } else if(Input.GetKeyDown(KeyCode.A)) {
-                    ToggleNoteDirectionMarker(Note.NoteDirection.Left);
+                    ToggleNoteDirectionMarker(EditorNote.NoteDirection.Left);
                 } else if(Input.GetKeyDown(KeyCode.Q)) {
-                    ToggleNoteDirectionMarker(Note.NoteDirection.LeftTop);
+                    ToggleNoteDirectionMarker(EditorNote.NoteDirection.LeftTop);
                 } else if(Input.GetKeyDown(KeyCode.W)) {
-                    ToggleNoteDirectionMarker(Note.NoteDirection.Top);
+                    ToggleNoteDirectionMarker(EditorNote.NoteDirection.Top);
                 } else if(Input.GetKeyDown(KeyCode.E)) {
-                    ToggleNoteDirectionMarker(Note.NoteDirection.RightTop);
+                    ToggleNoteDirectionMarker(EditorNote.NoteDirection.RightTop);
                 }
             }
             #endregion
@@ -1494,11 +1494,12 @@ namespace MiKu.NET {
         /// </summary>
         private void InitChart() {
             if(Serializer.Initialized) {
-                CurrentChart = Serializer.ChartData;
+                // reading the currently available data from converter into the Track
+                CurrentChart = ChartConverter.editorChart;
                 BPM = CurrentChart.BPM;
 
                 if(CurrentChart.Track.Master == null) {
-                    CurrentChart.Track.Master = new Dictionary<float, List<Note>>();
+                    CurrentChart.Track.Master = new Dictionary<float, List<EditorNote>>();
                 }
 
                 if(CurrentChart.Effects.Master == null) {
@@ -1514,11 +1515,11 @@ namespace MiKu.NET {
                 }
 
                 if(CurrentChart.Slides.Master == null) {
-                    CurrentChart.Slides.Master = new List<Slide>();
+                    CurrentChart.Slides.Master = new List<EditorSlide>();
                 }
 
                 if(CurrentChart.Track.Custom == null) {
-                    CurrentChart.Track.Custom = new Dictionary<float, List<Note>>();
+                    CurrentChart.Track.Custom = new Dictionary<float, List<EditorNote>>();
                 }
 
                 if(CurrentChart.Effects.Custom == null) {
@@ -1534,7 +1535,7 @@ namespace MiKu.NET {
                 }
 
                 if(CurrentChart.Slides.Custom == null) {
-                    CurrentChart.Slides.Custom = new List<Slide>();
+                    CurrentChart.Slides.Custom = new List<EditorSlide>();
                 }
 
                 if(CurrentChart.CustomDifficultyName == null || CurrentChart.CustomDifficultyName == string.Empty) {
@@ -1567,17 +1568,17 @@ namespace MiKu.NET {
                 LoadHitSFX();
             } else {
 
-                CurrentChart = new Chart();
-                Beats defaultBeats = new Beats();
-                defaultBeats.Easy = new Dictionary<float, List<Note>>();
-                defaultBeats.Normal = new Dictionary<float, List<Note>>();
-                defaultBeats.Hard = new Dictionary<float, List<Note>>();
-                defaultBeats.Expert = new Dictionary<float, List<Note>>();
-                defaultBeats.Master = new Dictionary<float, List<Note>>();
-                defaultBeats.Custom = new Dictionary<float, List<Note>>();
+                CurrentChart = new EditorChart();
+                EditorBeats defaultBeats = new EditorBeats();
+                defaultBeats.Easy = new Dictionary<float, List<EditorNote>>();
+                defaultBeats.Normal = new Dictionary<float, List<EditorNote>>();
+                defaultBeats.Hard = new Dictionary<float, List<EditorNote>>();
+                defaultBeats.Expert = new Dictionary<float, List<EditorNote>>();
+                defaultBeats.Master = new Dictionary<float, List<EditorNote>>();
+                defaultBeats.Custom = new Dictionary<float, List<EditorNote>>();
                 CurrentChart.Track = defaultBeats;
 
-                Effects defaultEffects = new Effects();
+                EditorEffects defaultEffects = new EditorEffects();
                 defaultEffects.Easy = new List<float>();
                 defaultEffects.Normal = new List<float>();
                 defaultEffects.Hard = new List<float>();
@@ -1586,7 +1587,7 @@ namespace MiKu.NET {
                 defaultEffects.Custom = new List<float>();
                 CurrentChart.Effects = defaultEffects;
 
-                Jumps defaultJumps = new Jumps();
+                EditorJumps defaultJumps = new EditorJumps();
                 defaultJumps.Easy = new List<float>();
                 defaultJumps.Normal = new List<float>();
                 defaultJumps.Hard = new List<float>();
@@ -1595,7 +1596,7 @@ namespace MiKu.NET {
                 defaultJumps.Custom = new List<float>();
                 CurrentChart.Jumps = defaultJumps;
 
-                Crouchs defaultCrouchs = new Crouchs();
+                EditorCrouchs defaultCrouchs = new EditorCrouchs();
                 defaultCrouchs.Easy = new List<float>();
                 defaultCrouchs.Normal = new List<float>();
                 defaultCrouchs.Hard = new List<float>();
@@ -1604,16 +1605,16 @@ namespace MiKu.NET {
                 defaultCrouchs.Custom = new List<float>();
                 CurrentChart.Crouchs = defaultCrouchs;
 
-                Slides defaultSlides = new Slides();
-                defaultSlides.Easy = new List<Slide>();
-                defaultSlides.Normal = new List<Slide>();
-                defaultSlides.Hard = new List<Slide>();
-                defaultSlides.Expert = new List<Slide>();
-                defaultSlides.Master = new List<Slide>();
-                defaultSlides.Custom = new List<Slide>();
+                EditorSlides defaultSlides = new EditorSlides();
+                defaultSlides.Easy = new List<EditorSlide>();
+                defaultSlides.Normal = new List<EditorSlide>();
+                defaultSlides.Hard = new List<EditorSlide>();
+                defaultSlides.Expert = new List<EditorSlide>();
+                defaultSlides.Master = new List<EditorSlide>();
+                defaultSlides.Custom = new List<EditorSlide>();
                 CurrentChart.Slides = defaultSlides;
 
-                Lights defaultLights = new Lights();
+                EditorLights defaultLights = new EditorLights();
                 defaultLights.Easy = new List<float>();
                 defaultLights.Normal = new List<float>();
                 defaultLights.Hard = new List<float>();
@@ -1623,7 +1624,7 @@ namespace MiKu.NET {
                 CurrentChart.Lights = defaultLights;
 
                 CurrentChart.BPM = BPM;
-                CurrentChart.Bookmarks = new Bookmarks();
+                CurrentChart.Bookmarks = new EditorBookmarks();
                 CurrentChart.CustomDifficultyName = "Custom";
                 CurrentChart.CustomDifficultySpeed = 1;
 
@@ -2032,6 +2033,10 @@ namespace MiKu.NET {
                     ""
                 )
             );
+            
+            // need to null these on any song switch
+            ChartConverter.editorChart = null;
+            ChartConverter.gameChart = null;
         }
 
         /// <summary>
@@ -2149,9 +2154,9 @@ namespace MiKu.NET {
                     }
                     break;
                 case PromtType.AddBookmarkAction:
-                    List<Bookmark> bookmarks = CurrentChart.Bookmarks.BookmarksList;
+                    List<EditorBookmark> bookmarks = CurrentChart.Bookmarks.BookmarksList;
                     if(bookmarks != null) {
-                        Bookmark book = new Bookmark();
+                        EditorBookmark book = new EditorBookmark();
                         book.time = CurrentTime;
                         book.name = m_BookmarkInput.text;
                         bookmarks.Add(book);
@@ -2286,7 +2291,11 @@ namespace MiKu.NET {
         public void SaveChartAction() {
             CurrentChart.BPM = BPM;
             CurrentChart.Offset = StartOffset;
-            Serializer.ChartData = CurrentChart;
+            // converting the current chart data into the structs readable by the game
+            // for subsequent serialization into files
+            ChartConverter converter = new ChartConverter();
+            converter.ConvertEditorChartToGameChart(CurrentChart);
+            Serializer.ChartData = ChartConverter.gameChart;
             Serializer.ChartData.EditorVersion = EditorVersion;
 
             TimeSpan t = TimeSpan.FromSeconds(TrackDuration);
@@ -2327,7 +2336,11 @@ namespace MiKu.NET {
         private void ExportToJSON() {
             CurrentChart.BPM = BPM;
             CurrentChart.Offset = StartOffset;
-            Serializer.ChartData = CurrentChart;
+            // converting the current chart data into the structs readable by the game
+            // for subsequent serialization into files
+            ChartConverter converter = new ChartConverter();
+            converter.ConvertEditorChartToGameChart(CurrentChart);
+            Serializer.ChartData = ChartConverter.gameChart;
             Serializer.ChartData.EditorVersion = EditorVersion;
 
             if(Serializer.SerializeToJSON()) {
@@ -2414,11 +2427,11 @@ namespace MiKu.NET {
         public void CopyAction() {
             isBusy = true;
 
-            Dictionary<float, List<Note>> workingTrack = s_instance.GetCurrentTrackDifficulty();
+            Dictionary<float, List<EditorNote>> workingTrack = s_instance.GetCurrentTrackDifficulty();
             List<float> effects = GetCurrentEffectDifficulty();
             List<float> jumps = GetCurrentMovementListByDifficulty(true);
             List<float> crouchs = GetCurrentMovementListByDifficulty(false);
-            List<Slide> slides = GetCurrentMovementListByDifficulty();
+            List<EditorSlide> slides = GetCurrentMovementListByDifficulty();
             List<float> lights = GetCurrentLightsByDifficulty();
 
             CurrentClipBoard.notes.Clear();
@@ -2474,12 +2487,12 @@ namespace MiKu.NET {
 
                 if(workingTrack.ContainsKey(lookUpTime)) {
                     // If the time key exist, check how many notes are added
-                    List<Note> copyNotes = workingTrack[lookUpTime];
-                    List<Note> clipboardNotes = new List<Note>();
+                    List<EditorNote> copyNotes = workingTrack[lookUpTime];
+                    List<EditorNote> clipboardNotes = new List<EditorNote>();
                     int totalNotes = copyNotes.Count;
 
                     for(int i = 0; i < totalNotes; ++i) {
-                        Note toCopy = copyNotes[i];
+                        EditorNote toCopy = copyNotes[i];
                         clipboardNotes.Add(toCopy);
                     }
 
@@ -2519,20 +2532,20 @@ namespace MiKu.NET {
 
             List<float> note_keys = CurrentClipBoard.notes.Keys.ToList();
             if(note_keys.Count > 0) {
-                Dictionary<float, List<Note>> workingTrack = GetCurrentTrackDifficulty();
-                List<Note> copyList, currList;
+                Dictionary<float, List<EditorNote>> workingTrack = GetCurrentTrackDifficulty();
+                List<EditorNote> copyList, currList;
 
                 for(int i = 0; i < note_keys.Count; ++i) {
                     currList = CurrentClipBoard.notes[note_keys[i]];
-                    copyList = new List<Note>();
+                    copyList = new List<EditorNote>();
                     float prevTime = note_keys[i];
                     float newTime = prevTime + (backUpTime - CurrentClipBoard.startTime);
 
                     for(int j = 0; j < currList.Count; ++j) {
-                        Note currNote = currList[j];
+                        EditorNote currNote = currList[j];
                         float newPos = MStoUnit(newTime);
 
-                        Note copyNote = new Note(
+                        EditorNote copyNote = new EditorNote(
                             new Vector3(currNote.Position[0], currNote.Position[1], newPos),
                             currNote.TimePoint,
                             FormatNoteName(newTime, j, currNote.HandType),
@@ -2682,7 +2695,7 @@ namespace MiKu.NET {
             currentPromt = PromtType.JumpActionBookmark;
             m_BookmarkJumpDrop.ClearOptions();
             m_BookmarkJumpDrop.options.Add(new TMP_Dropdown.OptionData("Select a bookmark"));
-            List<Bookmark> bookmarks = CurrentChart.Bookmarks.BookmarksList;
+            List<EditorBookmark> bookmarks = CurrentChart.Bookmarks.BookmarksList;
             if(bookmarks != null && bookmarks.Count > 0) {
                 m_BookmarkJumpDrop.gameObject.SetActive(true);
                 m_BookmarkNotFound.SetActive(false);
@@ -2707,7 +2720,7 @@ namespace MiKu.NET {
         /// <param name="index">The index of the new difficulty from 0 - easy to 3 - Expert"</param>
         public void JumpToSelectedBookmark(int index = 0) {
             if(index <= 0) { return; }
-            List<Bookmark> bookmarks = CurrentChart.Bookmarks.BookmarksList;
+            List<EditorBookmark> bookmarks = CurrentChart.Bookmarks.BookmarksList;
             if(bookmarks != null && bookmarks.Count > 0) {
                 // print(bookmarks[index-1].time);
                 JumpToTime(bookmarks[index - 1].time);
@@ -2812,7 +2825,7 @@ namespace MiKu.NET {
         /// Clear The Beatmap Bookmarks
         ///</summary>
         public void ClearBookmarks() {
-            List<Bookmark> bookmarks = CurrentChart.Bookmarks.BookmarksList;
+            List<EditorBookmark> bookmarks = CurrentChart.Bookmarks.BookmarksList;
             if(bookmarks != null && bookmarks.Count > 0) {
                 for(int i = 0; i < bookmarks.Count; ++i) {
                     GameObject book = GameObject.Find(GetBookmarkIdFormated(bookmarks[i].time));
@@ -3621,8 +3634,8 @@ namespace MiKu.NET {
         private void LoadChartNotes() {
             isBusy = true;
             UpdateTotalNotes(true);
-            Dictionary<float, List<Note>> workingTrack = GetCurrentTrackDifficulty();
-            Dictionary<float, List<Note>>.ValueCollection valueColl = workingTrack.Values;
+            Dictionary<float, List<EditorNote>> workingTrack = GetCurrentTrackDifficulty();
+            Dictionary<float, List<EditorNote>>.ValueCollection valueColl = workingTrack.Values;
 
             List<float> keys_sorted = workingTrack.Keys.ToList();
             keys_sorted.Sort();
@@ -3635,10 +3648,10 @@ namespace MiKu.NET {
                         // If the note to add is pass the current song duration, we delete it
                         workingTrack.Remove(key);
                     } else {
-                        List<Note> _notes = workingTrack[key];
+                        List<EditorNote> _notes = workingTrack[key];
                         // Iterate each note and update its info
                         for(int i = 0; i < _notes.Count; i++) {
-                            Note n = _notes[i];
+                            EditorNote n = _notes[i];
 
                             // If the version of the Beatmap is not the same that the
                             // editor then move the note to the GridBoundaries to prevent
@@ -3686,7 +3699,7 @@ namespace MiKu.NET {
             Track.LogMessage("Current Special ID: " + s_instance.currentSpecialSectionID);
 
             if(CurrentChart.Effects == null) {
-                CurrentChart.Effects = new Effects();
+                CurrentChart.Effects = new EditorEffects();
             }
 
             List<float> workingEffects = GetCurrentEffectDifficulty();
@@ -3700,7 +3713,7 @@ namespace MiKu.NET {
                 }
             }
 
-            List<Bookmark> bookmarks = CurrentChart.Bookmarks.BookmarksList;
+            List<EditorBookmark> bookmarks = CurrentChart.Bookmarks.BookmarksList;
             if(bookmarks != null && bookmarks.Count > 0) {
                 for(int i = 0; i < bookmarks.Count; ++i) {
                     AddBookmarkGameObjectToScene(bookmarks[i].time, bookmarks[i].name);
@@ -3721,7 +3734,7 @@ namespace MiKu.NET {
                 }
             }
 
-            List<Slide> slides = GetCurrentMovementListByDifficulty();
+            List<EditorSlide> slides = GetCurrentMovementListByDifficulty();
             if(slides != null && slides.Count > 0) {
                 for(int i = 0; i < slides.Count; ++i) {
                     AddMovementGameObjectToScene(slides[i].time, GetSlideTagByType(slides[i].slideType));
@@ -3729,7 +3742,7 @@ namespace MiKu.NET {
             }
 
             if(CurrentChart.Lights == null) {
-                CurrentChart.Lights = new Lights();
+                CurrentChart.Lights = new EditorLights();
             }
 
             List<float> lights = GetCurrentLightsByDifficulty();
@@ -3769,22 +3782,22 @@ namespace MiKu.NET {
             // Now get the track to start the paste operation
 
             // Track on where the notes will be paste
-            Dictionary<float, List<Note>> workingTrack = GetCurrentTrackDifficulty();
+            Dictionary<float, List<EditorNote>> workingTrack = GetCurrentTrackDifficulty();
 
             // Track from where the notes will be copied
-            Dictionary<float, List<Note>> copiedTrack = Miku_Clipboard.CopiedDict;
+            Dictionary<float, List<EditorNote>> copiedTrack = Miku_Clipboard.CopiedDict;
 
             if(copiedTrack != null && copiedTrack.Count > 0) {
 
                 // Iterate each entry on the Dictionary and get the note to copy
-                foreach(KeyValuePair<float, List<Note>> kvp in copiedTrack) {
-                    List<Note> _notes = kvp.Value;
-                    List<Note> copiedList = new List<Note>();
+                foreach(KeyValuePair<float, List<EditorNote>> kvp in copiedTrack) {
+                    List<EditorNote> _notes = kvp.Value;
+                    List<EditorNote> copiedList = new List<EditorNote>();
 
                     // Iterate each note and update its info
                     for(int i = 0; i < _notes.Count; i++) {
-                        Note n = _notes[i];
-                        Note newNote = new Note(Vector3.zero);
+                        EditorNote n = _notes[i];
+                        EditorNote newNote = new EditorNote(Vector3.zero);
                         newNote.Position = n.Position;
                         newNote.TimePoint = n.TimePoint;
                         newNote.Id = Track.FormatNoteName(kvp.Key, i, n.HandType);
@@ -3818,7 +3831,7 @@ namespace MiKu.NET {
         /// Instantiate the Note GameObject on the scene
         /// </summary>
         /// <param name="noteData">The Note from where the data for the instantiation will be read</param>
-        public GameObject AddNoteGameObjectToScene(Note noteData) {
+        public GameObject AddNoteGameObjectToScene(EditorNote noteData) {
             // And add the note game object to the screen
             GameObject noteGO = GameObject.Instantiate(GetNoteMarkerByType(noteData.HandType));
             noteGO.transform.localPosition = new Vector3(
@@ -3835,7 +3848,7 @@ namespace MiKu.NET {
                 AddNoteSegmentsObject(noteData, noteGO.transform.Find("LineArea"));
             }
 
-            if(noteData.Direction != Note.NoteDirection.None) {
+            if(noteData.Direction != EditorNote.NoteDirection.None) {
                 AddNoteDirectionObject(noteData);
             }
 
@@ -3846,7 +3859,7 @@ namespace MiKu.NET {
         /// Instantiate the Segment GameObject on the scene
         /// </summary>
         /// <param name="noteData">The Note from where the data for the instantiation will be read</param>
-        void AddNoteSegmentsObject(Note noteData, Transform segmentsParent, bool isRefresh = false) {
+        void AddNoteSegmentsObject(EditorNote noteData, Transform segmentsParent, bool isRefresh = false) {
             //if(Track.IsOnDebugMode) {
             if(isRefresh) {
                 int childsNum = segmentsParent.childCount;
@@ -3879,8 +3892,8 @@ namespace MiKu.NET {
         /// Instantiate the Direction GameObject on the scene
         /// </summary>
         /// <param name="noteData">The Note from where the data for the instantiation will be read</param>
-        void AddNoteDirectionObject(Note noteData) {
-            if(noteData.Direction != Note.NoteDirection.None) {
+        void AddNoteDirectionObject(EditorNote noteData) {
+            if(noteData.Direction != EditorNote.NoteDirection.None) {
                 GameObject parentGO = GameObject.Find(noteData.Id);
                 GameObject dirGO;
                 Transform dirTrans = parentGO.transform.Find("DirectionWrap/DirectionMarker");
@@ -4249,7 +4262,7 @@ namespace MiKu.NET {
         void RefreshCurrentTime() {
             float timeRangeDuplicatesStart = CurrentTime - MIN_TIME_OVERLAY_CHECK;
             float timeRangeDuplicatesEnd = CurrentTime + MIN_TIME_OVERLAY_CHECK;
-            Dictionary<float, List<Note>> workingTrack = s_instance.GetCurrentTrackDifficulty();
+            Dictionary<float, List<EditorNote>> workingTrack = s_instance.GetCurrentTrackDifficulty();
 
             if(workingTrack.Count > 0) {
                 List<float> keys_tofilter = workingTrack.Keys.ToList();
@@ -4301,9 +4314,9 @@ namespace MiKu.NET {
             }
 
 
-            List<Slide> slides = GetCurrentMovementListByDifficulty();
+            List<EditorSlide> slides = GetCurrentMovementListByDifficulty();
             if(slides.Count > 0) {
-                List<Slide> slides_tofilter;
+                List<EditorSlide> slides_tofilter;
                 slides_tofilter = slides.Where(s => s.time >= (timeRangeDuplicatesStart + 3)
                         && s.time <= (timeRangeDuplicatesEnd + 3)).ToList();
 
@@ -4317,13 +4330,13 @@ namespace MiKu.NET {
         void HighlightNotes() {
             RefreshCurrentTime();
 
-            Dictionary<float, List<Note>> workingTrack = s_instance.GetCurrentTrackDifficulty();
+            Dictionary<float, List<EditorNote>> workingTrack = s_instance.GetCurrentTrackDifficulty();
             if(workingTrack.ContainsKey(CurrentTime)) {
-                List<Note> notes = workingTrack[CurrentTime];
+                List<EditorNote> notes = workingTrack[CurrentTime];
                 int totalNotes = notes.Count;
 
                 for(int i = 0; i < totalNotes; ++i) {
-                    Note toHighlight = notes[i];
+                    EditorNote toHighlight = notes[i];
 
                     GameObject highlighter = GetHighlighter(toHighlight.Id);
                     if(highlighter) {
@@ -4346,11 +4359,11 @@ namespace MiKu.NET {
             return null;
         }
 
-        void ToggleNoteDirectionMarker(Note.NoteDirection direction) {
+        void ToggleNoteDirectionMarker(EditorNote.NoteDirection direction) {
             if(DirectionalNotesEnabled) {
                 isBusy = true;
 
-                Dictionary<float, List<Note>> workingTrack = s_instance.GetCurrentTrackDifficulty();
+                Dictionary<float, List<EditorNote>> workingTrack = s_instance.GetCurrentTrackDifficulty();
 
                 float timeRangeDuplicatesStart = CurrentTime - MIN_TIME_OVERLAY_CHECK;
                 float timeRangeDuplicatesEnd = CurrentTime + MIN_TIME_OVERLAY_CHECK;
@@ -4365,16 +4378,16 @@ namespace MiKu.NET {
                         // If the time key exist, check how many notes are added
                         float targetTime = keys_tofilter[filterList];
                         //print(targetTime+" "+CurrentTime);
-                        List<Note> notes = workingTrack[targetTime];
+                        List<EditorNote> notes = workingTrack[targetTime];
                         int totalNotes = notes.Count;
 
                         for(int i = 0; i < totalNotes; ++i) {
-                            Note n = notes[i];
-                            if(isALTDown && n.HandType != Note.NoteHandType.LeftHanded) {
+                            EditorNote n = notes[i];
+                            if(isALTDown && n.HandType != EditorNote.NoteHandType.LeftHanded) {
                                 continue;
                             }
 
-                            if(!isALTDown && n.HandType == Note.NoteHandType.LeftHanded) {
+                            if(!isALTDown && n.HandType == EditorNote.NoteHandType.LeftHanded) {
                                 continue;
                             }
 
@@ -4395,18 +4408,18 @@ namespace MiKu.NET {
         void DeleteNotesAtTheCurrentTime() {
             isBusy = true;
 
-            Dictionary<float, List<Note>> workingTrack = s_instance.GetCurrentTrackDifficulty();
+            Dictionary<float, List<EditorNote>> workingTrack = s_instance.GetCurrentTrackDifficulty();
             List<float> workingEffects = GetCurrentEffectDifficulty();
             List<float> jumps = GetCurrentMovementListByDifficulty(true);
             List<float> crouchs = GetCurrentMovementListByDifficulty(false);
-            List<Slide> slides = GetCurrentMovementListByDifficulty();
+            List<EditorSlide> slides = GetCurrentMovementListByDifficulty();
             List<float> lights = GetCurrentLightsByDifficulty();
             GameObject targetToDelete;
             float lookUpTime;
 
             List<float> keys_tofilter = workingTrack.Keys.ToList();
             List<float> effects_tofilter, jumps_tofilter, crouchs_tofilter, lights_tofilter;
-            List<Slide> slides_tofilter;
+            List<EditorSlide> slides_tofilter;
 
 
             if(CurrentSelection.endTime > CurrentSelection.startTime) {
@@ -4449,11 +4462,11 @@ namespace MiKu.NET {
 
                 if(workingTrack.ContainsKey(lookUpTime)) {
                     // If the time key exist, check how many notes are added
-                    List<Note> notes = workingTrack[lookUpTime];
+                    List<EditorNote> notes = workingTrack[lookUpTime];
                     int totalNotes = notes.Count;
 
                     for(int i = 0; i < totalNotes; ++i) {
-                        Note toRemove = notes[i];
+                        EditorNote toRemove = notes[i];
 
                         targetToDelete = GameObject.Find(toRemove.Id);
                         // print(targetToDelete);
@@ -4509,7 +4522,7 @@ namespace MiKu.NET {
             }
 
             for(int j = 0; j < slides_tofilter.Count; ++j) {
-                Slide currSlide = slides_tofilter[j];
+                EditorSlide currSlide = slides_tofilter[j];
 
                 if(slides.Contains(currSlide)) {
                     lookUpTime = currSlide.time;
@@ -4605,7 +4618,7 @@ namespace MiKu.NET {
                     ""
                 ));
 
-                if(selectedNoteType == Note.NoteHandType.OneHandSpecial || selectedNoteType == Note.NoteHandType.BothHandsSpecial) {
+                if(selectedNoteType == EditorNote.NoteHandType.OneHandSpecial || selectedNoteType == EditorNote.NoteHandType.BothHandsSpecial) {
                     SetNoteMarkerType(0);
                 }
             } else {
@@ -4662,12 +4675,12 @@ namespace MiKu.NET {
         /// </summary>
         /// <returns>Returns <typeparamref name="GameObject"/></returns>
         public static GameObject GetMirroredNoteMarker() {
-            Note.NoteHandType targedMirrored = s_instance.selectedNoteType == Note.NoteHandType.LeftHanded ? Note.NoteHandType.RightHanded : Note.NoteHandType.LeftHanded;
+            EditorNote.NoteHandType targedMirrored = s_instance.selectedNoteType == EditorNote.NoteHandType.LeftHanded ? EditorNote.NoteHandType.RightHanded : EditorNote.NoteHandType.LeftHanded;
             return GameObject.Instantiate(s_instance.GetNoteMarkerByType(targedMirrored), Vector3.zero, Quaternion.identity);
         }
 
-        public static Note.NoteHandType GetMirroreNoteMarkerType(Note.NoteHandType tocheck) {
-            return tocheck == Note.NoteHandType.LeftHanded ? Note.NoteHandType.RightHanded : Note.NoteHandType.LeftHanded;
+        public static EditorNote.NoteHandType GetMirroreNoteMarkerType(EditorNote.NoteHandType tocheck) {
+            return tocheck == EditorNote.NoteHandType.LeftHanded ? EditorNote.NoteHandType.RightHanded : EditorNote.NoteHandType.LeftHanded;
         }
 
         public static Vector3 GetMirrorePosition(Vector3 targetpPos) {
@@ -4816,7 +4829,7 @@ namespace MiKu.NET {
 
             // first we check if theres is any note in that time period
             // We need to check the track difficulty selected
-            Dictionary<float, List<Note>> workingTrack = s_instance.GetCurrentTrackDifficulty();
+            Dictionary<float, List<EditorNote>> workingTrack = s_instance.GetCurrentTrackDifficulty();
             if(workingTrack != null) {
                 float timeRangeDuplicatesStart = CurrentTime - MIN_TIME_OVERLAY_CHECK;
                 float timeRangeDuplicatesEnd = CurrentTime + MIN_TIME_OVERLAY_CHECK;
@@ -4842,7 +4855,7 @@ namespace MiKu.NET {
                 }
 
                 // workingTrack[CurrentTime].Count
-                Note noteForChart = new Note(noteFromNoteArea.transform.position, Track.CurrentTime, FormatNoteName(CurrentTime, s_instance.TotalNotes + 1, s_instance.selectedNoteType));
+                EditorNote noteForChart = new EditorNote(noteFromNoteArea.transform.position, Track.CurrentTime, FormatNoteName(CurrentTime, s_instance.TotalNotes + 1, s_instance.selectedNoteType));
                 noteForChart.HandType = s_instance.selectedNoteType;
 
                 // Check if the note placed if of special type 
@@ -4875,9 +4888,10 @@ namespace MiKu.NET {
             }
         }
 
+            EditorNote.NoteType defaultType = s_instance.selectedNoteType;
 
         public static void AddNoteToChart(GameObject[] noteAndMirror) {
-            Note.NoteHandType defaultType = s_instance.selectedNoteType;
+            EditorNote.NoteHandType defaultType = s_instance.selectedNoteType;
 
             int totalNotes = noteAndMirror.Length;
             for(int i = 0; i < totalNotes; ++i) {
@@ -4908,8 +4922,8 @@ namespace MiKu.NET {
         /// </summary>
         /// <param name="_ms">Millesconds of the current position to use on the formating</param>
         /// <param name="index">Index of the note to use on the formating</param>    
-        /// <param name="noteType">The type of note to look for, default is <see cref="Note.NoteHandType.RightHanded" /></param>
-        public static string FormatNoteName(float _ms, int index, Note.NoteHandType noteType = Note.NoteHandType.RightHanded) {
+        /// <param name="noteType">The type of note to look for, default is <see cref="EditorNote.NoteHandType.RightHanded" /></param>
+        public static string FormatNoteName(float _ms, int index, EditorNote.NoteHandType noteType = EditorNote.NoteHandType.RightHanded) {
             return (_ms.ToString("R") + noteType.ToString() + index).ToString();
         }
 
@@ -4998,7 +5012,7 @@ namespace MiKu.NET {
         /// Check if the note if out of the Grid Boundaries and Update its position
         /// </summary>
         /// <param name="note">The note object to check</param>
-        public static void MoveToGridBoundaries(Note note) {
+        public static void MoveToGridBoundaries(EditorNote note) {
             // Clamp between Horizontal Boundaries
             note.Position[0] = Mathf.Clamp(note.Position[0], LEFT_GRID_BOUNDARY, RIGHT_GRID_BOUNDARY);
 
@@ -5010,7 +5024,7 @@ namespace MiKu.NET {
         /// Check if the note if of special type, and update the combo id info
         /// </summary>
         /// <param name="note">The note object to check</param>
-        public static void AddComboIdToNote(Note note) {
+        public static void AddComboIdToNote(EditorNote note) {
             // Check if the note placed if of special type 
             if(IsOfSpecialType(note)) {
                 // If whe are no creating a special, Then we init the new special section
@@ -5031,7 +5045,7 @@ namespace MiKu.NET {
         /// </summary>
         /// <param name="note">The note object to check</param>
         /// <param name="boundaries">The boudanries to clamp the note position to. x = left, y = right; z = top, w = bottom</param>
-        public static void MoveToGridBoundaries(Note note, Vector4 boundaries) {
+        public static void MoveToGridBoundaries(EditorNote note, Vector4 boundaries) {
             // Clamp between Horizontal Boundaries
             note.Position[0] = Mathf.Clamp(note.Position[0], boundaries.x, boundaries.y);
 
@@ -5058,12 +5072,12 @@ namespace MiKu.NET {
         }
 
         /// <summary>
-        /// Check if the passed note if of Special Type: <see cref="Note.NoteHandType.BothHandsSpecial" /> or <see cref="Note.NoteHandType.OneHandSpecial" />
+        /// Check if the passed note if of Special Type: <see cref="EditorNote.NoteHandType.BothHandsSpecial" /> or <see cref="Note.NoteHandType.OneHandSpecial" />
         /// </summary>
-        /// <param name="n"><see cref="Note"/> to check</param>
+        /// <param name="n"><see cref="EditorNote"/> to check</param>
         /// <returns>Returns <typeparamref name="bool"/></returns>
-        public static bool IsOfSpecialType(Note n) {
-            if(n.HandType == Note.NoteHandType.OneHandSpecial || n.HandType == Note.NoteHandType.BothHandsSpecial) {
+        public static bool IsOfSpecialType(EditorNote n) {
+            if(n.HandType == EditorNote.NoteHandType.OneHandSpecial || n.HandType == EditorNote.NoteHandType.BothHandsSpecial) {
                 return true;
             }
 
@@ -5138,9 +5152,9 @@ namespace MiKu.NET {
 
             // first we check if theres is any effect in that time period
             // We need to check the effect difficulty selected
-            List<Bookmark> workingBookmarks = CurrentChart.Bookmarks.BookmarksList;
+            List<EditorBookmark> workingBookmarks = CurrentChart.Bookmarks.BookmarksList;
             if(workingBookmarks != null) {
-                Bookmark currentBookmark = workingBookmarks.Find(x => x.time >= CurrentTime - MIN_TIME_OVERLAY_CHECK
+                EditorBookmark currentBookmark = workingBookmarks.Find(x => x.time >= CurrentTime - MIN_TIME_OVERLAY_CHECK
                     && x.time <= CurrentTime + MIN_TIME_OVERLAY_CHECK);
                 if(currentBookmark.time >= 0 && currentBookmark.name != null) {
                     workingBookmarks.Remove(currentBookmark);
@@ -5182,7 +5196,7 @@ namespace MiKu.NET {
             string offText;
             string onText;
             List<float> workingElementVert = null;
-            List<Slide> workingElementHorz = null;
+            List<EditorSlide> workingElementHorz = null;
             switch(MoveTAG) {
                 case JUMP_TAG:
                     offText = StringVault.Info_JumpOff;
@@ -5237,7 +5251,7 @@ namespace MiKu.NET {
             }
 
             if(workingElementHorz != null) {
-                Slide currentSlide = workingElementHorz.Find(x => x.time == CurrentTime);
+                EditorSlide currentSlide = workingElementHorz.Find(x => x.time == CurrentTime);
                 string CurrentTag = String.Empty;
                 if(currentSlide.initialized) {
                     CurrentTag = s_instance.GetSlideTagByType(currentSlide.slideType);
@@ -5257,25 +5271,25 @@ namespace MiKu.NET {
                 } else {
                     s_instance.RemoveMovementSectionFromChart(MoveTAG, CurrentTime);
 
-                    Slide slide = new Slide();
+                    EditorSlide slide = new EditorSlide();
                     slide.time = CurrentTime;
                     slide.initialized = true;
 
                     switch(MoveTAG) {
                         case SLIDE_LEFT_TAG:
-                            slide.slideType = Note.NoteHandType.LeftHanded;
+                            slide.slideType = EditorNote.NoteHandType.LeftHanded;
                             break;
                         case SLIDE_RIGHT_TAG:
-                            slide.slideType = Note.NoteHandType.RightHanded;
+                            slide.slideType = EditorNote.NoteHandType.RightHanded;
                             break;
                         case SLIDE_LEFT_DIAG_TAG:
-                            slide.slideType = Note.NoteHandType.SeparateHandSpecial;
+                            slide.slideType = EditorNote.NoteHandType.SeparateHandSpecial;
                             break;
                         case SLIDE_RIGHT_DIAG_TAG:
-                            slide.slideType = Note.NoteHandType.OneHandSpecial;
+                            slide.slideType = EditorNote.NoteHandType.OneHandSpecial;
                             break;
                         default:
-                            slide.slideType = Note.NoteHandType.BothHandsSpecial;
+                            slide.slideType = EditorNote.NoteHandType.BothHandsSpecial;
                             break;
                     }
 
@@ -5349,7 +5363,7 @@ namespace MiKu.NET {
         /// <summary>
         /// Set the note marker type to be used
         /// </summary>
-        /// <param name="noteType">The type of note to use. Default is 0 that is equal to <see cref="Note.NoteHandType.LeftHanded" /></param>
+        /// <param name="noteType">The type of note to use. Default is 0 that is equal to <see cref="EditorNote.NoteHandType.LeftHanded" /></param>
         public void SetNoteMarkerType(int noteType = 0) {
             if(GetNoteMarkerTypeIndex(selectedNoteType) != noteType) {
                 CloseSpecialSection();
@@ -5357,19 +5371,19 @@ namespace MiKu.NET {
 
             switch(noteType) {
                 case 0:
-                    selectedNoteType = Note.NoteHandType.LeftHanded;
+                    selectedNoteType = EditorNote.NoteHandType.LeftHanded;
                     break;
                 case 1:
-                    selectedNoteType = Note.NoteHandType.RightHanded;
+                    selectedNoteType = EditorNote.NoteHandType.RightHanded;
                     break;
                 case 2:
-                    selectedNoteType = Note.NoteHandType.OneHandSpecial;
+                    selectedNoteType = EditorNote.NoteHandType.OneHandSpecial;
                     if(isOnMirrorMode) {
                         isOnMirrorMode = false;
                     }
                     break;
                 case 3:
-                    selectedNoteType = Note.NoteHandType.BothHandsSpecial;
+                    selectedNoteType = EditorNote.NoteHandType.BothHandsSpecial;
                     if(isOnMirrorMode) {
                         isOnMirrorMode = false;
                     }
@@ -5387,21 +5401,21 @@ namespace MiKu.NET {
         /// <summary>
         /// Returns note marker game object, based on the type selected
         /// </summary>
-        /// <param name="noteType">The type of note to look for, default is <see cref="Note.NoteHandType.LeftHanded" /></param>
+        /// <param name="noteType">The type of note to look for, default is <see cref="EditorNote.NoteHandType.LeftHanded" /></param>
         /// <returns>Returns <typeparamref name="GameObject"/></returns>
-        GameObject GetNoteMarkerByType(Note.NoteHandType noteType = Note.NoteHandType.LeftHanded, bool isSegment = false) {
+        GameObject GetNoteMarkerByType(EditorNote.NoteHandType noteType = EditorNote.NoteHandType.LeftHanded, bool isSegment = false) {
             GameObject result = m_LefthandNoteMarker;
             switch(noteType) {
-                case Note.NoteHandType.LeftHanded:
+                case EditorNote.NoteHandType.LeftHanded:
                     result = m_LefthandNoteMarker;
                     break;
-                case Note.NoteHandType.RightHanded:
+                case EditorNote.NoteHandType.RightHanded:
                     result = m_RighthandNoteMarker;
                     break;
-                case Note.NoteHandType.OneHandSpecial:
+                case EditorNote.NoteHandType.OneHandSpecial:
                     result = m_SpecialOneHandNoteMarker;
                     break;
-                case Note.NoteHandType.BothHandsSpecial:
+                case EditorNote.NoteHandType.BothHandsSpecial:
                     result = m_SpecialBothHandsNoteMarker;
                     break;
             }
@@ -5411,15 +5425,15 @@ namespace MiKu.NET {
         /// <summary>
         /// Returns index of the NoteType
         /// </summary>
-        /// <param name="noteType">The type of note to look for, default is <see cref="Note.NoteHandType.LeftHanded" /></param>
+        /// <param name="noteType">The type of note to look for, default is <see cref="EditorNote.NoteHandType.LeftHanded" /></param>
         /// <returns>Returns <typeparamref name="int"/></returns>
-        int GetNoteMarkerTypeIndex(Note.NoteHandType noteType = Note.NoteHandType.LeftHanded) {
+        int GetNoteMarkerTypeIndex(EditorNote.NoteHandType noteType = EditorNote.NoteHandType.LeftHanded) {
             switch(noteType) {
-                case Note.NoteHandType.LeftHanded:
+                case EditorNote.NoteHandType.LeftHanded:
                     return 0;
-                case Note.NoteHandType.RightHanded:
+                case EditorNote.NoteHandType.RightHanded:
                     return 1;
-                case Note.NoteHandType.OneHandSpecial:
+                case EditorNote.NoteHandType.OneHandSpecial:
                     return 2;
                 case Note.NoteHandType.BothHandsSpecial:
                     return 3;
@@ -5439,24 +5453,24 @@ namespace MiKu.NET {
 
             try {
                 // Get the current working track
-                Dictionary<float, List<Note>> workingTrack = GetCurrentTrackDifficulty();
+                Dictionary<float, List<EditorNote>> workingTrack = GetCurrentTrackDifficulty();
                 float newTime, newPos;
 
                 if(workingTrack != null && workingTrack.Count > 0) {
                     // New Dictionary on where the new data will be update
-                    Dictionary<float, List<Note>> updateData = new Dictionary<float, List<Note>>();
+                    Dictionary<float, List<EditorNote>> updateData = new Dictionary<float, List<EditorNote>>();
 
                     // Iterate each entry on the Dictionary and get the note to update
-                    foreach(KeyValuePair<float, List<Note>> kvp in workingTrack) {
-                        List<Note> _notes = kvp.Value;
-                        List<Note> updateList = new List<Note>();
+                    foreach(KeyValuePair<float, List<EditorNote>> kvp in workingTrack) {
+                        List<EditorNote> _notes = kvp.Value;
+                        List<EditorNote> updateList = new List<EditorNote>();
 
                         // The new update time
                         newTime = UpdateTimeToBPM(kvp.Key, fromBPM);
 
                         // Iterate each note and update its info
                         for(int i = 0; i < _notes.Count; i++) {
-                            Note n = _notes[i];
+                            EditorNote n = _notes[i];
 
                             // Get the new position using the new constants
                             newPos = MStoUnit(newTime);
@@ -5539,10 +5553,10 @@ namespace MiKu.NET {
                     UpdateCurrentEffectDifficulty(updatedEffects);
                 }
 
-                List<Bookmark> bookmarks = CurrentChart.Bookmarks.BookmarksList;
+                List<EditorBookmark> bookmarks = CurrentChart.Bookmarks.BookmarksList;
                 if(bookmarks != null && bookmarks.Count > 0) {
-                    List<Bookmark> updateBookmarks = new List<Bookmark>();
-                    Bookmark currBookmark;
+                    List<EditorBookmark> updateBookmarks = new List<EditorBookmark>();
+                    EditorBookmark currBookmark;
                     for(int i = 0; i < bookmarks.Count; ++i) {
                         currBookmark = bookmarks[i];
                         newTime = UpdateTimeToBPM(currBookmark.time, fromBPM);
@@ -5556,7 +5570,7 @@ namespace MiKu.NET {
                                 newPos);
                             bookmarkGO.name = GetBookmarkIdFormated(newTime);
                             //currBookmark.time = newTime;
-                            Bookmark copyBookmark = new Bookmark();
+                            EditorBookmark copyBookmark = new EditorBookmark();
                             copyBookmark.name = currBookmark.name;
                             copyBookmark.time = newTime;
                             updateBookmarks.Add(copyBookmark);
@@ -5613,11 +5627,11 @@ namespace MiKu.NET {
                     UpdateCurrentMovementDifficulty(updatedCrouchs, CROUCH_TAG);
                 }
 
-                List<Slide> slides = GetCurrentMovementListByDifficulty();
+                List<EditorSlide> slides = GetCurrentMovementListByDifficulty();
                 if(slides != null && slides.Count > 0) {
-                    List<Slide> updateSlides = new List<Slide>();
+                    List<EditorSlide> updateSlides = new List<EditorSlide>();
                     for(int i = 0; i < slides.Count; ++i) {
-                        Slide currSlide = slides[i];
+                        EditorSlide currSlide = slides[i];
                         newTime = UpdateTimeToBPM(slides[i].time, fromBPM);
                         newPos = MStoUnit(newTime);
 
@@ -5717,19 +5731,19 @@ namespace MiKu.NET {
             isBusy = true;
 
             // Get the current working track
-            Dictionary<float, List<Note>> workingTrack = GetCurrentTrackDifficulty();
+            Dictionary<float, List<EditorNote>> workingTrack = GetCurrentTrackDifficulty();
 
             if(workingTrack != null && workingTrack.Count > 0) {
                 // New Empty Dictionary on where the new data will be update
-                Dictionary<float, List<Note>> updateData = new Dictionary<float, List<Note>>();
+                Dictionary<float, List<EditorNote>> updateData = new Dictionary<float, List<EditorNote>>();
 
                 // Iterate each entry on the Dictionary and get the note to update
-                foreach(KeyValuePair<float, List<Note>> kvp in workingTrack) {
-                    List<Note> _notes = kvp.Value;
+                foreach(KeyValuePair<float, List<EditorNote>> kvp in workingTrack) {
+                    List<EditorNote> _notes = kvp.Value;
 
                     // Iterate each note and update its info
                     for(int i = 0; i < _notes.Count; i++) {
-                        Note n = _notes[i];
+                        EditorNote n = _notes[i];
 
                         // And after find its related GameObject we delete it
                         GameObject noteGO = GameObject.Find(n.Id);
@@ -5778,7 +5792,7 @@ namespace MiKu.NET {
             }
             crouchs.Clear();
 
-            List<Slide> slides = GetCurrentMovementListByDifficulty();
+            List<EditorSlide> slides = GetCurrentMovementListByDifficulty();
             if(slides != null && slides.Count > 0) {
                 for(int i = 0; i < slides.Count; ++i) {
                     float t = slides[i].time;
@@ -5820,16 +5834,16 @@ namespace MiKu.NET {
             isBusy = true;
 
             // Get the current working track
-            Dictionary<float, List<Note>> workingTrack = GetCurrentTrackDifficulty();
+            Dictionary<float, List<EditorNote>> workingTrack = GetCurrentTrackDifficulty();
 
             if(workingTrack != null && workingTrack.Count > 0) {
                 // Iterate each entry on the Dictionary and get the note to update
-                foreach(KeyValuePair<float, List<Note>> kvp in workingTrack) {
-                    List<Note> _notes = kvp.Value;
+                foreach(KeyValuePair<float, List<EditorNote>> kvp in workingTrack) {
+                    List<EditorNote> _notes = kvp.Value;
 
                     // Iterate each note and update its info
                     for(int i = 0; i < _notes.Count; i++) {
-                        Note n = _notes[i];
+                        EditorNote n = _notes[i];
 
                         // And after find its related GameObject we delete it
                         GameObject noteGO = GameObject.Find(n.Id);
@@ -5850,7 +5864,7 @@ namespace MiKu.NET {
                 }
             }
 
-            List<Bookmark> bookmarks = CurrentChart.Bookmarks.BookmarksList;
+            List<EditorBookmark> bookmarks = CurrentChart.Bookmarks.BookmarksList;
             if(bookmarks != null && bookmarks.Count > 0) {
                 for(int i = 0; i < bookmarks.Count; ++i) {
                     float t = bookmarks[i].time;
@@ -5877,7 +5891,7 @@ namespace MiKu.NET {
                 }
             }
 
-            List<Slide> slides = GetCurrentMovementListByDifficulty();
+            List<EditorSlide> slides = GetCurrentMovementListByDifficulty();
             if(slides != null && slides.Count > 0) {
                 for(int i = 0; i < slides.Count; ++i) {
                     float t = slides[i].time;
@@ -5927,7 +5941,7 @@ namespace MiKu.NET {
         /// Get The current track difficulty based on the selected difficulty
         /// </summary>
         /// <returns>Returns <typeparamref name="Dictionary<float, List<Note>>"/></returns>
-        Dictionary<float, List<Note>> GetCurrentTrackDifficulty() {
+        Dictionary<float, List<EditorNote>> GetCurrentTrackDifficulty() {
             if(CurrentChart == null) return null;
 
             switch(CurrentDifficulty) {
@@ -5992,7 +6006,7 @@ namespace MiKu.NET {
         /// <summary>
         /// Update the current track difficulty data based on the selected difficulty
         /// </summary>
-        void UpdateCurrentTrackDifficulty(Dictionary<float, List<Note>> newData) {
+        void UpdateCurrentTrackDifficulty(Dictionary<float, List<EditorNote>> newData) {
 
             switch(CurrentDifficulty) {
                 case TrackDifficulty.Normal:
@@ -6059,7 +6073,7 @@ namespace MiKu.NET {
                 }
             } else {
                 CurrentChart.Bookmarks.BookmarksList.Clear();
-                CurrentChart.Bookmarks.BookmarksList = newData as List<Bookmark>;
+                CurrentChart.Bookmarks.BookmarksList = newData as List<EditorBookmark>;
             }
         }
 
@@ -6078,7 +6092,7 @@ namespace MiKu.NET {
                         CurrentChart.Crouchs.Normal = newData as List<float>;
                     } else {
                         CurrentChart.Slides.Normal.Clear();
-                        CurrentChart.Slides.Normal = newData as List<Slide>;
+                        CurrentChart.Slides.Normal = newData as List<EditorSlide>;
                     }
                     break;
                 case TrackDifficulty.Hard:
@@ -6090,7 +6104,7 @@ namespace MiKu.NET {
                         CurrentChart.Crouchs.Hard = newData as List<float>;
                     } else {
                         CurrentChart.Slides.Hard.Clear();
-                        CurrentChart.Slides.Hard = newData as List<Slide>;
+                        CurrentChart.Slides.Hard = newData as List<EditorSlide>;
                     }
                     break;
                 case TrackDifficulty.Expert:
@@ -6102,7 +6116,7 @@ namespace MiKu.NET {
                         CurrentChart.Crouchs.Expert = newData as List<float>;
                     } else {
                         CurrentChart.Slides.Expert.Clear();
-                        CurrentChart.Slides.Expert = newData as List<Slide>;
+                        CurrentChart.Slides.Expert = newData as List<EditorSlide>;
                     }
                     break;
                 case TrackDifficulty.Master:
@@ -6114,7 +6128,7 @@ namespace MiKu.NET {
                         CurrentChart.Crouchs.Master = newData as List<float>;
                     } else {
                         CurrentChart.Slides.Master.Clear();
-                        CurrentChart.Slides.Master = newData as List<Slide>;
+                        CurrentChart.Slides.Master = newData as List<EditorSlide>;
                     }
                     break;
                 case TrackDifficulty.Custom:
@@ -6126,7 +6140,7 @@ namespace MiKu.NET {
                         CurrentChart.Crouchs.Custom = newData as List<float>;
                     } else {
                         CurrentChart.Slides.Custom.Clear();
-                        CurrentChart.Slides.Custom = newData as List<Slide>;
+                        CurrentChart.Slides.Custom = newData as List<EditorSlide>;
                     }
                     break;
                 default:
@@ -6138,7 +6152,7 @@ namespace MiKu.NET {
                         CurrentChart.Crouchs.Easy = newData as List<float>;
                     } else {
                         CurrentChart.Slides.Easy.Clear();
-                        CurrentChart.Slides.Easy = newData as List<Slide>;
+                        CurrentChart.Slides.Easy = newData as List<EditorSlide>;
                     }
                     break;
             }
@@ -6312,7 +6326,7 @@ namespace MiKu.NET {
         /// Get The current movement section list based on the selected difficulty
         /// </summary>
         /// <returns>Returns <typeparamref name="List"/></returns>
-        List<Slide> GetCurrentMovementListByDifficulty() {
+        List<EditorSlide> GetCurrentMovementListByDifficulty() {
             if(CurrentChart == null) return null;
 
             switch(CurrentDifficulty) {
@@ -6390,15 +6404,15 @@ namespace MiKu.NET {
         /// handler to get the Slide Tag relative to its type
         /// </summary>
         /// <param name="SlideType">The type of the slide</param>
-        string GetSlideTagByType(Note.NoteHandType SlideType) {
+        string GetSlideTagByType(EditorNote.NoteHandType SlideType) {
             switch(SlideType) {
-                case Note.NoteHandType.LeftHanded:
+                case EditorNote.NoteHandType.LeftHanded:
                     return SLIDE_LEFT_TAG;
-                case Note.NoteHandType.RightHanded:
+                case EditorNote.NoteHandType.RightHanded:
                     return SLIDE_RIGHT_TAG;
-                case Note.NoteHandType.SeparateHandSpecial:
+                case EditorNote.NoteHandType.SeparateHandSpecial:
                     return SLIDE_LEFT_DIAG_TAG;
-                case Note.NoteHandType.OneHandSpecial:
+                case EditorNote.NoteHandType.OneHandSpecial:
                     return SLIDE_RIGHT_DIAG_TAG;
                 default:
                     return SLIDE_CENTER_TAG;
@@ -6409,18 +6423,18 @@ namespace MiKu.NET {
         /// handler to get the Slide Type relative to its tag
         /// </summary>
         /// <param name="TagName">The Tag of the slide</param>
-        Note.NoteHandType GetSlideTypeByTag(string TagName) {
+        EditorNote.NoteHandType GetSlideTypeByTag(string TagName) {
             switch(TagName) {
                 case SLIDE_LEFT_TAG:
-                    return Note.NoteHandType.LeftHanded;
+                    return EditorNote.NoteHandType.LeftHanded;
                 case SLIDE_RIGHT_TAG:
-                    return Note.NoteHandType.RightHanded;
+                    return EditorNote.NoteHandType.RightHanded;
                 case SLIDE_LEFT_DIAG_TAG:
-                    return Note.NoteHandType.SeparateHandSpecial;
+                    return EditorNote.NoteHandType.SeparateHandSpecial;
                 case SLIDE_RIGHT_DIAG_TAG:
-                    return Note.NoteHandType.OneHandSpecial;
+                    return EditorNote.NoteHandType.OneHandSpecial;
                 default:
-                    return Note.NoteHandType.BothHandsSpecial;
+                    return EditorNote.NoteHandType.BothHandsSpecial;
             }
         }
 
@@ -6505,7 +6519,7 @@ namespace MiKu.NET {
         /// Delete the movement GameObjects at the passed time, filtering the passed Tag
         /// </summary>
         public void RemoveMovementSectionFromChart(string MoveTAG, float ms) {
-            List<Slide> slideList;
+            List<EditorSlide> slideList;
             switch(MoveTAG) {
                 case JUMP_TAG:
                     slideList = GetCurrentMovementListByDifficulty();
@@ -6543,9 +6557,9 @@ namespace MiKu.NET {
 
                 endList.Remove(ms);
 
-            } else if(workingList is List<Slide>) {
-                List<Slide> endList = workingList as List<Slide>;
-                Slide index = endList.Find(x => x.time == ms && x.slideType == GetSlideTypeByTag(MoveTAG));
+            } else if(workingList is List<EditorSlide>) {
+                List<EditorSlide> endList = workingList as List<EditorSlide>;
+                EditorSlide index = endList.Find(x => x.time == ms && x.slideType == GetSlideTypeByTag(MoveTAG));
                 if(!index.initialized) {
                     return;
                 }
@@ -6687,7 +6701,7 @@ namespace MiKu.NET {
         /// <value>
         /// The current Chart object being used
         /// </value>
-        public static Chart CurrentChart
+        public static EditorChart CurrentChart
         {
             get
             {

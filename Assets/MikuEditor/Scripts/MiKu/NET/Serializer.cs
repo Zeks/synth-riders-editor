@@ -319,6 +319,12 @@ namespace MiKu.NET {
                     StreamReader reader = new StreamReader( memStream );
                     string jsonDATA = reader.ReadToEnd();
                     ChartData = JsonConvert.DeserializeObject<Chart>(jsonDATA);
+                    
+                    // using chartconverter to pass the deserialized class into the editor's structures
+                    // the result needs to be assigned to Track later
+                    ChartConverter converter = new ChartConverter();
+                    converter.ConvertGameChartToEditorChart(ChartData);
+
                 } catch(Exception) {
                     Debug.Log("File made in version previous to 1.8, trying BinaryFormatter");
                     // Section for load of files previos to version 1.8					
@@ -330,7 +336,13 @@ namespace MiKu.NET {
                     memStream.Seek(0, SeekOrigin.Begin);
                     
                     BinaryFormatter bf = new BinaryFormatter();
-                    ChartData = (Chart) bf.Deserialize(memStream);	
+                    ChartData = (Chart) bf.Deserialize(memStream);
+                    
+                    // using chartconverter to pass the deserialized class into the editor's structures
+                    // the result needs to be assigned to Track later
+                    ChartConverter converter = new ChartConverter();
+                    converter.ConvertGameChartToEditorChart(ChartData);
+
                 }
 
             } catch(Exception) {
@@ -339,6 +351,11 @@ namespace MiKu.NET {
                     FileStream file = File.OpenRead(filePath);
                     BinaryFormatter bf = new BinaryFormatter();
                     ChartData = (Chart) bf.Deserialize(file);
+                    
+                    // using chartconverter to pass the deserialized class into the editor's structures
+                    // the result needs to be assigned to Track later
+                    ChartConverter converter = new ChartConverter();
+                    converter.ConvertGameChartToEditorChart(ChartData);
                     file.Close();
                 } catch(Exception e) {
                     Debug.LogError("Deserialization Error");
@@ -393,6 +410,8 @@ namespace MiKu.NET {
             } catch(Exception e) {
                 Miku_DialogManager.ShowDialog(Miku_DialogManager.DialogType.Alert, StringVault.Alert_FileLoadError);
                 Debug.Log(e);
+                // need to wipe the partially completed data?
+                ChartData = null;
                 IsBusy = false;
                 return false;				
             }
@@ -403,7 +422,8 @@ namespace MiKu.NET {
                 IsBusy = false;
                 return false;
             }
-
+            ChartConverter converter = new ChartConverter();
+            converter.ConvertGameChartToEditorChart(ChartData);
             IsBusy = false;
             return true;
         }
