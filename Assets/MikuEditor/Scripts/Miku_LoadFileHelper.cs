@@ -212,10 +212,7 @@ public class Miku_LoadFileHelper : MonoBehaviour {
         if(Serializer.Initialized) {
 			// bool fileLoadSuccess = Serializer.LoadFronFile(absoluteUri, isJSON, absoluteUri.Contains(".dat"));
 			bool fileLoadSuccess = isJSON ? Serializer.LoadFronFile(absoluteUri, isJSON, absoluteUri.Contains(".dat")) : Serializer.LoadFronFile(absoluteUri);
-            ChartConverter converter = new ChartConverter();
-            converter.ConvertGameChartToEditorChart(Serializer.ChartData);
-
-
+            
             if(fileLoadSuccess) {
 
 				editPanelAnimator.Play("Panel In");
