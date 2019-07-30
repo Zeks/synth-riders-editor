@@ -14,7 +14,7 @@ public class Miku_Clipboard : MonoBehaviour {
     public static bool Initialized { get; set; }   
 
     // The clipboard dictionary
-    private Dictionary<float, List<Note>> clipboardDict;
+    private Dictionary<float, List<EditorNote>> clipboardDict;
 
     private float clipboardBPM = 0;
 
@@ -35,7 +35,7 @@ public class Miku_Clipboard : MonoBehaviour {
     /// Save a copy of the passed Dictionary to the clipboard	
     /// </summary>
     /// <param name="workingTrack">The Dictionary to be copied</param>
-    public static void CopyTrackToClipboard( Dictionary<float, List<Note>> workingTrack, float pasteBPM ) {
+    public static void CopyTrackToClipboard( Dictionary<float, List<EditorNote>> workingTrack, float pasteBPM ) {
         if(s_instance == null) return;
         
         ClipboardBPM = pasteBPM;
@@ -46,19 +46,19 @@ public class Miku_Clipboard : MonoBehaviour {
             if(CopiedDict != null) {
                 CopiedDict.Clear();
             } else {
-                CopiedDict = new Dictionary<float, List<Note>>();
+                CopiedDict = new Dictionary<float, List<EditorNote>>();
             }            
 
             // Iterate each entry on the Dictionary and get the note to copy
-            foreach( KeyValuePair<float, List<Note>> kvp in workingTrack )
+            foreach( KeyValuePair<float, List<EditorNote>> kvp in workingTrack )
             {
-                List<Note> _notes = kvp.Value; 
-                List<Note> copiedList = new List<Note>();
+                List<EditorNote> _notes = kvp.Value;
+                List<EditorNote> copiedList = new List<EditorNote>();
 
                 // Iterate each note and update its info
                 for(int i = 0; i < _notes.Count; i++) {
-                    Note n = _notes[i];
-                    Note newNote = new Note(Vector3.zero);
+                    EditorNote n = _notes[i];
+                    EditorNote newNote = new EditorNote(Vector3.zero);
                     newNote.Position = n.Position;
                     newNote.Id = Track.FormatNoteName(kvp.Key, i, n.HandType);
                     newNote.HandType = n.HandType;
@@ -75,7 +75,7 @@ public class Miku_Clipboard : MonoBehaviour {
         }
     }
 
-    public static Dictionary<float, List<Note>> CopiedDict
+    public static Dictionary<float, List<EditorNote>> CopiedDict
     {
         get
         {
