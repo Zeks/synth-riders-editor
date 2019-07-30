@@ -372,12 +372,18 @@ namespace MiKu.NET.Charting {
             }
 
             // passing one dictionary of notes into another 
-            PassEditorNoteDataToGame(editorChart.Track.Custom, gameChart.Track.Custom);
-            PassEditorNoteDataToGame(editorChart.Track.Easy, gameChart.Track.Easy);
-            PassEditorNoteDataToGame(editorChart.Track.Normal, gameChart.Track.Normal);
-            PassEditorNoteDataToGame(editorChart.Track.Hard, gameChart.Track.Hard);
-            PassEditorNoteDataToGame(editorChart.Track.Expert, gameChart.Track.Expert);
-            PassEditorNoteDataToGame(editorChart.Track.Master, gameChart.Track.Master);
+            if(editorChart.Track.Custom != null)
+                PassEditorNoteDataToGame(editorChart.Track.Custom, gameChart.Track.Custom);
+            if(editorChart.Track.Easy != null)
+                PassEditorNoteDataToGame(editorChart.Track.Easy,   gameChart.Track.Easy);
+            if(editorChart.Track.Normal != null)
+                PassEditorNoteDataToGame(editorChart.Track.Normal, gameChart.Track.Normal);
+            if(editorChart.Track.Hard != null)
+                PassEditorNoteDataToGame(editorChart.Track.Hard,   gameChart.Track.Hard);
+            if(editorChart.Track.Expert != null)
+                PassEditorNoteDataToGame(editorChart.Track.Expert, gameChart.Track.Expert);
+            if(editorChart.Track.Master != null)
+                PassEditorNoteDataToGame(editorChart.Track.Master, gameChart.Track.Master);
             return true;
         }
 
