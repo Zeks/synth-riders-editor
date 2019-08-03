@@ -49,6 +49,8 @@ namespace MiKu.NET.Charting {
         public int noteId = -1;
         public int railId = -1;
 
+        public bool nullNote = false;
+
         private static int noteCounter = 0;
 
         private float timePoint;

@@ -628,8 +628,8 @@ namespace MiKu.NET {
         private AudioSource audioSource;
 
         // The current selected type of note marker
-        private EditorNote.NoteHandType selectedNoteType = EditorNote.NoteHandType.RightHanded;
-        private EditorNote.NoteUsageType selectedUsageType = EditorNote.NoteUsageType.None;
+        private EditorNote.NoteHandType selectedNoteType = EditorNote.NoteHandType.LeftHanded;
+        private EditorNote.NoteUsageType selectedUsageType = EditorNote.NoteUsageType.Ball;
 
         // Has the chart been Initiliazed
         private bool isInitilazed = false;
@@ -1548,6 +1548,15 @@ namespace MiKu.NET {
                     CurrentChart.Tags = new List<string>();
                 }
 
+                EditorRails defaultRails = new EditorRails();
+                defaultRails.Easy = new List<Rail>();
+                defaultRails.Normal = new List<Rail>();
+                defaultRails.Hard = new List<Rail>();
+                defaultRails.Expert = new List<Rail>();
+                defaultRails.Master = new List<Rail>();
+                defaultRails.Custom = new List<Rail>();
+                CurrentChart.Rails = defaultRails;
+
                 /* songClip = AudioClip.Create(CurrentChart.AudioName,
                     CurrentChart.AudioData.Length,
                     CurrentChart.AudioChannels,
@@ -1623,6 +1632,15 @@ namespace MiKu.NET {
                 defaultLights.Master = new List<float>();
                 defaultLights.Custom = new List<float>();
                 CurrentChart.Lights = defaultLights;
+
+                EditorRails defaultRails = new EditorRails();
+                defaultRails.Easy = new List<Rail>();
+                defaultRails.Normal = new List<Rail>();
+                defaultRails.Hard = new List<Rail>();
+                defaultRails.Expert = new List<Rail>();
+                defaultRails.Master = new List<Rail>();
+                defaultRails.Custom = new List<Rail>();
+                CurrentChart.Rails = defaultRails;
 
                 CurrentChart.BPM = BPM;
                 CurrentChart.Bookmarks = new EditorBookmarks();
@@ -4745,7 +4763,7 @@ namespace MiKu.NET {
                         // need to check if the note is of the correct type
                         // for the time being let's make only rail notes to remove other rail notes
                         // and only balls to remove balls
-                        if(IsRailNoteType(potentialOverlap.UsageType) && 
+                        if(IsRailNoteType(potentialOverlap.UsageType) &&
                             IsRailNoteType(Track.s_instance.selectedUsageType)) {
                             // this adjusts the rail but actual outside note is for this code to handle
                             Rail rail = IdDictionaries.GetRail(potentialOverlap.railId);
@@ -4773,7 +4791,7 @@ namespace MiKu.NET {
                                     newRangeBeginObject.name = newRangeBegin.Id;
                                 }
                             }
-                        } 
+                        }
                         return true;
                     }
                 }
@@ -4862,7 +4880,7 @@ namespace MiKu.NET {
         }
 
         public static bool IsSimpleNoteType(EditorNote.NoteHandType noteType) {
-            if(noteType == EditorNote.NoteHandType.LeftHanded || noteType == EditorNote.NoteHandType.RightHanded || noteType == EditorNote.NoteHandType.SeparateHandSpecial)  {
+            if(noteType == EditorNote.NoteHandType.LeftHanded || noteType == EditorNote.NoteHandType.RightHanded || noteType == EditorNote.NoteHandType.SeparateHandSpecial) {
                 return true;
             }
             return false;
@@ -4887,7 +4905,7 @@ namespace MiKu.NET {
             if(noteType1 == EditorNote.NoteUsageType.Ball && noteType2 == EditorNote.NoteUsageType.Ball) {
                 return true;
             }
-            if((noteType1 == EditorNote.NoteUsageType.Line || noteType1 == EditorNote.NoteUsageType.Breaker) && 
+            if((noteType1 == EditorNote.NoteUsageType.Line || noteType1 == EditorNote.NoteUsageType.Breaker) &&
                 (noteType2 == EditorNote.NoteUsageType.Line || noteType2 == EditorNote.NoteUsageType.Breaker)) {
                 return true;
             }
@@ -4911,10 +4929,10 @@ namespace MiKu.NET {
 
                 return;
             }
-            if(IsBallNoteType(Track.s_instance.selectedUsageType)) { 
+            Dictionary<float, List<EditorNote>> workingTrack = s_instance.GetCurrentTrackDifficulty();
+            if(IsBallNoteType(Track.s_instance.selectedUsageType)) {
                 // first we check if theres is any note in that time period
                 // We need to check the track difficulty selected
-                Dictionary<float, List<EditorNote>> workingTrack = s_instance.GetCurrentTrackDifficulty();
                 if(workingTrack != null) {
                     // ball section, rail notes need to be handled differently
                     float timeRangeDuplicatesStart = CurrentTime - MIN_TIME_OVERLAY_CHECK;
@@ -4941,122 +4959,174 @@ namespace MiKu.NET {
                         }
                     }
                 }
-                if(IsRailNoteType(Track.s_instance.selectedUsageType)) {
-                    // check to see if there's an opposing rail note here
-                    // if there is adjust the time to match
-                    // if there is not just move the current rail note and reinstantiate the rail
-                    float timeRangeDuplicatesStart = CurrentTime - MIN_TIME_OVERLAY_CHECK;
-                    float timeRangeDuplicatesEnd = CurrentTime + MIN_TIME_OVERLAY_CHECK;
-                    List<Rail> rails = Track.s_instance.GetCurrentRailListByDifficulty();
-                    rails.Sort((x, y) => x.startTime.CompareTo(y.startTime));
-                    // we're looking for up to two rails overlapping this time point
-                    List<Rail> matches = new List<Rail>();
-                    foreach(Rail testedRail in rails.OrEmptyIfNull()) {
-                        if(testedRail.startTime > timeRangeDuplicatesEnd)
-                            break;
+            }
+            if(IsRailNoteType(Track.s_instance.selectedUsageType)) {
+                // check to see if there's an opposing rail note here
+                // if there is adjust the time to match
+                // if there is not just move the current rail note and reinstantiate the rail
+                float timeRangeDuplicatesStart = CurrentTime - MIN_TIME_OVERLAY_CHECK;
+                float timeRangeDuplicatesEnd = CurrentTime + MIN_TIME_OVERLAY_CHECK;
+                List<Rail> rails = s_instance.GetCurrentRailListByDifficulty();
+                rails.Sort((x, y) => x.startTime.CompareTo(y.startTime));
+                // we're looking for up to two rails overlapping this time point
+                List<Rail> matches = new List<Rail>();
+                foreach(Rail testedRail in rails.OrEmptyIfNull()) {
+                    if(testedRail.startTime > timeRangeDuplicatesEnd)
+                        break;
 
-                        if(testedRail.endTime < timeRangeDuplicatesStart)
-                            continue;
+                    if(testedRail.endTime < timeRangeDuplicatesStart)
+                        continue;
 
-                        if(testedRail.TimeInInterval(CurrentTime)) {
-                            matches.Add(testedRail);
-                        }
-                        if(matches.Count == 2) // reached all potential rails
-                            break;
+                    if(testedRail.TimeInInterval(CurrentTime)) {
+                        matches.Add(testedRail);
                     }
-
-                    // we need to check within found rails if we can replace the current note and do that
-                    {
-                        Rail matchedRail = null;
-                        foreach(Rail potentialMatch in matches.OrEmptyIfNull()) {
-                            if(potentialMatch.HasNoteAtTime(CurrentTime)
-                                && Track.s_instance.selectedNoteType == potentialMatch.noteType) {
-                                matchedRail = potentialMatch;
-                                break;
-                            }
-                        }
-                        // if we found a match we move the rail note to a new position and recalc the rail
-                        if(matchedRail != null) {
-                            matchedRail.MoveNoteAtTimeToPosition(CurrentTime, noteFromNoteArea.transform.position.x, noteFromNoteArea.transform.position.y);
-                        }
-                        // if we're placing the special combo rail over a common one, display promt and exit
-                        // same for the opposite case
-                        bool simpleRail = false;
-                        foreach(Rail potentialMatch in matches.OrEmptyIfNull()) {
-                            if(IsSimpleNoteType(Track.s_instance.selectedNoteType) && IsSimpleNoteType(potentialMatch.noteType)) {
-                                simpleRail = true;
-                                break;
-                            }
-                        }
-                        if(!simpleRail) {
-                            Miku_DialogManager.ShowDialog(Miku_DialogManager.DialogType.Alert, StringVault.Alert_CantPlaceRailOfDifferntSubtype);
-                            return;
-                        }
-
-                        EditorNote noteForRail = new EditorNote(noteFromNoteArea.transform.position, Track.CurrentTime, FormatNoteName(CurrentTime, s_instance.TotalNotes + 1, s_instance.selectedNoteType));
-                        noteForRail.UsageType = s_instance.selectedUsageType;
-
-                        // trying to add the note to an already existing rail
-                        bool addedToExistingRail = false;
-                        foreach(Rail testedRail in matches.OrEmptyIfNull()) {
-                            if(testedRail.noteType == Track.s_instance.selectedNoteType) {
-                                testedRail.AddNote(noteForRail);
-                                addedToExistingRail = true;
-                                break;
-                            }
-                        }
-                        if(addedToExistingRail)
-                            return;
-
-                        Rail rail = new Rail();
-                        rail.noteType =  s_instance.selectedNoteType;
-                        rail.AddNote(noteForRail);
-                        IdDictionaries.AddRail(rail);
-                        List<Rail> railList = s_instance.GetCurrentRailListByDifficulty();
-                        railList.Add(rail);
-                        // if we're here, we definitely need to add a completely new rail
-
-
-                    }
+                    if(matches.Count == 2) // reached all potential rails
+                        break;
                 }
 
-
-
-                // workingTrack[CurrentTime].Count
-                EditorNote noteForChart = new EditorNote(noteFromNoteArea.transform.position, Track.CurrentTime, FormatNoteName(CurrentTime, s_instance.TotalNotes + 1, s_instance.selectedNoteType));
-                noteForChart.HandType = s_instance.selectedNoteType;
-
-                // Check if the note placed if of special type 
-                if(IsOfSpecialType(noteForChart)) {
-                    // If whe are no creating a special, Then we init the new special section
-                    if(!s_instance.specialSectionStarted) {
-                        s_instance.specialSectionStarted = true;
-                        s_instance.currentSpecialSectionID++;
-                        Miku_DialogManager.ShowDialog(Miku_DialogManager.DialogType.Info, StringVault.Info_SpecialModeStarted);
-                        s_instance.ToggleWorkingStateAlertOn(StringVault.Info_UserOnSpecialSection);
+                // we need to check within found rails if we can replace the current note and do that
+                {
+                    Rail matchedRail = null;
+                    foreach(Rail potentialMatch in matches.OrEmptyIfNull()) {
+                        if(potentialMatch.HasNoteAtTime(CurrentTime)
+                            && Track.s_instance.selectedNoteType == potentialMatch.noteType) {
+                            matchedRail = potentialMatch;
+                            break;
+                        }
+                    }
+                    // if we found a match we move the rail note to a new position and recalc the rail
+                    if(matchedRail != null) {
+                        matchedRail.MoveNoteAtTimeToPosition(CurrentTime, noteFromNoteArea.transform.position.x, noteFromNoteArea.transform.position.y);
+                    }
+                    // if we're placing the special combo rail over a common one, display promt and exit
+                    // same for the opposite case
+                    bool simpleRail = false;
+                    foreach(Rail potentialMatch in matches.OrEmptyIfNull()) {
+                        if(IsSimpleNoteType(Track.s_instance.selectedNoteType) && IsSimpleNoteType(potentialMatch.noteType)) {
+                            simpleRail = true;
+                            break;
+                        }
+                    }
+                    if(!simpleRail && matches != null && matches.Count > 0) {
+                        Miku_DialogManager.ShowDialog(Miku_DialogManager.DialogType.Alert, StringVault.Alert_CantPlaceRailOfDifferntSubtype);
+                        return;
                     }
 
-                    // Assing the Special ID to the note
-                    noteForChart.ComboId = s_instance.currentSpecialSectionID;
+                    EditorNote noteForRail = new EditorNote(noteFromNoteArea.transform.position, Track.CurrentTime, "Rail " + FormatNoteName(CurrentTime, s_instance.TotalNotes + 1, s_instance.selectedNoteType));
+                    noteForRail.UsageType = s_instance.selectedUsageType;
+                    noteForRail.HandType = s_instance.selectedNoteType;
 
-                    Track.LogMessage("Current Special ID: " + s_instance.currentSpecialSectionID);
-                }
+                    // trying to add the note to an already existing rail
+                    bool addedToExistingRail = false;
+                    
+                    // first we need to sort the rails on time and find the ones containing the current note
+                    // this should net us exactly one rail
+                    List<Rail> activeRailsOfSameType = rails.Where(filteredRail => filteredRail.TimeInInterval(CurrentTime) && filteredRail.noteType == s_instance.selectedNoteType).ToList();
+                    foreach(Rail testedRail in activeRailsOfSameType.OrEmptyIfNull()) {
+                            testedRail.AddNote(noteForRail);
+                            addedToExistingRail = true;
+                            break;
+                    }
+                    
+                    if(!addedToExistingRail) {
+                        // if we haven't added a note inside the existing rail, we need to test if there is an open one to the left
+                        rails.Sort((x, y) => y.startTime.CompareTo(x.startTime));
+                        foreach(Rail testedRail in rails) {
+                            if(testedRail.startTime <= CurrentTime && testedRail.noteType == s_instance.selectedNoteType) {
+                                if(testedRail.breaker == null) {
+                                    // now we need to make sure there are no single balls of special color between the rail end and this new line note
+                                    // ideally this should be checked between the ranges, but this will require too much refactoring rn
+                                    // so I will just go with bruteforcing ball/rail search for the interval
 
-                // Finally we added the note to the dictonary
-                // ref of the note for easy of access to properties                        
-                if(workingTrack.ContainsKey(CurrentTime)) {
-                    // print("Trying currentTime "+CurrentTime);
-                    workingTrack[CurrentTime].Add(noteForChart);
-                    s_instance.AddNoteGameObjectToScene(noteForChart);
-                    s_instance.UpdateTotalNotes();
-                } else {
-                    Track.LogMessage("Time does not exist");
+                                    //Dictionary<float, List<EditorNote>> workingTrack = s_instance.GetCurrentTrackDifficulty();
+                                    List<float> keys_tofilter = workingTrack.Keys.ToList();
+                                    List<float> activeTimesIntheInterval = keys_tofilter.Where( time => time > testedRail.endTime && time < CurrentTime).ToList();
+                                    bool hasPreventingNotes = false;
+                                    // we need to check each possible time
+                                    foreach(float testedTime in activeTimesIntheInterval.OrEmptyIfNull()) {
+                                        List<EditorNote> currentNotes = workingTrack[testedTime];
+                                        foreach(EditorNote testedNote in currentNotes.OrEmptyIfNull())  {
+                                            if(testedNote.HandType == testedRail.noteType)
+                                                continue;
+                                            if(IsOfSpecialType(testedRail.noteType)) {
+                                                if(testedNote.HandType != testedRail.noteType) {
+                                                    hasPreventingNotes = true;
+                                                    break;
+                                                }
+                                            } else {
+                                                if(IsOfSpecialType(testedNote.HandType)) {
+                                                    hasPreventingNotes = true;
+                                                    break;
+                                                }
+                                            }
+                                        }
+                                        if(hasPreventingNotes)
+                                            break;
+                                     }
+                                    if(!hasPreventingNotes) { 
+                                        testedRail.AddNote(noteForRail);
+                                        addedToExistingRail = true;
+                                    }
+                                }
+                                break;
+                            }
+                        }
+
+
+                    }
+                    if(addedToExistingRail)
+                        return;
+
+                    Rail rail = new Rail();
+                    rail.noteType =  s_instance.selectedNoteType;
+                    rail.AddNote(noteForRail);
+                    IdDictionaries.AddRail(rail);
+                    List<Rail> railList = s_instance.GetCurrentRailListByDifficulty();
+                    railList.Add(rail);
+                    // if we're here, we definitely need to add a completely new rail
+
+
                 }
 
             }
+
+
+            // workingTrack[CurrentTime].Count
+            EditorNote noteForChart = new EditorNote(noteFromNoteArea.transform.position, Track.CurrentTime, FormatNoteName(CurrentTime, s_instance.TotalNotes + 1, s_instance.selectedNoteType));
+            noteForChart.HandType = s_instance.selectedNoteType;
+
+            // Check if the note placed if of special type 
+            if(IsOfSpecialType(noteForChart)) {
+                // If whe are no creating a special, Then we init the new special section
+                if(!s_instance.specialSectionStarted) {
+                    s_instance.specialSectionStarted = true;
+                    s_instance.currentSpecialSectionID++;
+                    Miku_DialogManager.ShowDialog(Miku_DialogManager.DialogType.Info, StringVault.Info_SpecialModeStarted);
+                    s_instance.ToggleWorkingStateAlertOn(StringVault.Info_UserOnSpecialSection);
+                }
+
+                // Assing the Special ID to the note
+                noteForChart.ComboId = s_instance.currentSpecialSectionID;
+
+                Track.LogMessage("Current Special ID: " + s_instance.currentSpecialSectionID);
+            }
+
+            // Finally we added the note to the dictonary
+            // ref of the note for easy of access to properties                        
+            if(workingTrack.ContainsKey(CurrentTime)) {
+                // print("Trying currentTime "+CurrentTime);
+                workingTrack[CurrentTime].Add(noteForChart);
+                s_instance.AddNoteGameObjectToScene(noteForChart);
+                s_instance.UpdateTotalNotes();
+            } else {
+                Track.LogMessage("Time does not exist");
+            }
+
+
         }
 
-        EditorNote.NoteHandType defaultType = s_instance.selectedNoteType;
+
+        EditorNote.NoteHandType defaultType = EditorNote.NoteHandType.LeftHanded;
 
         public static void AddNoteToChart(GameObject[] noteAndMirror) {
             EditorNote.NoteHandType defaultType = s_instance.selectedNoteType;
@@ -5246,6 +5316,13 @@ namespace MiKu.NET {
         /// <returns>Returns <typeparamref name="bool"/></returns>
         public static bool IsOfSpecialType(EditorNote n) {
             if(n.HandType == EditorNote.NoteHandType.OneHandSpecial || n.HandType == EditorNote.NoteHandType.BothHandsSpecial) {
+                return true;
+            }
+
+            return false;
+        }
+        public static bool IsOfSpecialType(EditorNote.NoteHandType type) {
+            if(type == EditorNote.NoteHandType.OneHandSpecial || type == EditorNote.NoteHandType.BothHandsSpecial) {
                 return true;
             }
 
@@ -5724,7 +5801,7 @@ namespace MiKu.NET {
                                     float tms = UnitToMS(segmentPos.z);
                                     n.Segments[j, 2] = MStoUnit(UpdateTimeToBPM(tms, fromBPM));
                                 }
-                                
+
                                 RenderLine(noteGO, n.Segments, true);
                             } */
                         }

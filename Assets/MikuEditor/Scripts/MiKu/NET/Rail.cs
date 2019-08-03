@@ -17,14 +17,19 @@ namespace MiKu.NET {
         }
 
         public EditorNote thisNote;
+        public GameObject thisNoteObject;
         public RailNoteWrapper previousNote;
         public RailNoteWrapper nextNote;
+
     }
 
-    public class Rail : MonoBehaviour {
+    public class Rail  {
         public Rail() {
             railId = railCounter++;
-        }
+            notesByID = new Dictionary<int, RailNoteWrapper>();
+            notesByTime = new Dictionary<float, RailNoteWrapper>();
+            noteObjects = new Dictionary<int, GameObject>();
+    }
 
         ~Rail() {
             IdDictionaries.RemoveRail(railId);
@@ -66,7 +71,7 @@ namespace MiKu.NET {
             foundNote.Position[0] = x;
             foundNote.Position[1] = y;
 
-            InstantiateNoteObject(foundNote);
+            InstantiateNoteObject(notesByTime[times[0]]);
             ReinstantiateRail(this);
         }
 
@@ -82,64 +87,91 @@ namespace MiKu.NET {
             if(!notesByID.ContainsKey(id))
                 return;
 
-            Rail potentialRemovedRail = null;
-            RailNoteWrapper removedNote = notesByID[id];
+            // three distinct cases here, removing sole leader, breaker and removing simple note
+            // first removes the rail altogether
+            // second needs to set a new breaker as the previous note (merging two rails should be done by replacing the breaker with a note)
+            // third just moves pointers around
 
-            // need to check that this note isn't the leader and assign a new one
-            if(leader.thisNote.noteId == id) {
-                RailNoteWrapper oldLeader = leader;
-                RailNoteWrapper oldNextNote = leader.nextNote;
-                if(oldNextNote == null) {
-                    scheduleForDeletion = true;
-                } else {
-                    leader = oldNextNote;
-                    oldNextNote.previousNote = null;
-                }
-            } else {
-                // need to check that we're not removing the breaker
-                // if we do, make the previous note a breaker
-                // user can always change the type of it later
-                if(IsBreakerNote(removedNote.thisNote.UsageType)) {
-                    RailNoteWrapper previousNote = removedNote.previousNote;
-                    previousNote.thisNote.UsageType = removedNote.thisNote.UsageType;
-                    previousNote.nextNote = null;
-                } else {
-                    RailNoteWrapper previousNote = removedNote.previousNote;
-                    previousNote.nextNote = removedNote.nextNote; // it's fine if nextNote is null
-                }
+            if(notesByID.Count == 1) {
+                // we are removing the last note of the rail
+                scheduleForDeletion = true;
+                return;
             }
+
+            RailNoteWrapper removedNote = notesByID[id];
+            EditorNote note = removedNote.thisNote;
+
+            if(IsBreakerNote(note.UsageType)) 
+                RemoveBreakerNote(removedNote);
+            else
+                RemoveSimpleNote(removedNote);
 
             notesByID.Remove(id);
             notesByTime.Remove(removedNote.thisNote.TimePoint);
-
-            // by removing the breaker we are opening merge potential
-            // this means the next following rails might need to be deinstantiated
-            // as its notes will move to this one
-            // ^^^ disregard this comment for now, I will move merges to node type change
-            //potentialRemovedRail = GetNextRail();
-            //if (!CanMerge(this, potentialRemovedRail))
-            //{
-            //    potentialRemovedRail = null;
-            //}
-            //else {
-            //    Merge(this, potentialRemovedRail);
-            //}
 
             RecalcDuration();
             
             DestroyNoteObjectAndRemoveItFromTheRail(id);
             ReinstantiateRail(this);
-            Destroy(potentialRemovedRail);
             return;
+        }
+
+
+        void RemoveSimpleNote(RailNoteWrapper wrapper) {
+            EditorNote note = wrapper.thisNote;
+            RailNoteWrapper previous = GetPreviousNote(note.TimePoint);
+
+            // by this point we've established it's not the breaker so we only need 
+            // to concern ourselves if we're removing the leader or not
+            // need to check that this note isn't the leader and assign a new one
+            if(leader.thisNote.noteId == note.noteId) {
+                RailNoteWrapper oldNextNote = leader.nextNote;
+                leader = oldNextNote;
+            } else {
+                RailNoteWrapper oldPreviousNote = wrapper.previousNote;
+                RailNoteWrapper oldNextNote = wrapper.nextNote;
+
+                oldPreviousNote.nextNote = oldNextNote;
+                // we can be removing the last section of unterminated rail
+                // in this case oldNextNote will be null
+                if(oldNextNote != null)
+                    oldNextNote.previousNote = oldPreviousNote;
+            }
+        }
+
+        void RemoveBreakerNote(RailNoteWrapper wrapper) {
+            EditorNote note = wrapper.thisNote;
+            RailNoteWrapper previous = GetPreviousNote(note.TimePoint);
+            // by this point we've established this note isn't a sole note of a rail
+            // also at this point breaker can only be the last note in the segment
+            // by default removing a breaker does _not_ merge the rail to the next one
+            // neither does it automatically make the previous note a breaker
+            previous.nextNote = null;
+            breaker = null;
         }
 
         public void AddNote(EditorNote note) {
             // extending past the railbraker needs to make a new note railbreaker
-
-            Rail potentialNewRail = null;
-
             RailNoteWrapper wrapper = new RailNoteWrapper(note);
+            if(IsBreakerNote(note.UsageType)) 
+                AddBreakerNote(wrapper);
+            else
+                AddSimpleNote(wrapper);
+
+            notesByID[note.noteId] = wrapper;
+            notesByTime[note.TimePoint] = wrapper;
+
+            RecalcDuration();
+
+            InstantiateNoteObject(wrapper);
+            ReinstantiateRail(this);
+        }
+
+        void AddSimpleNote(RailNoteWrapper wrapper) {
+
+            EditorNote note = wrapper.thisNote;
             RailNoteWrapper previous = GetPreviousNote(note.TimePoint);
+            
             // adding new leader
             if(previous == null) {
                 RailNoteWrapper previousLeader = leader;
@@ -149,39 +181,77 @@ namespace MiKu.NET {
                     previousLeader.previousNote = wrapper;
                 }
             }
-            // adding new tail or non breaker
-            else if(previous.nextNote == null || !IsBreakerNote(note.UsageType)) {
+            // adding new tail 
+            else if(previous.nextNote == null ) {
                 RailNoteWrapper previousLeftPoint = previous;
-                RailNoteWrapper previousRightPoint = previous.nextNote;
-                bool previousIsBreaker = IsBreakerNote(previousLeftPoint.thisNote.UsageType);
 
                 previous.nextNote = wrapper;
-                wrapper.nextNote = previousRightPoint;
+                wrapper.nextNote = null;
                 wrapper.previousNote = previousLeftPoint;
-                if(previousIsBreaker) {
-                    previousLeftPoint.thisNote.UsageType = EditorNote.NoteUsageType.Line;
-                    wrapper.thisNote.UsageType = EditorNote.NoteUsageType.Breaker;
-                }
             }
-            // adding new note in the middle, need to handle breaker case
+            // adding new note in the middle
             else {
                 RailNoteWrapper originalNextNote = previous.nextNote;
 
                 previous.nextNote = wrapper;
-                wrapper.nextNote = null;
-
-                potentialNewRail = ConvertTheTailIntoNewRail(originalNextNote);
-
+                wrapper.nextNote = originalNextNote;
+                wrapper.previousNote = previous;
             }
-            notesByID[note.noteId] = wrapper;
-            notesByTime[note.TimePoint] = wrapper;
+        }
 
-            RecalcDuration();
+        //need to handle special case of adding a breaker to an already broken rail
+        void AddBreakerNote(RailNoteWrapper wrapper) {
 
+            EditorNote note = wrapper.thisNote;
+            Rail potentialNewRail = null;
 
-            InstantiateNoteObject(note);
-            ReinstantiateRail(this);
+            breaker = wrapper;
+
+            
+
+            RailNoteWrapper previous = GetPreviousNote(note.TimePoint);
+            // breaker becomes the first note 
+            // two possibilities > first note of an existing rail and first note of a new rail
+            // first shouldn't be happening because request like that won't pass the external function
+            // still, better to handle this and just exit
+            if(previous == null ) {
+
+                // first note of an existing rail 
+                // returning, this is bs
+                if(notesByID.Count > 0)
+                    return;
+               
+                // rail that starts with the breaker is theoretically possible
+                leader = wrapper;
+            }
+            // adding non first note
+            // since it's a breaker there are two possible cases
+            // we're splitting an existing rail
+            // or we're adding a breaker past an already existing breaker
+
+            // if we're breaking an existing rail
+            if(previous.nextNote != null ) {
+                
+                RailNoteWrapper previousLeftPoint = previous;
+                RailNoteWrapper previousRightPoint = previous.nextNote;
+
+                previous.nextNote = wrapper;
+                wrapper.nextNote = null;
+                wrapper.previousNote = previousLeftPoint;
+
+                potentialNewRail = ConvertTheTailIntoNewRail(previousRightPoint);
+            }
+            // adding a breaker past the breaker
+            // need to extend and set all params for a new breaker
+            else {
+                //RailNoteWrapper originalNextNote = previous.nextNote;
+                previous.thisNote.UsageType = EditorNote.NoteUsageType.Line;
+                previous.nextNote = wrapper;
+                wrapper.nextNote = null;
+            }
+
             ReinstantiateRail(potentialNewRail);
+
         }
 
         public RailNoteWrapper GetPreviousNote(float time) {
@@ -202,6 +272,8 @@ namespace MiKu.NET {
         }
 
         public static void ReinstantiateRail(Rail rail) {
+            if(rail == null)
+                return;
             // need to somehow indicate that rail is too shor or too long, maybe with a color
             if(rail.duration < Track.MIN_LINE_DURATION ||
                 rail.duration > Track.MAX_LINE_DURATION) {
@@ -226,22 +298,32 @@ namespace MiKu.NET {
             //    rail.linkedObject = Track.Instance.AddNoteGameObjectToScene(rail.leader.thisNote);
             //}
 
-            var leaderNote = rail.leader.thisNote;
+            EditorNote leaderNote = rail.leader.thisNote;
             leaderNote.Segments = new float[rail.notesByID.Count, 3];
+            
+            //float[,] testedArray = new float[rail.notesByID.Count, 3];
 
             List<float> keys = rail.notesByTime.Keys.ToList();
             keys.Sort();
+            try {
+                for(int i = 0; i < keys.Count; i++) {
+                    float key = keys[i];
+                    RailNoteWrapper note = rail.notesByTime[key];
 
-            for(int i = 0; i < keys.Count; ++i) {
-                leaderNote.Segments[i, 0] = rail.notesByTime[keys[i]].thisNote.Position[0];
-                leaderNote.Segments[i, 1] = rail.notesByTime[keys[i]].thisNote.Position[1];
-                leaderNote.Segments[i, 2] = rail.notesByTime[keys[i]].thisNote.Position[2];
-            }
+                    leaderNote.Segments[i, 0] = note.thisNote.Position[0];
+                    leaderNote.Segments[i, 1] = note.thisNote.Position[1];
+                    leaderNote.Segments[i, 2] = note.thisNote.Position[2];
+
+                    note = rail.notesByTime[key];
+                    //leaderNote.Segments[i, 1] = note.thisNote.Position[1];
+                }
+            } catch { }
 
 
-            rail.waveCustom = new Game_LineWaveCustom();
-            rail.waveCustom.targetOptional = leaderNote.Segments;
-            rail.waveCustom.RenderLine(true);
+            GameObject leaderObject = rail.leader.thisNoteObject;
+            Game_LineWaveCustom waveCustom = leaderObject.GetComponentInChildren<Game_LineWaveCustom>();
+            waveCustom.targetOptional = leaderNote.Segments;
+            waveCustom.RenderLine(true);
         }
 
         public static void Destroy(Rail rail) {
@@ -290,7 +372,8 @@ namespace MiKu.NET {
             endTime = keys[keys.Count - 1];
         }
 
-        void InstantiateNoteObject(EditorNote note) {
+        void InstantiateNoteObject(RailNoteWrapper wrapper) {
+            EditorNote note = wrapper.thisNote;
             DestroyNoteObjectAndRemoveItFromTheRail(note.noteId);
 
             GameObject noteGO = GameObject.Instantiate(Track.s_instance.GetNoteMarkerByType(note.HandType));
@@ -302,6 +385,7 @@ namespace MiKu.NET {
             noteGO.transform.rotation = Quaternion.identity;
             noteGO.transform.parent = Track.s_instance.m_NotesHolder;
             noteGO.name = note.Id;
+            wrapper.thisNoteObject = noteGO;
         }
 
         void DestroyNoteObjectAndRemoveItFromTheRail(int id) {
