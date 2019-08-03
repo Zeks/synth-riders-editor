@@ -223,16 +223,16 @@ namespace MiKu.NET {
 
         private const string SLIDE_LEFT_DIAG_TAG = "SlideLeftDiag";
 
-        private const float MIN_TIME_OVERLAY_CHECK = 5;
+        public const float MIN_TIME_OVERLAY_CHECK = 5;
 
-        private const float MIN_NOTE_START = 2;
+        public const float MIN_NOTE_START = 2;
 
         public const int MAX_TAG_ALLOWED = 10;
 
         #endregion
 
         // For static access
-        private static Track s_instance;
+        public static Track s_instance;
 
         [SerializeField]
         private string editorVersion = "1.1-alpha.3";
@@ -248,7 +248,7 @@ namespace MiKu.NET {
         private Transform m_CamerasHolder;
 
         [SerializeField]
-        private Transform m_NotesHolder;
+        public Transform m_NotesHolder;
 
         [SerializeField]
         private Transform m_NoNotesElementHolder;
@@ -629,6 +629,7 @@ namespace MiKu.NET {
 
         // The current selected type of note marker
         private EditorNote.NoteHandType selectedNoteType = EditorNote.NoteHandType.RightHanded;
+        private EditorNote.NoteUsageType selectedUsageType = EditorNote.NoteUsageType.None;
 
         // Has the chart been Initiliazed
         private bool isInitilazed = false;
@@ -4036,6 +4037,27 @@ namespace MiKu.NET {
         }
 
         /// <summary>
+        /// Increase the <see cref="TotalNotes" /> stat
+        /// </summary>
+        void IncreaseTotalNotesCount() {
+            TotalNotes++;
+            m_statsTotalNotesText.SetText(TotalNotes.ToString() + " Notes");
+        }
+        /// <summary>
+        /// Decrease the <see cref="TotalNotes" /> stat
+        /// </summary>
+        void DecreaseTotalNotesCount() {
+            TotalNotes--;
+            m_statsTotalNotesText.SetText(TotalNotes.ToString() + " Notes");
+        }
+        /// <summary>
+        /// Reset the <see cref="TotalNotes" /> stat
+        /// </summary>
+        void ResetTotalNotesCount() {
+            TotalNotes = 0;
+            m_statsTotalNotesText.SetText(TotalNotes.ToString() + " Notes");
+        }
+        /// <summary>
         /// Start the functionality to add a longnote
         /// no longer used
         /// </summary>
@@ -4708,41 +4730,50 @@ namespace MiKu.NET {
                 float targetTime = keys_tofilter[filterList];
                 //print(targetTime+" "+CurrentTime);
                 List<EditorNote> notes = workingTrack[targetTime];
-                int totalNotes = notes.Count;
+                int totalNotesAtCurrentTime = notes.Count;
 
                 // Check for overlaping notes and delete if close
-                for(int i = 0; i < totalNotes; ++i) {
-                    EditorNote overlap = notes[i];
+                for(int i = 0; i < totalNotesAtCurrentTime; ++i) {
+                    EditorNote potentialOverlap = notes[i];
+                    bool hasActualOverlap = ArePositionsOverlaping(noteFromNoteArea.transform.position,
+                        new Vector3(potentialOverlap.Position[0],
+                            potentialOverlap.Position[1],
+                            potentialOverlap.Position[2]
+                        ));
+                    if(hasActualOverlap) {
 
-                    if(ArePositionsOverlaping(noteFromNoteArea.transform.position,
-                        new Vector3(overlap.Position[0],
-                            overlap.Position[1],
-                            overlap.Position[2]
-                        ))) {
-                        GameObject nToDelete = GameObject.Find(overlap.Id);
-                        if(nToDelete) {
-                            DestroyImmediate(nToDelete);
+                        // need to check if the note is of the correct type
+                        // for the time being let's make only rail notes to remove other rail notes
+                        // and only balls to remove balls
+                        if(IsRailNoteType(potentialOverlap.UsageType) && 
+                            IsRailNoteType(Track.s_instance.selectedUsageType)) {
+                            // this adjusts the rail but actual outside note is for this code to handle
+                            Rail rail = IdDictionaries.GetRail(potentialOverlap.railId);
+                            rail.RemoveNote(potentialOverlap.noteId);
                         }
 
-                        Rail rail = IdDictionaries.GetRail(overlap.railId);
-                        rail.RemoveNote(overlap.noteId);
-
-                        notes.Remove(overlap);
-                        totalNotes--;
-                        s_instance.UpdateTotalNotes(false, true);
-                        //Rail railSegment = FindRailSegment(targetTime);
-
-                        if(totalNotes <= 0) {
-                            workingTrack.Remove(targetTime);
-                            s_instance.hitSFXSource.Remove(targetTime);
-                        } else {
-                            overlap = notes[0];
-                            if(overlap.HandType == EditorNote.NoteHandType.OneHandSpecial) {
-                                nToDelete = GameObject.Find(overlap.Id);
-                                overlap.Id = FormatNoteName(targetTime, 0, overlap.HandType);
-                                nToDelete.name = overlap.Id;
+                        if(IsSameUsageTypeClass(potentialOverlap.UsageType, Track.s_instance.selectedUsageType)) {
+                            // removing just the note object
+                            GameObject nToDelete = GameObject.Find(potentialOverlap.Id);
+                            if(nToDelete) {
+                                DestroyImmediate(nToDelete);
                             }
-                        }
+
+                            notes.Remove(potentialOverlap);
+                            totalNotesAtCurrentTime--;
+                            s_instance.DecreaseTotalNotesCount();
+                            if(totalNotesAtCurrentTime <= 0) {
+                                workingTrack.Remove(targetTime);
+                                s_instance.hitSFXSource.Remove(targetTime);
+                            } else {
+                                EditorNote newRangeBegin = notes[0];
+                                if(newRangeBegin.HandType == EditorNote.NoteHandType.OneHandSpecial) {
+                                    GameObject newRangeBeginObject = GameObject.Find(newRangeBegin.Id);
+                                    newRangeBegin.Id = FormatNoteName(targetTime, 0, newRangeBegin.HandType);
+                                    newRangeBeginObject.name = newRangeBegin.Id;
+                                }
+                            }
+                        } 
                         return true;
                     }
                 }
@@ -4755,8 +4786,8 @@ namespace MiKu.NET {
                 // If the time key exist, check how many notes are added
                 float targetTime = keys_tofilter[filterList];
                 //print(targetTime+" "+CurrentTime);
-                List<EditorNote> notes = workingTrack[targetTime];
-                int totalNotes = notes.Count;
+                List<EditorNote> notesAtTargetTime = workingTrack[targetTime];
+                int totalNotes = notesAtTargetTime.Count;
 
                 // if count is MAX_ALLOWED_NOTES then return because not more notes are allowed
                 if(totalNotes >= MAX_ALLOWED_NOTES) {
@@ -4766,7 +4797,7 @@ namespace MiKu.NET {
                 } else {
                     // Both hand notes only allowed 1 total
                     // RightHanded/Left Handed notes only allowed 1 of their types
-                    EditorNote specialsNotes = notes.Find(x => x.HandType == EditorNote.NoteHandType.BothHandsSpecial || x.HandType == EditorNote.NoteHandType.OneHandSpecial);
+                    EditorNote specialsNotes = notesAtTargetTime.Find(x => x.HandType == EditorNote.NoteHandType.BothHandsSpecial || x.HandType == EditorNote.NoteHandType.OneHandSpecial);
                     if(specialsNotes != null || ((s_instance.selectedNoteType == EditorNote.NoteHandType.BothHandsSpecial || s_instance.selectedNoteType == EditorNote.NoteHandType.OneHandSpecial)
                                                         && totalNotes >= MAX_SPECIAL_NOTES)) {
                         //Track.LogMessage("Max number of both hands notes reached");
@@ -4774,7 +4805,7 @@ namespace MiKu.NET {
                         return true;
                     } else {
                         //if(s_instance.selectedNoteType != Note.NoteType.OneHandSpecial) {
-                        specialsNotes = notes.Find(x => x.HandType == s_instance.selectedNoteType);
+                        specialsNotes = notesAtTargetTime.Find(x => x.HandType == s_instance.selectedNoteType);
                         if(specialsNotes != null) {
                             //Track.LogMessage("Max number of "+s_instance.selectedNoteType.ToString()+" notes reached");
                             Miku_DialogManager.ShowDialog(Miku_DialogManager.DialogType.Alert, string.Format(StringVault.Alert_MaxNumberOfTypeNotes, s_instance.selectedNoteType.ToString()));
@@ -4786,7 +4817,7 @@ namespace MiKu.NET {
             }
             return false;
         }
-        private static void AdjustCurrentTimeToFoundNotes(Dictionary<float, List<EditorNote>> workingTrack, List<float> keys_tofilter) {
+        private static void AdjustCurrentTimeToFoundBallNotes(Dictionary<float, List<EditorNote>> workingTrack, List<float> keys_tofilter) {
             int totalFilteredTime = keys_tofilter.Count;
             for(int filterList = 0; filterList < totalFilteredTime; ++filterList) {
                 // If the time key exist, check how many notes are added
@@ -4801,13 +4832,67 @@ namespace MiKu.NET {
             }
         }
 
+        private static void AdjustCurrentTimeToFoundRailNotes(Dictionary<float, List<EditorNote>> workingTrack, List<float> keys_tofilter) {
+            int totalFilteredTime = keys_tofilter.Count;
+            for(int filterList = 0; filterList < totalFilteredTime; ++filterList) {
+                // If the time key exist, check how many notes are added
+                float targetTime = keys_tofilter[filterList];
+                //print(targetTime+" "+CurrentTime);
+                List<EditorNote> notes = workingTrack[targetTime];
+                int totalNotes = notes.Count;
+
+                if(totalNotes > 0) {
+                    CurrentTime = targetTime;
+                }
+            }
+        }
+
+
         public static bool IsRailNote(EditorNote note) {
             if(note.UsageType == EditorNote.NoteUsageType.Line || note.UsageType == EditorNote.NoteUsageType.Breaker) {
                 return true;
             }
             return false;
         }
+        public static bool IsRailNoteType(EditorNote.NoteUsageType noteType) {
+            if(noteType == EditorNote.NoteUsageType.Line || noteType == EditorNote.NoteUsageType.Breaker) {
+                return true;
+            }
+            return false;
+        }
 
+        public static bool IsSimpleNoteType(EditorNote.NoteHandType noteType) {
+            if(noteType == EditorNote.NoteHandType.LeftHanded || noteType == EditorNote.NoteHandType.RightHanded || noteType == EditorNote.NoteHandType.SeparateHandSpecial)  {
+                return true;
+            }
+            return false;
+        }
+
+        public static bool IsComboNoteType(EditorNote.NoteHandType noteType) {
+            if(noteType == EditorNote.NoteHandType.OneHandSpecial || noteType == EditorNote.NoteHandType.BothHandsSpecial) {
+                return true;
+            }
+            return false;
+        }
+
+
+        public static bool IsBallNoteType(EditorNote.NoteUsageType noteType) {
+            if(noteType == EditorNote.NoteUsageType.Ball) {
+                return true;
+            }
+            return false;
+        }
+
+        public static bool IsSameUsageTypeClass(EditorNote.NoteUsageType noteType1, EditorNote.NoteUsageType noteType2) {
+            if(noteType1 == EditorNote.NoteUsageType.Ball && noteType2 == EditorNote.NoteUsageType.Ball) {
+                return true;
+            }
+            if((noteType1 == EditorNote.NoteUsageType.Line || noteType1 == EditorNote.NoteUsageType.Breaker) && 
+                (noteType2 == EditorNote.NoteUsageType.Line || noteType2 == EditorNote.NoteUsageType.Breaker)) {
+                return true;
+            }
+            return false;
+        }
 
         /// <summary>
         /// Add note to chart
@@ -4826,33 +4911,116 @@ namespace MiKu.NET {
 
                 return;
             }
-
-            // first we check if theres is any note in that time period
-            // We need to check the track difficulty selected
-            Dictionary<float, List<EditorNote>> workingTrack = s_instance.GetCurrentTrackDifficulty();
-            if(workingTrack != null) {
-                float timeRangeDuplicatesStart = CurrentTime - MIN_TIME_OVERLAY_CHECK;
-                float timeRangeDuplicatesEnd = CurrentTime + MIN_TIME_OVERLAY_CHECK;
-                List<float> keys_tofilter = workingTrack.Keys.ToList();
-                keys_tofilter = keys_tofilter.Where(time => time >= timeRangeDuplicatesStart
-                        && time <= timeRangeDuplicatesEnd).ToList();
-                bool hasNotesWithinDeltaTime = keys_tofilter.Count != 0;
-                // if there are no notes to overlap, instantiate time in the dictionary
-                if(!hasNotesWithinDeltaTime) {
-                    workingTrack.Add(CurrentTime, new List<EditorNote>());
-                    s_instance.AddTimeToSFXList(CurrentTime);
-                } else {
-                    // find and remove notes that overlaps and return if one was removed
-                    if(RemoveOverlappingNote(workingTrack, keys_tofilter, noteFromNoteArea)) {
-
-                        return;
+            if(IsBallNoteType(Track.s_instance.selectedUsageType)) { 
+                // first we check if theres is any note in that time period
+                // We need to check the track difficulty selected
+                Dictionary<float, List<EditorNote>> workingTrack = s_instance.GetCurrentTrackDifficulty();
+                if(workingTrack != null) {
+                    // ball section, rail notes need to be handled differently
+                    float timeRangeDuplicatesStart = CurrentTime - MIN_TIME_OVERLAY_CHECK;
+                    float timeRangeDuplicatesEnd = CurrentTime + MIN_TIME_OVERLAY_CHECK;
+                    List<float> keys_tofilter = workingTrack.Keys.ToList();
+                    keys_tofilter = keys_tofilter.Where(time => time >= timeRangeDuplicatesStart
+                            && time <= timeRangeDuplicatesEnd).ToList();
+                    bool hasNotesWithinDeltaTime = keys_tofilter.Count != 0;
+                    // if there are no notes to overlap, instantiate time in the dictionary
+                    if(!hasNotesWithinDeltaTime) {
+                        workingTrack.Add(CurrentTime, new List<EditorNote>());
+                        s_instance.AddTimeToSFXList(CurrentTime);
+                    } else {
+                        // find and remove notes that overlaps and return if one was removed
+                        // needs a rail handler inside because removed rail note requires whole rail recalc
+                        if(RemoveOverlappingNote(workingTrack, keys_tofilter, noteFromNoteArea)) {
+                            return;
+                        }
+                        // check if max notes of current type are reached for the time delta and return if true
+                        {
+                            if(ReachedMaxNotesOfCurrentType(workingTrack, keys_tofilter, noteFromNoteArea))
+                                return;
+                            AdjustCurrentTimeToFoundBallNotes(workingTrack, keys_tofilter);
+                        }
                     }
-                    // check if max notes of current type are reached for the time delta and return if true
-                    if(ReachedMaxNotesOfCurrentType(workingTrack, keys_tofilter, noteFromNoteArea))
-                        return;
-
-                    AdjustCurrentTimeToFoundNotes(workingTrack, keys_tofilter);
                 }
+                if(IsRailNoteType(Track.s_instance.selectedUsageType)) {
+                    // check to see if there's an opposing rail note here
+                    // if there is adjust the time to match
+                    // if there is not just move the current rail note and reinstantiate the rail
+                    float timeRangeDuplicatesStart = CurrentTime - MIN_TIME_OVERLAY_CHECK;
+                    float timeRangeDuplicatesEnd = CurrentTime + MIN_TIME_OVERLAY_CHECK;
+                    List<Rail> rails = Track.s_instance.GetCurrentRailListByDifficulty();
+                    rails.Sort((x, y) => x.startTime.CompareTo(y.startTime));
+                    // we're looking for up to two rails overlapping this time point
+                    List<Rail> matches = new List<Rail>();
+                    foreach(Rail testedRail in rails.OrEmptyIfNull()) {
+                        if(testedRail.startTime > timeRangeDuplicatesEnd)
+                            break;
+
+                        if(testedRail.endTime < timeRangeDuplicatesStart)
+                            continue;
+
+                        if(testedRail.TimeInInterval(CurrentTime)) {
+                            matches.Add(testedRail);
+                        }
+                        if(matches.Count == 2) // reached all potential rails
+                            break;
+                    }
+
+                    // we need to check within found rails if we can replace the current note and do that
+                    {
+                        Rail matchedRail = null;
+                        foreach(Rail potentialMatch in matches.OrEmptyIfNull()) {
+                            if(potentialMatch.HasNoteAtTime(CurrentTime)
+                                && Track.s_instance.selectedNoteType == potentialMatch.noteType) {
+                                matchedRail = potentialMatch;
+                                break;
+                            }
+                        }
+                        // if we found a match we move the rail note to a new position and recalc the rail
+                        if(matchedRail != null) {
+                            matchedRail.MoveNoteAtTimeToPosition(CurrentTime, noteFromNoteArea.transform.position.x, noteFromNoteArea.transform.position.y);
+                        }
+                        // if we're placing the special combo rail over a common one, display promt and exit
+                        // same for the opposite case
+                        bool simpleRail = false;
+                        foreach(Rail potentialMatch in matches.OrEmptyIfNull()) {
+                            if(IsSimpleNoteType(Track.s_instance.selectedNoteType) && IsSimpleNoteType(potentialMatch.noteType)) {
+                                simpleRail = true;
+                                break;
+                            }
+                        }
+                        if(!simpleRail) {
+                            Miku_DialogManager.ShowDialog(Miku_DialogManager.DialogType.Alert, StringVault.Alert_CantPlaceRailOfDifferntSubtype);
+                            return;
+                        }
+
+                        EditorNote noteForRail = new EditorNote(noteFromNoteArea.transform.position, Track.CurrentTime, FormatNoteName(CurrentTime, s_instance.TotalNotes + 1, s_instance.selectedNoteType));
+                        noteForRail.UsageType = s_instance.selectedUsageType;
+
+                        // trying to add the note to an already existing rail
+                        bool addedToExistingRail = false;
+                        foreach(Rail testedRail in matches.OrEmptyIfNull()) {
+                            if(testedRail.noteType == Track.s_instance.selectedNoteType) {
+                                testedRail.AddNote(noteForRail);
+                                addedToExistingRail = true;
+                                break;
+                            }
+                        }
+                        if(addedToExistingRail)
+                            return;
+
+                        Rail rail = new Rail();
+                        rail.noteType =  s_instance.selectedNoteType;
+                        rail.AddNote(noteForRail);
+                        IdDictionaries.AddRail(rail);
+                        List<Rail> railList = s_instance.GetCurrentRailListByDifficulty();
+                        railList.Add(rail);
+                        // if we're here, we definitely need to add a completely new rail
+
+
+                    }
+                }
+
+
 
                 // workingTrack[CurrentTime].Count
                 EditorNote noteForChart = new EditorNote(noteFromNoteArea.transform.position, Track.CurrentTime, FormatNoteName(CurrentTime, s_instance.TotalNotes + 1, s_instance.selectedNoteType));
@@ -5397,13 +5565,36 @@ namespace MiKu.NET {
                     break;
             }
         }
+        /// <summary>
+        /// Set the note usage type to be used
+        /// </summary>
+        /// <param name="noteUsageType">The usage type of note to use. Default is 0 that is equal to <see cref="EditorNote.NoteUsageType.None" /></param>
+        public void SetNoteUsageType(int noteUsageType = 0) {
+            switch(noteUsageType) {
+                case 0:
+                    selectedUsageType = EditorNote.NoteUsageType.None;
+                    break;
+                case 1:
+                    selectedUsageType = EditorNote.NoteUsageType.Ball;
+                    break;
+                case 2:
+                    selectedUsageType = EditorNote.NoteUsageType.Line;
+                    break;
+                case 3:
+                    selectedUsageType = EditorNote.NoteUsageType.Breaker;
+                    break;
 
+                default:
+                    selectedUsageType = EditorNote.NoteUsageType.None;
+                    break;
+            }
+        }
         /// <summary>
         /// Returns note marker game object, based on the type selected
         /// </summary>
         /// <param name="noteType">The type of note to look for, default is <see cref="EditorNote.NoteHandType.LeftHanded" /></param>
         /// <returns>Returns <typeparamref name="GameObject"/></returns>
-        GameObject GetNoteMarkerByType(EditorNote.NoteHandType noteType = EditorNote.NoteHandType.LeftHanded, bool isSegment = false) {
+        public GameObject GetNoteMarkerByType(EditorNote.NoteHandType noteType = EditorNote.NoteHandType.LeftHanded, bool isSegment = false) {
             GameObject result = m_LefthandNoteMarker;
             switch(noteType) {
                 case EditorNote.NoteHandType.LeftHanded:
@@ -5440,6 +5631,25 @@ namespace MiKu.NET {
             }
             return 0; // default
         }
+        /// <summary>
+        /// Returns index of the NoteUsageType
+        /// </summary>
+        /// <param name="noteType">The usage type of note to look for, default is <see cref="EditorNote.NoteUsageType.None" /></param>
+        /// <returns>Returns <typeparamref name="int"/></returns>
+        int GetNoteUsageTypeIndex(EditorNote.NoteUsageType noteType = EditorNote.NoteUsageType.None) {
+            switch(noteType) {
+                case EditorNote.NoteUsageType.None:
+                    return 0;
+                case EditorNote.NoteUsageType.Ball:
+                    return 1;
+                case EditorNote.NoteUsageType.Line:
+                    return 2;
+                case EditorNote.NoteUsageType.Breaker:
+                    return 3;
+            }
+            return 0; // default
+        }
+
 
         /// <summary>
         /// Update the position on the Current Place notes when any of the const changes        
@@ -6320,6 +6530,32 @@ namespace MiKu.NET {
             }
 
             return fromJumpList ? CurrentChart.Jumps.Easy : CurrentChart.Crouchs.Easy;
+        }
+
+        /// <summary>
+        /// Get The current rail list based on the selected difficulty
+        /// </summary>
+        /// <returns>Returns <typeparamref name="List"/></returns>
+        public List<Rail> GetCurrentRailListByDifficulty() {
+            if(CurrentChart == null)
+                return null;
+
+            switch(CurrentDifficulty) {
+                case TrackDifficulty.Easy:
+                    return CurrentChart.Rails.Easy;
+                case TrackDifficulty.Normal:
+                    return CurrentChart.Rails.Normal;
+                case TrackDifficulty.Hard:
+                    return CurrentChart.Rails.Hard;
+                case TrackDifficulty.Expert:
+                    return CurrentChart.Rails.Expert;
+                case TrackDifficulty.Master:
+                    return CurrentChart.Rails.Master;
+                case TrackDifficulty.Custom:
+                    return CurrentChart.Rails.Custom;
+            }
+
+            return CurrentChart.Rails.Easy; ;
         }
 
         /// <summary>

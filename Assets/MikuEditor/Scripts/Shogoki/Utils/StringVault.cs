@@ -66,9 +66,13 @@ namespace Shogoki.Utils {
 
 		[SerializeField]
 		[TextArea(3, 8)]
-		string alert_MaxNumberOfSpecialNotes = "Max number of special notes reached";	
+		string alert_MaxNumberOfSpecialNotes = "Max number of special notes reached";
 
-		[SerializeField]
+        [SerializeField]
+        [TextArea(3, 8)]
+        string alert_CantPlaceRailOfDifferntSubtype = "You need to finish the current rail";
+
+        [SerializeField]
 		[TextArea(3, 8)]
 		string alert_MaxNumberOfTypeNotes = "Max number of {0} notes reached";	
 
@@ -436,7 +440,14 @@ namespace Shogoki.Utils {
                 return s_instance.alert_MaxNumberOfSpecialNotes;
             }
         }
-
+        public static string Alert_CantPlaceRailOfDifferntSubtype
+        {
+            get
+            {
+                return s_instance.alert_CantPlaceRailOfDifferntSubtype;
+            }
+        }
+        
         public static string Alert_MaxNumberOfTypeNotes
         {
             get

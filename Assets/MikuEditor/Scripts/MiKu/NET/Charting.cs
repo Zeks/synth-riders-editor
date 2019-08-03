@@ -39,7 +39,8 @@ namespace MiKu.NET.Charting {
 
         ~EditorNote() {
             IdDictionaries.RemoveNote(noteId);
-        }
+            TimeDictionaries.RemoveNote(this);
+        } 
 
 
 
@@ -120,6 +121,10 @@ namespace MiKu.NET.Charting {
                 Id = idRoot.ToString();
             }
             noteId = noteCounter++;
+
+            IdDictionaries.AddNote(noteId, this);
+            if(time != default(float))
+                TimeDictionaries.AddNote(time, this);
             timePoint = time;
             ComboId = idCmb;
             HandType = t;
@@ -168,6 +173,43 @@ namespace MiKu.NET.Charting {
         /// Notes for the Custom dificulty
         /// </value>
         public Dictionary<float, List<EditorNote>> Custom { get; set; }
+    }
+
+
+    /// <summary>
+    /// Class for the beats Representaion
+    /// </summary>
+    public class EditorRails {
+
+        /// <value>
+        /// Notes for the easy dificulty
+        /// </value>
+        public  List<Rail> Easy { get; set; }
+
+        /// <value>
+        /// Notes for the normal dificulty
+        /// </value>
+        public List<Rail> Normal { get; set; }
+
+        /// <value>
+        /// Notes for the hard dificulty
+        /// </value>
+        public List<Rail> Hard { get; set; }
+
+        /// <value>
+        /// Notes for the expert dificulty
+        /// </value>
+        public  List<Rail> Expert { get; set; }
+
+        /// <value>
+        /// Notes for the Master dificulty
+        /// </value>
+        public List<Rail> Master { get; set; }
+
+        /// <value>
+        /// Notes for the Custom dificulty
+        /// </value>
+        public List<Rail> Custom { get; set; }
     }
 
     [Serializable]
@@ -484,6 +526,11 @@ namespace MiKu.NET.Charting {
 		/// List of beats that made the Chart
 		/// </value>
         public EditorBeats Track { get; set; }
+        
+        /// <value>
+		/// List of Rails that made the Chart
+		/// </value>
+        public EditorRails Rails { get; set; }
 
         /// <value>
         /// List of the effects for the chart
