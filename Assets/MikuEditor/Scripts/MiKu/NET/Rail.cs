@@ -44,7 +44,7 @@ namespace MiKu.NET {
 
         public bool TimeInInterval(float time) {
             Trace.WriteLine("Detecting if time: " + time + " is within " + startTime + " and " + endTime);
-            if(time > startTime && time < endTime) {
+            if(time >= startTime && time <= endTime) {
                 Trace.WriteLine("returning true");
                 return true;
             }
@@ -207,6 +207,7 @@ namespace MiKu.NET {
             RecalcDuration();
 
             InstantiateNoteObject(wrapper);
+
             ReinstantiateRail(this);
         }
 
@@ -329,8 +330,29 @@ namespace MiKu.NET {
         }
 
         Rail ConvertTheTailIntoNewRail(RailNoteWrapper note) {
-            return null;
+            if(note == null)
+                return null;
+            RailNoteWrapper initialNote = note;
+
+            Trace.WriteLine("!<><><><><><><><><><>RAIL CREATION<><><><><><><><><><><><><><><>!");
+            Rail rail = new Rail();
+            rail.noteType = noteType;
+            IdDictionaries.AddRail(rail);
+            List<Rail> railList = Track.s_instance.GetCurrentRailListByDifficulty();
+            railList.Add(rail);
+
+            while(note.nextNote != null) {
+
+                notesByID.Remove(note.thisNote.noteId);
+                notesByTime.Remove(note.thisNote.TimePoint);
+                noteObjects.Remove(note.thisNote.noteId);
+
+                rail.AddNote(note.thisNote);
+                note = note.nextNote;
+            }
+            return rail;
         }
+
         public static void Print2DArray<T>(T[,] matrix) {
             for(int i = 0; i < matrix.GetLength(0); i++) {
                 for(int j = 0; j < matrix.GetLength(1); j++) {
@@ -474,16 +496,20 @@ namespace MiKu.NET {
             EditorNote note = wrapper.thisNote;
             DestroyNoteObjectAndRemoveItFromTheRail(note.noteId);
 
-            GameObject noteGO = GameObject.Instantiate(Track.s_instance.GetNoteMarkerByType(note.HandType));
+            bool isSegment = wrapper == leader ? false : true;
+            GameObject noteGO = GameObject.Instantiate(Track.s_instance.GetNoteMarkerByType(note.HandType, isSegment));
             noteGO.transform.localPosition = new Vector3(
                                                 note.Position[0],
                                                 note.Position[1],
                                                 note.Position[2]
                                             );
+            if(isSegment)
+                noteGO.transform.localScale *= 0.5f;
             noteGO.transform.rotation = Quaternion.identity;
             noteGO.transform.parent = Track.s_instance.m_NotesHolder;
             noteGO.name = note.Id;
             wrapper.thisNoteObject = noteGO;
+            noteObjects.Add(note.noteId, noteGO);
         }
 
         void DestroyNoteObjectAndRemoveItFromTheRail(int id) {

@@ -348,7 +348,7 @@ namespace MiKu.NET {
         private GameObject m_Special2NoteMarkerSegment;
 
         [SerializeField]
-        private float m_NoteSegmentMarkerRedution = 0.5f;
+        public  float m_NoteSegmentMarkerRedution = 0.5f;
 
         [SerializeField]
         private GameObject m_NotesDropArea;
@@ -5014,7 +5014,7 @@ namespace MiKu.NET {
                 // we need to check within found rails if we can replace the current note and do that
                 {
                     Rail matchedRail = null;
-                    Trace.WriteLine("Attempting to find a note we could move");
+                    Trace.WriteLine("Attempting to find a note we could move in " + matches.Count + "matched rails");
                     foreach(Rail potentialMatch in matches.OrEmptyIfNull()) {
                         if(potentialMatch.HasNoteAtTime(CurrentTime)
                             && Track.s_instance.selectedNoteType == potentialMatch.noteType) {
@@ -5154,6 +5154,7 @@ namespace MiKu.NET {
                     IdDictionaries.AddRail(rail);
                     List<Rail> railList = s_instance.GetCurrentRailListByDifficulty();
                     railList.Add(rail);
+                    return;
                     // if we're here, we definitely need to add a completely new rail
 
 
@@ -5746,16 +5747,16 @@ namespace MiKu.NET {
             GameObject result = m_LefthandNoteMarker;
             switch(noteType) {
                 case EditorNote.NoteHandType.LeftHanded:
-                    result = m_LefthandNoteMarker;
+                    result = isSegment ? m_LefthandNoteMarkerSegment : m_LefthandNoteMarker;
                     break;
                 case EditorNote.NoteHandType.RightHanded:
-                    result = m_RighthandNoteMarker;
+                    result = isSegment ? m_RighthandNoteMarkerSegment : m_RighthandNoteMarker;
                     break;
                 case EditorNote.NoteHandType.OneHandSpecial:
-                    result = m_SpecialOneHandNoteMarker;
+                    result = isSegment ? m_Special1NoteMarkerSegment : m_SpecialOneHandNoteMarker;
                     break;
                 case EditorNote.NoteHandType.BothHandsSpecial:
-                    result = m_SpecialBothHandsNoteMarker;
+                    result = isSegment ? m_Special2NoteMarkerSegment : m_SpecialBothHandsNoteMarker;
                     break;
             }
             return result;
