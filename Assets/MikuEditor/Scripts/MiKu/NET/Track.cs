@@ -17,6 +17,7 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
+using System.Diagnostics;
 
 namespace MiKu.NET {
 
@@ -764,18 +765,25 @@ namespace MiKu.NET {
         private CursorLockMode currentLockeMode;
 
         public bool AddTimeToCurrentTrack(float time) {
+            Trace.WriteLine("Adding time to current track: " + time);
             Dictionary<float, List<EditorNote>> workingTrack = s_instance.GetCurrentTrackDifficulty();
             if(workingTrack == null)
                 return false;
 
             if(!workingTrack.ContainsKey(time)) {
+                Trace.WriteLine("Added");
                 workingTrack.Add(time, new List<EditorNote>());
+            } else {
+                Trace.WriteLine("Already had this time");
             }
             return true;
         }
 
         // Use this for initialization
         void Awake() {
+            File.Delete("../editor-build/editor.log");
+            Trace.Listeners.Add(new TextWriterTraceListener("../editor-build/editor.log"));
+            Trace.AutoFlush = true;
             // Initilization of the Game Object to use for the line drawing
             drawedLines = new List<GameObject>();
             drawedXSLines = new List<GameObject>();
@@ -805,7 +813,7 @@ namespace MiKu.NET {
                 || !m_LefthandNoteMarker
                 || !m_RighthandNoteMarker
                 || !m_SpecialBothHandsNoteMarker) {
-                Debug.LogError("Note maker prefab missing");
+                UnityEngine.Debug.LogError("Note maker prefab missing");
 #if UNITY_EDITOR
                 // Application.Quit() does not work in the editor so
                 // UnityEditor.EditorApplication.isPlaying need to be set to false to end the game
@@ -1820,8 +1828,8 @@ namespace MiKu.NET {
                     }
                 }
 
-                Debug.Log("Combine Channels done");
-                Debug.Log(preProcessedSamples.Length.ToString());
+                UnityEngine.Debug.Log("Combine Channels done");
+                UnityEngine.Debug.Log(preProcessedSamples.Length.ToString());
 
                 // Once we have our audio sample data prepared, we can execute an FFT to return the spectrum data over the time domain
                 int spectrumSampleSize = 1024;
@@ -1830,7 +1838,7 @@ namespace MiKu.NET {
                 FFT fft = new FFT();
                 fft.Initialize((UInt32)spectrumSampleSize);
 
-                Debug.Log(string.Format("Processing {0} time domain samples for FFT", iterations));
+                UnityEngine.Debug.Log(string.Format("Processing {0} time domain samples for FFT", iterations));
                 double[] sampleChunk = new double[spectrumSampleSize];
                 for(int i = 0; i < iterations; i++) {
                     // Grab the current 1024 chunk of audio sample data
@@ -1853,15 +1861,15 @@ namespace MiKu.NET {
                     preProcessedSpectralFluxAnalyzer.analyzeSpectrum(Array.ConvertAll(scaledFFTSpectrum, x => (float)x), curSongTime);
                 }
 
-                Debug.Log("Spectrum Analysis done");
-                Debug.Log("Background Thread Completed");
+                UnityEngine.Debug.Log("Spectrum Analysis done");
+                UnityEngine.Debug.Log("Background Thread Completed");
 
                 threadFinished = true;
             } catch(Exception e) {
                 threadFinished = true;
                 treadWithError = true;
                 // Catch exceptions here since the background thread won't always surface the exception to the main thread
-                Debug.LogError(e.ToString());
+                UnityEngine.Debug.LogError(e.ToString());
                 Serializer.WriteToLogFile("getFullSpectrumThreaded Error");
                 Serializer.WriteToLogFile(e.ToString());
             }
@@ -3261,12 +3269,12 @@ namespace MiKu.NET {
             float _CK = (K * MBPM);
 
             //_currentTime+= K*MBPM;
-            //Debug.Log("Current "+_currentTime);
+            //UnityEngine.Debug.Log("Current "+_currentTime);
             if(_currentTime % _CK == 0) {
                 _currentTime += _CK;
             } else {
                 float nextPoint = _currentTime + (_CK - (_currentTime % _CK));
-                //Debug.Log("Next "+nextPoint);
+                //UnityEngine.Debug.Log("Next "+nextPoint);
                 //print(_CK);
 
                 if(nextPoint == _currentTime) {
@@ -4689,11 +4697,11 @@ namespace MiKu.NET {
 
             if(Application.isEditor) {
                 if(logError) {
-                    Debug.LogError(message);
+                    UnityEngine.Debug.LogError(message);
                     return;
                 }
 
-                Debug.Log(message);
+                UnityEngine.Debug.Log(message);
             }
 
             if(logError) {
@@ -4742,6 +4750,7 @@ namespace MiKu.NET {
         }
 
         private static bool RemoveOverlappingNote(Dictionary<float, List<EditorNote>> workingTrack, List<float> keys_tofilter, GameObject noteFromNoteArea) {
+            Trace.WriteLine("Requested to remove a note from track: " + CurrentTime);
             int totalFilteredTime = keys_tofilter.Count;
             for(int filterList = 0; filterList < totalFilteredTime; ++filterList) {
                 // If the time key exist, check how many notes are added
@@ -4799,6 +4808,7 @@ namespace MiKu.NET {
             return false;
         }
         private static bool ReachedMaxNotesOfCurrentType(Dictionary<float, List<EditorNote>> workingTrack, List<float> keys_tofilter, GameObject noteFromNoteArea) {
+            Trace.WriteLine("Called ReachedMaxNotesOfCurrentType");
             int totalFilteredTime = keys_tofilter.Count;
             for(int filterList = 0; filterList < totalFilteredTime; ++filterList) {
                 // If the time key exist, check how many notes are added
@@ -4836,6 +4846,7 @@ namespace MiKu.NET {
             return false;
         }
         private static void AdjustCurrentTimeToFoundBallNotes(Dictionary<float, List<EditorNote>> workingTrack, List<float> keys_tofilter) {
+            Trace.WriteLine("Trying to adjust CurrentTime to time on the track");
             int totalFilteredTime = keys_tofilter.Count;
             for(int filterList = 0; filterList < totalFilteredTime; ++filterList) {
                 // If the time key exist, check how many notes are added
@@ -4845,6 +4856,7 @@ namespace MiKu.NET {
                 int totalNotes = notes.Count;
 
                 if(totalNotes > 0) {
+                    Trace.WriteLine("Adjusting CurrentTime to found time");
                     CurrentTime = targetTime;
                 }
             }
@@ -4916,6 +4928,7 @@ namespace MiKu.NET {
         /// Add note to chart
         /// </summary>
         public static void AddNoteToChart(GameObject noteFromNoteArea) {
+            Trace.WriteLine("AddNoteToChart called");
             if(PromtWindowOpen || s_instance.isBusy) return;
 
             if(CurrentTime < MIN_NOTE_START * MS) {
@@ -4931,6 +4944,7 @@ namespace MiKu.NET {
             }
             Dictionary<float, List<EditorNote>> workingTrack = s_instance.GetCurrentTrackDifficulty();
             if(IsBallNoteType(Track.s_instance.selectedUsageType)) {
+                Trace.WriteLine("Is in note branch");
                 // first we check if theres is any note in that time period
                 // We need to check the track difficulty selected
                 if(workingTrack != null) {
@@ -4943,24 +4957,29 @@ namespace MiKu.NET {
                     bool hasNotesWithinDeltaTime = keys_tofilter.Count != 0;
                     // if there are no notes to overlap, instantiate time in the dictionary
                     if(!hasNotesWithinDeltaTime) {
+                        Trace.WriteLine("Adding new time to track: " + CurrentTime);
                         workingTrack.Add(CurrentTime, new List<EditorNote>());
                         s_instance.AddTimeToSFXList(CurrentTime);
                     } else {
                         // find and remove notes that overlaps and return if one was removed
                         // needs a rail handler inside because removed rail note requires whole rail recalc
                         if(RemoveOverlappingNote(workingTrack, keys_tofilter, noteFromNoteArea)) {
+                            Trace.WriteLine("Note removed. Returning");
                             return;
                         }
                         // check if max notes of current type are reached for the time delta and return if true
                         {
-                            if(ReachedMaxNotesOfCurrentType(workingTrack, keys_tofilter, noteFromNoteArea))
+                            if(ReachedMaxNotesOfCurrentType(workingTrack, keys_tofilter, noteFromNoteArea)) {
+                                Trace.WriteLine("Reached maximum note density for type. Returning");
                                 return;
+                            }
                             AdjustCurrentTimeToFoundBallNotes(workingTrack, keys_tofilter);
                         }
                     }
                 }
             }
             if(IsRailNoteType(Track.s_instance.selectedUsageType)) {
+                Trace.WriteLine("Is in rail branch");
                 // check to see if there's an opposing rail note here
                 // if there is adjust the time to match
                 // if there is not just move the current rail note and reinstantiate the rail
@@ -4969,27 +4988,37 @@ namespace MiKu.NET {
                 List<Rail> rails = s_instance.GetCurrentRailListByDifficulty();
                 rails.Sort((x, y) => x.startTime.CompareTo(y.startTime));
                 // we're looking for up to two rails overlapping this time point
+                Trace.WriteLine("Attempting to find rail for this time point");
                 List<Rail> matches = new List<Rail>();
                 foreach(Rail testedRail in rails.OrEmptyIfNull()) {
-                    if(testedRail.startTime > timeRangeDuplicatesEnd)
-                        break;
-
-                    if(testedRail.endTime < timeRangeDuplicatesStart)
+                    if(testedRail.startTime > timeRangeDuplicatesEnd) {
+                        Trace.WriteLine("DISCARDING Rail: " + testedRail.railId + " starts at: " + testedRail.startTime + " which is too late");
                         continue;
+                    }
+
+                    if(testedRail.endTime < timeRangeDuplicatesStart) {
+                        Trace.WriteLine("DISCARDING Rail: " + testedRail.railId + " ends at: " + testedRail.endTime + " which is too early");
+                        continue;
+                    }
 
                     if(testedRail.TimeInInterval(CurrentTime)) {
+                        Trace.WriteLine("ADDING Rail: " + testedRail.railId + " contains the current time.");
                         matches.Add(testedRail);
                     }
-                    if(matches.Count == 2) // reached all potential rails
+                    if(matches.Count == 2) {
+                        Trace.WriteLine("Collected all possible rail matches (2)");
                         break;
+                    }
                 }
 
                 // we need to check within found rails if we can replace the current note and do that
                 {
                     Rail matchedRail = null;
+                    Trace.WriteLine("Attempting to find a note we could move");
                     foreach(Rail potentialMatch in matches.OrEmptyIfNull()) {
                         if(potentialMatch.HasNoteAtTime(CurrentTime)
                             && Track.s_instance.selectedNoteType == potentialMatch.noteType) {
+                            Trace.WriteLine("Rail: " + potentialMatch.railId + " has a note that can be moved.");
                             matchedRail = potentialMatch;
                             break;
                         }
@@ -4997,43 +5026,64 @@ namespace MiKu.NET {
                     // if we found a match we move the rail note to a new position and recalc the rail
                     if(matchedRail != null) {
                         matchedRail.MoveNoteAtTimeToPosition(CurrentTime, noteFromNoteArea.transform.position.x, noteFromNoteArea.transform.position.y);
+                        Trace.WriteLine("Moved the note. Returning");
+                        return;
                     }
                     // if we're placing the special combo rail over a common one, display promt and exit
                     // same for the opposite case
+                    Trace.WriteLine("Making sure we're not placing a note of the incompatible type over existing rail");
                     bool simpleRail = false;
                     foreach(Rail potentialMatch in matches.OrEmptyIfNull()) {
                         if(IsSimpleNoteType(Track.s_instance.selectedNoteType) && IsSimpleNoteType(potentialMatch.noteType)) {
+                            Trace.WriteLine("Working on a SIMPLE rail");
                             simpleRail = true;
                             break;
                         }
                     }
+                    if(simpleRail)
+                        Trace.WriteLine("Working on a SIMPLE rail");
+
                     if(!simpleRail && matches != null && matches.Count > 0) {
+                        Trace.WriteLine("Displaying INCOMPATIBLE warning");
                         Miku_DialogManager.ShowDialog(Miku_DialogManager.DialogType.Alert, StringVault.Alert_CantPlaceRailOfDifferntSubtype);
                         return;
                     }
 
+                    Trace.WriteLine("Creating a note to add to some rail");
                     EditorNote noteForRail = new EditorNote(noteFromNoteArea.transform.position, Track.CurrentTime, "Rail " + FormatNoteName(CurrentTime, s_instance.TotalNotes + 1, s_instance.selectedNoteType));
                     noteForRail.UsageType = s_instance.selectedUsageType;
                     noteForRail.HandType = s_instance.selectedNoteType;
 
+                    noteForRail.Log();
+
                     // trying to add the note to an already existing rail
                     bool addedToExistingRail = false;
-                    
+
                     // first we need to sort the rails on time and find the ones containing the current note
                     // this should net us exactly one rail
+                    Trace.WriteLine("Attempting to find a rail that this note can be added to in the middle");
                     List<Rail> activeRailsOfSameType = rails.Where(filteredRail => filteredRail.TimeInInterval(CurrentTime) && filteredRail.noteType == s_instance.selectedNoteType).ToList();
+
                     foreach(Rail testedRail in activeRailsOfSameType.OrEmptyIfNull()) {
-                            testedRail.AddNote(noteForRail);
-                            addedToExistingRail = true;
-                            break;
+                        Trace.WriteLine("Adding note inside the rail:");
+                        testedRail.Log();
+                        testedRail.AddNote(noteForRail);
+                        addedToExistingRail = true;
+                        Trace.WriteLine("Returning");
+                        return;
                     }
                     
                     if(!addedToExistingRail) {
+                        Trace.WriteLine("Attempting to find a rail that can be extended with this note");
                         // if we haven't added a note inside the existing rail, we need to test if there is an open one to the left
                         rails.Sort((x, y) => y.startTime.CompareTo(x.startTime));
                         foreach(Rail testedRail in rails) {
+                            Trace.WriteLine("Testing the rail:");
+                            testedRail.Log();
                             if(testedRail.startTime <= CurrentTime && testedRail.noteType == s_instance.selectedNoteType) {
+                                Trace.WriteLine("Rail starts BEFORE current time");
                                 if(testedRail.breaker == null) {
+                                    Trace.WriteLine("Rail does NOT have a breaker");
                                     // now we need to make sure there are no single balls of special color between the rail end and this new line note
                                     // ideally this should be checked between the ranges, but this will require too much refactoring rn
                                     // so I will just go with bruteforcing ball/rail search for the interval
@@ -5041,45 +5091,66 @@ namespace MiKu.NET {
                                     //Dictionary<float, List<EditorNote>> workingTrack = s_instance.GetCurrentTrackDifficulty();
                                     List<float> keys_tofilter = workingTrack.Keys.ToList();
                                     List<float> activeTimesIntheInterval = keys_tofilter.Where( time => time > testedRail.endTime && time < CurrentTime).ToList();
+                                    activeTimesIntheInterval.Sort();
                                     bool hasPreventingNotes = false;
                                     // we need to check each possible time
+                                    Trace.WriteLine("Gap between the rail start and CurrentTime has these stops: " + activeTimesIntheInterval);
+                                    Trace.WriteLine("Making sure this gap only contains the notes of same or opposite color");
                                     foreach(float testedTime in activeTimesIntheInterval.OrEmptyIfNull()) {
+                                        Trace.WriteLine("Testing time:" + testedTime);
                                         List<EditorNote> currentNotes = workingTrack[testedTime];
                                         foreach(EditorNote testedNote in currentNotes.OrEmptyIfNull())  {
-                                            if(testedNote.HandType == testedRail.noteType)
+                                            Trace.WriteLine("Testing note:");
+                                            testedNote.Log();
+                                            if(testedNote.HandType == testedRail.noteType) {
+                                                Trace.WriteLine("Same hand type, OK, moving on");
                                                 continue;
+                                            }
                                             if(IsOfSpecialType(testedRail.noteType)) {
+                                                Trace.WriteLine("Tested rail is of special type...");
                                                 if(testedNote.HandType != testedRail.noteType) {
+                                                    Trace.WriteLine("... and note's type is NOT that type and can't extend that rail.");
                                                     hasPreventingNotes = true;
                                                     break;
+                                                } else {
+                                                    Trace.WriteLine("... and note's type is MATCHING that type and can extend that rail.");
                                                 }
                                             } else {
+                                                Trace.WriteLine("Tested rail is of normal type...");
                                                 if(IsOfSpecialType(testedNote.HandType)) {
+                                                    Trace.WriteLine("... and note's type is of SPECIAL type and can't extend that rail.");
                                                     hasPreventingNotes = true;
                                                     break;
+                                                } else {
+                                                    Trace.WriteLine("... and note's type is of SIMPLE type and can extend that rail.");
                                                 }
                                             }
                                         }
-                                        if(hasPreventingNotes)
+                                        if(hasPreventingNotes) {
+                                            Trace.WriteLine("Found notes that prevent rail extention. Breaking from note loop");
                                             break;
+                                        }
                                      }
-                                    if(!hasPreventingNotes) { 
+                                    if(!hasPreventingNotes) {
+                                        Trace.WriteLine("Extending the rail and returning");
                                         testedRail.AddNote(noteForRail);
                                         addedToExistingRail = true;
+                                        return;
                                     }
                                 }
-                                break;
                             }
                         }
-
-
                     }
+
                     if(addedToExistingRail)
                         return;
+                    Trace.WriteLine("!<><><><><><><><><><>RAIL CREATION<><><><><><><><><><><><><><><>!");
+                    Trace.WriteLine("Haven't found a rail to extend. Creating a new one");
 
                     Rail rail = new Rail();
-                    rail.noteType =  s_instance.selectedNoteType;
+                    rail.noteType = s_instance.selectedNoteType;
                     rail.AddNote(noteForRail);
+                    rail.Log();
                     IdDictionaries.AddRail(rail);
                     List<Rail> railList = s_instance.GetCurrentRailListByDifficulty();
                     railList.Add(rail);
@@ -6918,7 +6989,7 @@ namespace MiKu.NET {
         /// </summary>
         private void DoAbortThread() {
             try {
-                if(analyzerThread != null && analyzerThread.ThreadState == ThreadState.Running) {
+                if(analyzerThread != null && analyzerThread.ThreadState == System.Threading.ThreadState.Running) {
                     analyzerThread.Abort();
                 }
             } catch(Exception ex) {

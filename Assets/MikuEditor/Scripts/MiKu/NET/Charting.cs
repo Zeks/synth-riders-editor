@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using System.Diagnostics;
 
 namespace MiKu.NET.Charting {
 
@@ -137,6 +138,9 @@ namespace MiKu.NET.Charting {
         public EditorNote() {
             noteId = noteCounter++;
             UsageType = EditorNote.NoteUsageType.Ball;
+        }
+        public void Log() {
+            Trace.WriteLine("Note ID: " + noteId + "time: " + TimePoint + "position:"  + Position + " handtype:" + HandType+  " usagetype:" + UsageType +  " combo:" + ComboId);
         }
     }
 

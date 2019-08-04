@@ -1,6 +1,8 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using System.Diagnostics;
+
 
 namespace MiKu.NET {
     public class NotesArea : MonoBehaviour {
@@ -136,12 +138,16 @@ namespace MiKu.NET {
             }
 
             if(!isCTRLDown && Input.GetMouseButtonDown(0) && selectedNote != null) {
+                Trace.WriteLine("======================================NOTE AREA CLICK===================================================");
                 if(Track.IsOnMirrorMode) {
                     System.Array.Clear(multipleNotes, 0, 2);
                     multipleNotes[0] = selectedNote;
                     multipleNotes[1] = mirroredNote;
                     Track.AddNoteToChart(multipleNotes);
                 } else {
+                    
+                    Trace.WriteLine("Clicked on note area: Current time: " + Track.CurrentTime + " " + "x:" +  selectedNote.transform.position.x + " y:" +   selectedNote.transform.position.y);
+                    Trace.Flush();
                     Track.AddNoteToChart(selectedNote);
                 }
             }

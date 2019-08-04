@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
 using System.Collections.Generic;
 using System;
+using System.Diagnostics;
 
 namespace ThirdParty.Custom {
     /// <summary>
@@ -108,28 +109,45 @@ namespace ThirdParty.Custom {
 
         public void RenderLine(bool refreshLine = false)
         {
+            Trace.WriteLine("00000000000000000000LINE RENDER00000000000000");
+            Trace.WriteLine("Entered Render Line");
             if(!isChopping || refreshLine)
             {
+                Trace.WriteLine("Passed first if");
                 isChopping = true;
                 if (!isLineInit || refreshLine)
                 {
+                    Trace.WriteLine("Passed second if");
                     linePositions.Clear();
                     isLineInit = true;
                     lrComp.startWidth = traceWidth;
                     lrComp.endWidth = traceWidth;
 
                     gameObject.transform.localScale = Vector3.one;  
-                    int startOptional = targetOptional.GetLength(0) > size ? targetOptional.GetLength(0) - size : 0;    
-                    size = Mathf.RoundToInt( size / (targetOptional.GetLength(0) - startOptional) );   
+                    int startOptional = targetOptional.GetLength(0) > size ? targetOptional.GetLength(0) - size : 0;
+                    Trace.WriteLine("size is:" + size);
+                    Trace.WriteLine("targetOptional.GetLength(0) is:" + targetOptional.GetLength(0));
+                    Trace.WriteLine("startOptional is:" + startOptional);
+                    size = Mathf.RoundToInt( size / (targetOptional.GetLength(0) - startOptional) );
+                    Trace.WriteLine("rounded size is:" + size);
 
-                    linePositions.Add(transform.position);        
-                    
-                    for(int index = startOptional; index < targetOptional.GetLength(0); ++index){
-                        //InitLinePositions(new Vector3(targetOptional[index, 0], targetOptional[index, 1], targetOptional[index, 2])); 
-                        linePositions.Add(new Vector3(targetOptional[index, 0], targetOptional[index, 1], targetOptional[index, 2]));
-                    }                     
+                    linePositions.Add(transform.position);
+
+                    int lengthOfArray = targetOptional.GetLength(0);
+                    Trace.WriteLine("Passed array is of size:" + lengthOfArray);
+                    try {
+                        for(int index = startOptional; index < targetOptional.GetLength(0); ++index) {
+                            //InitLinePositions(new Vector3(targetOptional[index, 0], targetOptional[index, 1], targetOptional[index, 2])); 
+                            Trace.WriteLine("Adding point:" + targetOptional[index, 0] + " " +  targetOptional[index, 1] + " " + targetOptional[index, 2]);
+                            linePositions.Add(new Vector3(targetOptional[index, 0], targetOptional[index, 1], targetOptional[index, 2]));
+                        }
+                    } catch {
+                        Trace.WriteLine("!!!!!!!!!!!!!!!!CRASHED ADDING POINTS TO RENDERER!!!!!!!!!!!!!!!!!!!!");
+                    }
 
                     smoothedPoints = LineSmoother.SmoothLine( linePositions.ToArray(), 0.8f );
+                    Trace.WriteLine("Smoothed points is of size: " + smoothedPoints.Length);
+
 
                     lrComp.positionCount = smoothedPoints.Length;  
                     lrComp.SetPositions( smoothedPoints );                       
