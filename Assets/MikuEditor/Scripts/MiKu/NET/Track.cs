@@ -189,7 +189,7 @@ namespace MiKu.NET {
         public const float MIN_LINE_DURATION = 0.1f * MS;
 
         // Max duration on milliseconds that the line can have
-        public const float MAX_LINE_DURATION = 10 * MS;
+        public const float MAX_LINE_DURATION = 100 * MS;
 
         // Max size that the note can have
         private const float MAX_NOTE_RESIZE = 0.2f;
@@ -4923,6 +4923,53 @@ namespace MiKu.NET {
             }
             return false;
         }
+        public bool IsOppositeNoteType(EditorNote.NoteHandType handType1, EditorNote.NoteHandType handType2) {
+            if(handType1 == EditorNote.NoteHandType.LeftHanded && handType2 == EditorNote.NoteHandType.RightHanded)
+                return true;
+            if(handType1 == EditorNote.NoteHandType.RightHanded && handType2 == EditorNote.NoteHandType.LeftHanded)
+                return true;
+            return false;
+        }
+        public bool HasRailInterruptionsBetween(int railId, int secondRailId, float startTime, float endTime, EditorNote.NoteHandType handType) {
+            Dictionary<float, List<EditorNote>> notes = s_instance.GetCurrentTrackDifficulty();
+            List<float> keys = notes.Keys.ToList();
+            List<float>  filteredNoteTimes = keys.Where((time) => time >= startTime && time <= endTime).ToList();
+            
+            List<Rail> rails = s_instance.GetCurrentRailListByDifficulty();
+            List<Rail> filteredRails = rails.Where((rail) => rail.startTime >= startTime && rail.startTime <= endTime).ToList();
+            bool hasInterruptions = false;
+            foreach(float time in filteredNoteTimes) {
+                List<EditorNote> notesAtTIme = notes[time];
+                foreach(EditorNote note in notesAtTIme) {
+                    if(IsOppositeNoteType(note.HandType, handType))
+                        continue;
+                    else {
+                        hasInterruptions = true;
+                        break;
+                    }
+                }
+                if(hasInterruptions)
+                    return true;
+            }
+
+            foreach(Rail rail in filteredRails) {
+                if(rail.railId == railId || rail.railId == secondRailId)
+                    continue;
+
+                if(rail.scheduleForDeletion)
+                    continue;
+
+                if(IsOppositeNoteType(rail.noteType, handType))
+                    continue;
+                else {
+                    hasInterruptions = true;
+                    break;
+                }
+            }
+            if(hasInterruptions)
+                return true;
+            return false;
+        }
 
         /// <summary>
         /// Add note to chart
@@ -4991,6 +5038,8 @@ namespace MiKu.NET {
                 Trace.WriteLine("Attempting to find rail for this time point");
                 List<Rail> matches = new List<Rail>();
                 foreach(Rail testedRail in rails.OrEmptyIfNull()) {
+                    if(testedRail.scheduleForDeletion)
+                        continue;
                     if(testedRail.startTime > timeRangeDuplicatesEnd) {
                         Trace.WriteLine("DISCARDING Rail: " + testedRail.railId + " starts at: " + testedRail.startTime + " which is too late");
                         continue;
@@ -5016,7 +5065,7 @@ namespace MiKu.NET {
                     Rail matchedRail = null;
                     Trace.WriteLine("Attempting to find a note we could move in " + matches.Count + "matched rails");
                     foreach(Rail potentialMatch in matches.OrEmptyIfNull()) {
-                        if(potentialMatch.HasNoteAtTime(CurrentTime)
+                        if(!potentialMatch.scheduleForDeletion && potentialMatch.HasNoteAtTime(CurrentTime)
                             && Track.s_instance.selectedNoteType == potentialMatch.noteType) {
                             Trace.WriteLine("Rail: " + potentialMatch.railId + " has a note that can be moved.");
                             matchedRail = potentialMatch;
@@ -5025,8 +5074,64 @@ namespace MiKu.NET {
                     }
                     // if we found a match we move the rail note to a new position and recalc the rail
                     if(matchedRail != null) {
-                        matchedRail.MoveNoteAtTimeToPosition(CurrentTime, noteFromNoteArea.transform.position.x, noteFromNoteArea.transform.position.y);
-                        Trace.WriteLine("Moved the note. Returning");
+                        EditorNote railNote = matchedRail.GetNoteAtPosition(CurrentTime);
+                        if(railNote != null ) {
+                            Vector2 foundNotePosition = new Vector2(railNote.Position[0], railNote.Position[1]);
+                            Vector2 clickedPosition = new Vector2(noteFromNoteArea.transform.position.x, noteFromNoteArea.transform.position.y);
+                            float distance = Vector2.Distance(foundNotePosition, clickedPosition);
+                            if(distance > 0.05f) {
+                                // we've clicked away from current note. this means we need to move it
+                                matchedRail.MoveNoteAtTimeToPosition(CurrentTime, noteFromNoteArea.transform.position.x, noteFromNoteArea.transform.position.y);
+                            } else {
+                                // we've clicked on the current note. this means we either want to delete it or change its subtype
+                                if(s_instance.selectedUsageType == railNote.UsageType) {
+                                    matchedRail.RemoveNote(railNote.noteId);
+                                    return;
+                                } else {
+                                    // we're in type change branch
+                                    
+                                    // removing a breaker
+                                    bool wasBreaker = railNote.UsageType == EditorNote.NoteUsageType.Breaker;
+                                    bool wasSimpleLine = railNote.UsageType == EditorNote.NoteUsageType.Line;
+                                    if(wasSimpleLine) {
+                                        // we're adding a new breaker. need to split the rail
+                                        matchedRail.FlipNoteTypeToBreaker(railNote.noteId, s_instance.selectedUsageType);
+                                        return;
+                                    }
+                                    if(wasBreaker) {
+                                        // we're removing a breaker. need to check if there's a rail next to this one that we can attach to
+                                        // for that we check if there are NO notes of any type other than the opposite hand until the next rail
+                                        float railEndTime = matchedRail.endTime;
+                                        Rail nextRail = Rail.GetNextRail(matchedRail.railId, railEndTime, s_instance.selectedUsageType);
+                                        if(nextRail != null) {
+                                            float nextRailStartTIme = nextRail.startTime;
+                                            // for railEndTime and nextRailStartTIme we check if there are ANY notes not of the opposite type
+                                            if(!s_instance.HasRailInterruptionsBetween(matchedRail.railId, nextRail.railId, railEndTime, nextRailStartTIme, matchedRail.noteType)) {
+                                                // no interrupting notes or rails, can link this rail and the next one
+                                                matchedRail.Merge(nextRail);
+                                                return;
+                                            }
+                                        }
+                                        else return;
+                                    }
+
+                                }
+                                    railNote.UsageType = s_instance.selectedUsageType;
+                                    // we've switched the note usage type, the result might be that a rail merge or break is necessary
+                                    //public bool HasRailInterruptionsBetween(int railId, float startTime, float endTime, EditorNote.NoteHandType handType) {
+                                    
+                            }
+
+                            if(matchedRail.scheduleForDeletion) {
+
+                                Trace.WriteLine("Deleting the rail: " + matchedRail.railId);
+                                IdDictionaries.RemoveRail(matchedRail.railId);
+                                List<Rail> tempRailList = s_instance.GetCurrentRailListByDifficulty();
+                                tempRailList.Remove(matchedRail);
+                                matchedRail.DestroyLeader();
+                            }
+                            Trace.WriteLine("Moved the note. Returning");
+                        }
                         return;
                     }
                     // if we're placing the special combo rail over a common one, display promt and exit
@@ -5034,7 +5139,7 @@ namespace MiKu.NET {
                     Trace.WriteLine("Making sure we're not placing a note of the incompatible type over existing rail");
                     bool simpleRail = false;
                     foreach(Rail potentialMatch in matches.OrEmptyIfNull()) {
-                        if(IsSimpleNoteType(Track.s_instance.selectedNoteType) && IsSimpleNoteType(potentialMatch.noteType)) {
+                        if(!potentialMatch.scheduleForDeletion && IsSimpleNoteType(Track.s_instance.selectedNoteType) && IsSimpleNoteType(potentialMatch.noteType)) {
                             Trace.WriteLine("Working on a SIMPLE rail");
                             simpleRail = true;
                             break;
@@ -5065,6 +5170,9 @@ namespace MiKu.NET {
                     List<Rail> activeRailsOfSameType = rails.Where(filteredRail => filteredRail.TimeInInterval(CurrentTime) && filteredRail.noteType == s_instance.selectedNoteType).ToList();
 
                     foreach(Rail testedRail in activeRailsOfSameType.OrEmptyIfNull()) {
+                        if(testedRail.scheduleForDeletion)
+                            continue;
+
                         Trace.WriteLine("Adding note inside the rail:");
                         testedRail.Log();
                         testedRail.AddNote(noteForRail);
@@ -5080,7 +5188,7 @@ namespace MiKu.NET {
                         foreach(Rail testedRail in rails) {
                             Trace.WriteLine("Testing the rail:");
                             testedRail.Log();
-                            if(testedRail.startTime <= CurrentTime && testedRail.noteType == s_instance.selectedNoteType) {
+                            if(testedRail.noteType == s_instance.selectedNoteType && !testedRail.scheduleForDeletion) {
                                 Trace.WriteLine("Rail starts BEFORE current time");
                                 if(testedRail.breaker == null) {
                                     Trace.WriteLine("Rail does NOT have a breaker");
