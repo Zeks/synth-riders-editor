@@ -5203,6 +5203,19 @@ namespace MiKu.NET {
                         foreach(Rail testedRail in rails) {
                             Trace.WriteLine("Testing the rail:");
                             testedRail.Log();
+                            bool extendingTail = testedRail.endTime < CurrentTime;
+                            bool extendingHead = testedRail.startTime > CurrentTime;
+                            bool canExtendHead = testedRail.breakerHead == null;
+                            bool canExtendTail = testedRail.breakerTail == null;
+                            if(extendingTail && !canExtendTail) {
+                                Trace.WriteLine("Cannot extend the rail past its head breaker");
+                                continue;
+                            }
+                            if(extendingHead && !canExtendHead) {
+                                Trace.WriteLine("Cannot extend the rail past its tail breaker");
+                                continue;
+                            }
+
                             if(testedRail.noteType == s_instance.selectedNoteType && !testedRail.scheduleForDeletion) {
                                 Trace.WriteLine("Rail starts BEFORE current time");
                                 if(testedRail.startTime > CurrentTime ||  testedRail.breakerTail == null) {

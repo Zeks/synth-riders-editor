@@ -166,6 +166,7 @@ namespace MiKu.NET {
             if(notesByID.Count == 1) {
                 // we are removing the last note of the rail
                 Trace.WriteLine("Last note detected, setting deletion schedule");
+                DestroyNoteObjectAndRemoveItFromTheRail(id);
                 scheduleForDeletion = true;
                 return;
             }
