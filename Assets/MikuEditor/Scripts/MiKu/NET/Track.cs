@@ -5075,17 +5075,17 @@ namespace MiKu.NET {
                 // we need to check within found rails if we can replace the current note and do that
                 {
                     Rail matchedRail = null;
-                    Trace.WriteLine("Attempting to find a note we could move in " + matches.Count + "matched rails");
-                    if(s_instance.selectedUsageType != EditorNote.NoteUsageType.Breaker) {
-                        foreach(Rail potentialMatch in matches.OrEmptyIfNull()) {
-                            if(!potentialMatch.scheduleForDeletion && potentialMatch.HasNoteAtTime(CurrentTime)
-                                && Track.s_instance.selectedNoteType == potentialMatch.noteType) {
-                                Trace.WriteLine("Rail: " + potentialMatch.railId + " has a note that can be moved.");
-                                matchedRail = potentialMatch;
-                                break;
-                            }
+                    Trace.WriteLine("Attempting to find a note we could modify in " + matches.Count + "matched rails");
+
+                    foreach(Rail potentialMatch in matches.OrEmptyIfNull()) {
+                        if(!potentialMatch.scheduleForDeletion && potentialMatch.HasNoteAtTime(CurrentTime)
+                            && Track.s_instance.selectedNoteType == potentialMatch.noteType) {
+                            Trace.WriteLine("Rail: " + potentialMatch.railId + " has a note that can be moved.");
+                            matchedRail = potentialMatch;
+                            break;
                         }
                     }
+
                     // if we found a match we move the rail note to a new position and recalc the rail
                     if(matchedRail != null) {
                         EditorNote railNote = matchedRail.GetNoteAtPosition(CurrentTime);
@@ -5093,7 +5093,7 @@ namespace MiKu.NET {
                             Vector2 foundNotePosition = new Vector2(railNote.Position[0], railNote.Position[1]);
                             Vector2 clickedPosition = new Vector2(noteFromNoteArea.transform.position.x, noteFromNoteArea.transform.position.y);
                             float distance = Vector2.Distance(foundNotePosition, clickedPosition);
-                            if(distance > 0.05f) {
+                            if(distance > 0.05f && railNote.UsageType != EditorNote.NoteUsageType.Breaker) {
                                 // we've clicked away from current note. this means we need to move it
                                 matchedRail.MoveNoteAtTimeToPosition(CurrentTime, noteFromNoteArea.transform.position.x, noteFromNoteArea.transform.position.y);
                             } else {
@@ -5205,7 +5205,7 @@ namespace MiKu.NET {
                             testedRail.Log();
                             if(testedRail.noteType == s_instance.selectedNoteType && !testedRail.scheduleForDeletion) {
                                 Trace.WriteLine("Rail starts BEFORE current time");
-                                if(testedRail.startTime > CurrentTime ||  testedRail.breaker == null) {
+                                if(testedRail.startTime > CurrentTime ||  testedRail.breakerTail == null) {
                                     Trace.WriteLine("Rail does NOT have a breaker or is after the current time");
                                     // now we need to make sure there are no single balls of special color between the rail end and this new line note
                                     // ideally this should be checked between the ranges, but this will require too much refactoring rn

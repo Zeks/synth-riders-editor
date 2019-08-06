@@ -240,7 +240,7 @@ namespace MiKu.NET {
             // by default removing a breaker does _not_ merge the rail to the next one
             // neither does it automatically make the previous note a breaker
             previous.nextNote = null;
-            breaker = null;
+            breakerTail = null;
         }
 
         public void AddNote(EditorNote note, bool silent = false) {
@@ -328,7 +328,7 @@ namespace MiKu.NET {
             EditorNote note = wrapper.thisNote;
             Rail potentialNewRail = null;
 
-            breaker = wrapper;
+            breakerTail = wrapper;
 
             
 
@@ -410,15 +410,23 @@ namespace MiKu.NET {
             RailNoteWrapper previousLeftPoint = previous;
             RailNoteWrapper previousRightPoint = note.nextNote;
 
-            note.nextNote = null;
+            // two cases here: we're breaking the rail OR marking a leader as a closed one
+            if(note != leader) {
+                // note isn't a leader, this means we are cutting off the tail
+                note.nextNote = null;
 
-            Rail potentialNewRail = null;
-            potentialNewRail = ConvertTheTailIntoNewRail(previousRightPoint);
-            if(potentialNewRail != null)
-                Trace.WriteLine("The tail of this rail has created a new rail with id:" + potentialNewRail.railId);
+                Rail potentialNewRail = null;
+                potentialNewRail = ConvertTheTailIntoNewRail(previousRightPoint);
+                if(potentialNewRail != null)
+                    Trace.WriteLine("The tail of this rail has created a new rail with id:" + potentialNewRail.railId);
 
-            note.thisNote.UsageType =  EditorNote.NoteUsageType.Breaker;
-            breaker = note;
+                note.thisNote.UsageType =  EditorNote.NoteUsageType.Breaker;
+                breakerTail = note;
+            } else {
+                // note IS a leader, this means we are toggling the leader as non expandable
+                breakerHead = note;
+                note.thisNote.UsageType =  EditorNote.NoteUsageType.Breaker;
+            }
 
             RecalcDuration();
 
@@ -433,7 +441,11 @@ namespace MiKu.NET {
                 return;
 
             note.thisNote.UsageType =  EditorNote.NoteUsageType.Line;
-            breaker = null;
+            if(note != leader) {
+                breakerTail = null;
+            } else {
+                breakerHead = null;
+            }
 
             InstantiateNoteObject(note);
 
@@ -709,7 +721,7 @@ namespace MiKu.NET {
                 return;
 
             lastNote.thisNote.UsageType = EditorNote.NoteUsageType.Line;
-
+            InstantiateNoteObject(lastNote);
             // this destroys the displayed part
             nextRail.DestroyLeader();
 
@@ -745,7 +757,8 @@ namespace MiKu.NET {
         public Dictionary<int, GameObject> noteObjects; 
 
         public RailNoteWrapper leader;
-        public RailNoteWrapper breaker;
+        public RailNoteWrapper breakerTail;
+        public RailNoteWrapper breakerHead;
         //public LongNote railInstance;
         Game_LineWaveCustom waveCustom;
         
