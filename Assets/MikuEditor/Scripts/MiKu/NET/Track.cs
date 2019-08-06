@@ -5064,12 +5064,14 @@ namespace MiKu.NET {
                 {
                     Rail matchedRail = null;
                     Trace.WriteLine("Attempting to find a note we could move in " + matches.Count + "matched rails");
-                    foreach(Rail potentialMatch in matches.OrEmptyIfNull()) {
-                        if(!potentialMatch.scheduleForDeletion && potentialMatch.HasNoteAtTime(CurrentTime)
-                            && Track.s_instance.selectedNoteType == potentialMatch.noteType) {
-                            Trace.WriteLine("Rail: " + potentialMatch.railId + " has a note that can be moved.");
-                            matchedRail = potentialMatch;
-                            break;
+                    if(s_instance.selectedUsageType != EditorNote.NoteUsageType.Breaker) {
+                        foreach(Rail potentialMatch in matches.OrEmptyIfNull()) {
+                            if(!potentialMatch.scheduleForDeletion && potentialMatch.HasNoteAtTime(CurrentTime)
+                                && Track.s_instance.selectedNoteType == potentialMatch.noteType) {
+                                Trace.WriteLine("Rail: " + potentialMatch.railId + " has a note that can be moved.");
+                                matchedRail = potentialMatch;
+                                break;
+                            }
                         }
                     }
                     // if we found a match we move the rail note to a new position and recalc the rail
@@ -5111,10 +5113,11 @@ namespace MiKu.NET {
                                                 matchedRail.Merge(nextRail);
                                                 return;
                                             }
+                                        } else {
+                                            matchedRail.FlipNoteTypeToLineWithoutMerging(railNote.noteId);
+                                            return;
                                         }
-                                        else return;
                                     }
-
                                 }
                                     railNote.UsageType = s_instance.selectedUsageType;
                                     // we've switched the note usage type, the result might be that a rail merge or break is necessary
@@ -5184,61 +5187,26 @@ namespace MiKu.NET {
                     if(!addedToExistingRail) {
                         Trace.WriteLine("Attempting to find a rail that can be extended with this note");
                         // if we haven't added a note inside the existing rail, we need to test if there is an open one to the left
-                        rails.Sort((x, y) => y.startTime.CompareTo(x.startTime));
+                        rails.Sort((x, y) => x.startTime.CompareTo(y.startTime));
                         foreach(Rail testedRail in rails) {
                             Trace.WriteLine("Testing the rail:");
                             testedRail.Log();
                             if(testedRail.noteType == s_instance.selectedNoteType && !testedRail.scheduleForDeletion) {
                                 Trace.WriteLine("Rail starts BEFORE current time");
-                                if(testedRail.breaker == null) {
-                                    Trace.WriteLine("Rail does NOT have a breaker");
+                                if(testedRail.startTime > CurrentTime ||  testedRail.breaker == null) {
+                                    Trace.WriteLine("Rail does NOT have a breaker or is after the current time");
                                     // now we need to make sure there are no single balls of special color between the rail end and this new line note
                                     // ideally this should be checked between the ranges, but this will require too much refactoring rn
                                     // so I will just go with bruteforcing ball/rail search for the interval
 
                                     //Dictionary<float, List<EditorNote>> workingTrack = s_instance.GetCurrentTrackDifficulty();
                                     List<float> keys_tofilter = workingTrack.Keys.ToList();
-                                    List<float> activeTimesIntheInterval = keys_tofilter.Where( time => time > testedRail.endTime && time < CurrentTime).ToList();
-                                    activeTimesIntheInterval.Sort();
-                                    bool hasPreventingNotes = false;
-                                    // we need to check each possible time
-                                    Trace.WriteLine("Gap between the rail start and CurrentTime has these stops: " + activeTimesIntheInterval);
-                                    Trace.WriteLine("Making sure this gap only contains the notes of same or opposite color");
-                                    foreach(float testedTime in activeTimesIntheInterval.OrEmptyIfNull()) {
-                                        Trace.WriteLine("Testing time:" + testedTime);
-                                        List<EditorNote> currentNotes = workingTrack[testedTime];
-                                        foreach(EditorNote testedNote in currentNotes.OrEmptyIfNull())  {
-                                            Trace.WriteLine("Testing note:");
-                                            testedNote.Log();
-                                            if(testedNote.HandType == testedRail.noteType) {
-                                                Trace.WriteLine("Same hand type, OK, moving on");
-                                                continue;
-                                            }
-                                            if(IsOfSpecialType(testedRail.noteType)) {
-                                                Trace.WriteLine("Tested rail is of special type...");
-                                                if(testedNote.HandType != testedRail.noteType) {
-                                                    Trace.WriteLine("... and note's type is NOT that type and can't extend that rail.");
-                                                    hasPreventingNotes = true;
-                                                    break;
-                                                } else {
-                                                    Trace.WriteLine("... and note's type is MATCHING that type and can extend that rail.");
-                                                }
-                                            } else {
-                                                Trace.WriteLine("Tested rail is of normal type...");
-                                                if(IsOfSpecialType(testedNote.HandType)) {
-                                                    Trace.WriteLine("... and note's type is of SPECIAL type and can't extend that rail.");
-                                                    hasPreventingNotes = true;
-                                                    break;
-                                                } else {
-                                                    Trace.WriteLine("... and note's type is of SIMPLE type and can extend that rail.");
-                                                }
-                                            }
-                                        }
-                                        if(hasPreventingNotes) {
-                                            Trace.WriteLine("Found notes that prevent rail extention. Breaking from note loop");
-                                            break;
-                                        }
-                                     }
+
+                                    float begin = CurrentTime < testedRail.startTime ? CurrentTime : testedRail.endTime;
+                                    float end = CurrentTime < testedRail.startTime ? testedRail.startTime : CurrentTime;
+
+                                    bool hasPreventingNotes = s_instance.HasRailInterruptionsBetween(testedRail.railId, testedRail.railId, begin, end, testedRail.noteType);
+                                    
                                     if(!hasPreventingNotes) {
                                         Trace.WriteLine("Extending the rail and returning");
                                         testedRail.AddNote(noteForRail);
