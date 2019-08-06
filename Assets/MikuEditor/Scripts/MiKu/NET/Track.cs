@@ -348,6 +348,18 @@ namespace MiKu.NET {
         private GameObject m_Special2NoteMarkerSegment;
 
         [SerializeField]
+        private GameObject m_LeftHandBreaker;
+
+        [SerializeField]
+        private GameObject m_RightHandBreaker;
+
+        [SerializeField]
+        private GameObject m_OneHandBreaker;
+
+        [SerializeField]
+        private GameObject m_TwoHandsBreaker;
+
+        [SerializeField]
         public  float m_NoteSegmentMarkerRedution = 0.5f;
 
         [SerializeField]
@@ -3899,7 +3911,7 @@ namespace MiKu.NET {
             }
 
             for(int i = 0; i < noteData.Segments.GetLength(0); ++i) {
-                GameObject noteGO = GameObject.Instantiate(GetNoteMarkerByType(noteData.HandType, true));
+                GameObject noteGO = GameObject.Instantiate(GetNoteMarkerByType(noteData.HandType, noteData.UsageType, true));
                 noteGO.transform.localPosition = new Vector3(
                     noteData.Segments[i, 0],
                     noteData.Segments[i, 1],
@@ -5819,21 +5831,38 @@ namespace MiKu.NET {
         /// </summary>
         /// <param name="noteType">The type of note to look for, default is <see cref="EditorNote.NoteHandType.LeftHanded" /></param>
         /// <returns>Returns <typeparamref name="GameObject"/></returns>
-        public GameObject GetNoteMarkerByType(EditorNote.NoteHandType noteType = EditorNote.NoteHandType.LeftHanded, bool isSegment = false) {
+        public GameObject GetNoteMarkerByType(EditorNote.NoteHandType noteType = EditorNote.NoteHandType.LeftHanded, EditorNote.NoteUsageType usageType = EditorNote.NoteUsageType.Ball, bool isSegment = false) {
             GameObject result = m_LefthandNoteMarker;
-            switch(noteType) {
-                case EditorNote.NoteHandType.LeftHanded:
-                    result = isSegment ? m_LefthandNoteMarkerSegment : m_LefthandNoteMarker;
-                    break;
-                case EditorNote.NoteHandType.RightHanded:
-                    result = isSegment ? m_RighthandNoteMarkerSegment : m_RighthandNoteMarker;
-                    break;
-                case EditorNote.NoteHandType.OneHandSpecial:
-                    result = isSegment ? m_Special1NoteMarkerSegment : m_SpecialOneHandNoteMarker;
-                    break;
-                case EditorNote.NoteHandType.BothHandsSpecial:
-                    result = isSegment ? m_Special2NoteMarkerSegment : m_SpecialBothHandsNoteMarker;
-                    break;
+            if(usageType == EditorNote.NoteUsageType.Ball || usageType == EditorNote.NoteUsageType.Line) {
+                switch(noteType) {
+                    case EditorNote.NoteHandType.LeftHanded:
+                        result = isSegment ? m_LefthandNoteMarkerSegment : m_LefthandNoteMarker;
+                        break;
+                    case EditorNote.NoteHandType.RightHanded:
+                        result = isSegment ? m_RighthandNoteMarkerSegment : m_RighthandNoteMarker;
+                        break;
+                    case EditorNote.NoteHandType.OneHandSpecial:
+                        result = isSegment ? m_Special1NoteMarkerSegment : m_SpecialOneHandNoteMarker;
+                        break;
+                    case EditorNote.NoteHandType.BothHandsSpecial:
+                        result = isSegment ? m_Special2NoteMarkerSegment : m_SpecialBothHandsNoteMarker;
+                        break;
+                }
+            } else {
+                switch(noteType) {
+                    case EditorNote.NoteHandType.LeftHanded:
+                        result = m_LeftHandBreaker;
+                        break;
+                    case EditorNote.NoteHandType.RightHanded:
+                        result = m_RightHandBreaker;
+                        break;
+                    case EditorNote.NoteHandType.OneHandSpecial:
+                        result = m_OneHandBreaker;
+                        break;
+                    case EditorNote.NoteHandType.BothHandsSpecial:
+                        result = m_TwoHandsBreaker;
+                        break;
+                }
             }
             return result;
         }

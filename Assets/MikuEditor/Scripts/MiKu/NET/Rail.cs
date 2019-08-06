@@ -421,6 +421,8 @@ namespace MiKu.NET {
             breaker = note;
 
             RecalcDuration();
+
+            InstantiateNoteObject(note);
             ReinstantiateRail(this);
         }
 
@@ -432,6 +434,8 @@ namespace MiKu.NET {
 
             note.thisNote.UsageType =  EditorNote.NoteUsageType.Line;
             breaker = null;
+
+            InstantiateNoteObject(note);
 
             RecalcDuration();
             ReinstantiateRail(this);
@@ -640,15 +644,22 @@ namespace MiKu.NET {
             DestroyNoteObjectAndRemoveItFromTheRail(note.noteId);
 
             bool isSegment = wrapper == leader ? false : true;
-            GameObject noteGO = GameObject.Instantiate(Track.s_instance.GetNoteMarkerByType(note.HandType, isSegment));
+            GameObject noteGO = GameObject.Instantiate(Track.s_instance.GetNoteMarkerByType(note.HandType, note.UsageType, isSegment));
             noteGO.transform.localPosition = new Vector3(
                                                 note.Position[0],
                                                 note.Position[1],
                                                 note.Position[2]
                                             );
+            Vector3 oldScale = noteGO.transform.localScale;
             if(isSegment)
                 noteGO.transform.localScale *= 0.5f;
+            
             noteGO.transform.rotation = Quaternion.identity;
+            if(note.UsageType == EditorNote.NoteUsageType.Breaker) {
+                noteGO.transform.Rotate(90, 0 , 0);
+                noteGO.transform.localScale = oldScale*0.05f;
+            }
+
             noteGO.transform.parent = Track.s_instance.m_NotesHolder;
             noteGO.name = note.Id;
             wrapper.thisNoteObject = noteGO;

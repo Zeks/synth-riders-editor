@@ -4657,7 +4657,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 0.000030517578, y: -557.2658}
+  m_AnchoredPosition: {x: 0.000030517578, y: -557.26605}
   m_SizeDelta: {x: 0, y: 1099.08}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &195132920
@@ -7918,7 +7918,7 @@ MonoBehaviour:
   m_HandleRect: {fileID: 629322658}
   m_Direction: 2
   m_Value: 1
-  m_Size: 1
+  m_Size: 0.9999998
   m_NumberOfSteps: 0
   m_OnValueChanged:
     m_PersistentCalls:
@@ -32683,7 +32683,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 0, y: 0.000007638699}
+  m_AnchoredPosition: {x: 0, y: -0.000005498248}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0, y: 1}
 --- !u!114 &1161121330
@@ -52069,6 +52069,14 @@ MonoBehaviour:
   m_SpecialBothHandsNoteMarker: {fileID: 1980406998636066, guid: 3baf64a27379e3e4f9661d87f90f0966,
     type: 3}
   m_Special2NoteMarkerSegment: {fileID: 1763640875280510, guid: e310ac07da2b09e4f96fa30c37338878,
+    type: 3}
+  m_LeftHandBreaker: {fileID: 6809776508481149807, guid: ec05c78faa05f034d90cea6ceec6dbaa,
+    type: 3}
+  m_RightHandBreaker: {fileID: 6809776508481149807, guid: 7647e89ae001c6048abdea6db68d4112,
+    type: 3}
+  m_OneHandBreaker: {fileID: 6809776508481149807, guid: d2b4f4e0a539bf74195e2f9f9d19401f,
+    type: 3}
+  m_TwoHandsBreaker: {fileID: 6809776508481149807, guid: 66ff08214fef3084fb3223beea494bb3,
     type: 3}
   m_NoteSegmentMarkerRedution: 0.5
   m_NotesDropArea: {fileID: 2121096072}
