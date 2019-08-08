@@ -58,8 +58,11 @@ namespace MiKu.NET.Charting {
 
         /// <value>
 		/// ID for cache use, when set the format used is Note_{value passed}
+        /// there's literally no point in using anything but the id tho
+        /// a proper name can just as well be formatted where it's needed
+        /// but for object find purposes Note_UNIQUEID will suffice
 		/// </value>
-        public string Id
+        public string name
         {
             get
             {
@@ -119,11 +122,9 @@ namespace MiKu.NET.Charting {
             }
         }
 
-        public EditorNote(UnityEngine.Vector3 pos, float time = default(float), string idRoot = "", int idCmb = -1, NoteHandType t = NoteHandType.OneHandSpecial, NoteDirection d = NoteDirection.None) {
-            if(idRoot != null) {
-                Id = idRoot.ToString();
-            }
+        public EditorNote(UnityEngine.Vector3 pos, float time = default(float), int idCmb = -1, NoteHandType t = NoteHandType.OneHandSpecial, NoteDirection d = NoteDirection.None) {
             noteId = noteCounter++;
+            name = noteId.ToString();
 
             IdDictionaries.AddNote(noteId, this);
             if(time != default(float))
@@ -135,6 +136,20 @@ namespace MiKu.NET.Charting {
             Position = new float[3] { pos.x, pos.y, pos.z };
             Direction = d;
         }
+
+        public EditorNote(float time, UnityEngine.Vector3 pos, NoteHandType handType, NoteUsageType usageType) {
+            noteId = noteCounter++;
+            name = noteId.ToString();
+
+            IdDictionaries.AddNote(noteId, this);
+            if(time != default(float))
+                TimeDictionaries.AddNote(time, this);
+            timePoint = time;
+            HandType = handType;
+            UsageType = usageType;
+            Position = new float[3] { pos.x, pos.y, pos.z };
+        }
+
         public EditorNote() {
             noteId = noteCounter++;
             UsageType = EditorNote.NoteUsageType.Ball;

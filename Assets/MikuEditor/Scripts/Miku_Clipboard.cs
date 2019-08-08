@@ -60,7 +60,7 @@ public class Miku_Clipboard : MonoBehaviour {
                     EditorNote n = _notes[i];
                     EditorNote newNote = new EditorNote(Vector3.zero);
                     newNote.Position = n.Position;
-                    newNote.Id = Track.FormatNoteName(kvp.Key, i, n.HandType);
+                    //newNote.name = Track.FormatNoteName(kvp.Key, i, n.HandType);
                     newNote.HandType = n.HandType;
                     newNote.UsageType = n.UsageType;
                     newNote.ComboId = n.ComboId;

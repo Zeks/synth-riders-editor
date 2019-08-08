@@ -189,7 +189,7 @@ namespace MiKu.NET {
         public const float MIN_LINE_DURATION = 0.1f * MS;
 
         // Max duration on milliseconds that the line can have
-        public const float MAX_LINE_DURATION = 100 * MS;
+        public const float MAX_LINE_DURATION = 10 * MS;
 
         // Max size that the note can have
         private const float MAX_NOTE_RESIZE = 0.2f;
@@ -2591,7 +2591,6 @@ namespace MiKu.NET {
                         EditorNote copyNote = new EditorNote(
                             new Vector3(currNote.Position[0], currNote.Position[1], newPos),
                             currNote.TimePoint,
-                            FormatNoteName(newTime, j, currNote.HandType),
                             currNote.ComboId,
                             currNote.HandType,
                             currNote.Direction
@@ -3843,7 +3842,7 @@ namespace MiKu.NET {
                         EditorNote newNote = new EditorNote(Vector3.zero);
                         newNote.Position = n.Position;
                         newNote.TimePoint = n.TimePoint;
-                        newNote.Id = Track.FormatNoteName(kvp.Key, i, n.HandType);
+                        //newNote.name = Track.FormatNoteName(kvp.Key, i, n.HandType);
                         newNote.HandType = n.HandType;
                         newNote.UsageType = n.UsageType;
                         newNote.ComboId = n.ComboId;
@@ -3884,7 +3883,7 @@ namespace MiKu.NET {
                                             );
             noteGO.transform.rotation = Quaternion.identity;
             noteGO.transform.parent = m_NotesHolder;
-            noteGO.name = noteData.Id;
+            noteGO.name = noteData.name;
 
             // if note has segments we added it
             if(noteData.Segments != null && noteData.Segments.Length > 0) {
@@ -3924,7 +3923,7 @@ namespace MiKu.NET {
                 noteGO.transform.rotation = Quaternion.identity;
                 noteGO.transform.localScale *= m_NoteSegmentMarkerRedution;
                 noteGO.transform.parent = segmentsParent;
-                noteGO.name = noteData.Id + "_Segment";
+                noteGO.name = noteData.name + "_Segment";
             }
             //}
 
@@ -3937,7 +3936,7 @@ namespace MiKu.NET {
         /// <param name="noteData">The Note from where the data for the instantiation will be read</param>
         void AddNoteDirectionObject(EditorNote noteData) {
             if(noteData.Direction != EditorNote.NoteDirection.None) {
-                GameObject parentGO = GameObject.Find(noteData.Id);
+                GameObject parentGO = GameObject.Find(noteData.name);
                 GameObject dirGO;
                 Transform dirTrans = parentGO.transform.Find("DirectionWrap/DirectionMarker");
 
@@ -4074,7 +4073,7 @@ namespace MiKu.NET {
                 if(deleted) TotalNotes--;
                 else TotalNotes++;
             }
-
+            // todo will need to create it dynamically from relevant data
             m_statsTotalNotesText.SetText(TotalNotes.ToString() + " Notes");
         }
 
@@ -4407,7 +4406,7 @@ namespace MiKu.NET {
                 for(int i = 0; i < totalNotes; ++i) {
                     EditorNote toHighlight = notes[i];
 
-                    GameObject highlighter = GetHighlighter(toHighlight.Id);
+                    GameObject highlighter = GetHighlighter(toHighlight.name);
                     if(highlighter) {
                         highlighter.SetActive(true);
                     }
@@ -4537,7 +4536,7 @@ namespace MiKu.NET {
                     for(int i = 0; i < totalNotes; ++i) {
                         EditorNote toRemove = notes[i];
 
-                        targetToDelete = GameObject.Find(toRemove.Id);
+                        targetToDelete = GameObject.Find(toRemove.name);
                         // print(targetToDelete);
                         if(targetToDelete) {
                             DestroyImmediate(targetToDelete);
@@ -4802,7 +4801,7 @@ namespace MiKu.NET {
 
                         if(IsSameUsageTypeClass(potentialOverlap.UsageType, Track.s_instance.selectedUsageType)) {
                             // removing just the note object
-                            GameObject nToDelete = GameObject.Find(potentialOverlap.Id);
+                            GameObject nToDelete = GameObject.Find(potentialOverlap.name);
                             if(nToDelete) {
                                 DestroyImmediate(nToDelete);
                             }
@@ -4816,9 +4815,9 @@ namespace MiKu.NET {
                             } else {
                                 EditorNote newRangeBegin = notes[0];
                                 if(newRangeBegin.HandType == EditorNote.NoteHandType.OneHandSpecial) {
-                                    GameObject newRangeBeginObject = GameObject.Find(newRangeBegin.Id);
-                                    newRangeBegin.Id = FormatNoteName(targetTime, 0, newRangeBegin.HandType);
-                                    newRangeBeginObject.name = newRangeBegin.Id;
+                                    GameObject newRangeBeginObject = GameObject.Find(newRangeBegin.name);
+                                    //newRangeBegin.name = FormatNoteName(targetTime, 0, newRangeBegin.HandType);
+                                    newRangeBeginObject.name = newRangeBegin.name;
                                 }
                             }
                         }
@@ -4998,7 +4997,7 @@ namespace MiKu.NET {
             if(noteFromNoteArea == null)
                 return null;
             Trace.WriteLine("Creating a note to add to some rail");
-            EditorNote newNote = new EditorNote(noteFromNoteArea.transform.position, Track.CurrentTime, "Rail " + FormatNoteName(CurrentTime, s_instance.TotalNotes + 1, s_instance.selectedNoteType));
+            EditorNote newNote = new EditorNote(noteFromNoteArea.transform.position, Track.CurrentTime);
             newNote.UsageType = s_instance.selectedUsageType;
             newNote.HandType = s_instance.selectedNoteType;
             newNote.Log();
@@ -5006,6 +5005,29 @@ namespace MiKu.NET {
             Rail rail = new Rail();
             rail.noteType = s_instance.selectedNoteType;
             rail.AddNote(newNote);
+            rail.Log();
+            IdDictionaries.AddRail(rail);
+            List<Rail> tempRailList = s_instance.GetCurrentRailListByDifficulty();
+            tempRailList.Add(rail);
+            return rail;
+        }
+
+        public static Rail CreateNewRailFromBeginEnd(float begin, float end, Vector3 posBegin, Vector3 posEnd, EditorNote.NoteHandType handType, EditorNote.NoteUsageType usageType) {
+            Trace.WriteLine("Creating a note to add to some rail");
+            EditorNote firstNote = new EditorNote(begin, posBegin, handType, usageType);
+            firstNote.UsageType = s_instance.selectedUsageType;
+            firstNote.HandType = s_instance.selectedNoteType;
+            firstNote.Log();
+
+            EditorNote secondNote = new EditorNote(end, posEnd, handType, usageType);
+            secondNote.UsageType = s_instance.selectedUsageType;
+            secondNote.HandType = s_instance.selectedNoteType;
+            secondNote.Log();
+
+            Rail rail = new Rail();
+            rail.noteType = s_instance.selectedNoteType;
+            rail.AddNote(firstNote);
+            rail.AddNote(secondNote);
             rail.Log();
             IdDictionaries.AddRail(rail);
             List<Rail> tempRailList = s_instance.GetCurrentRailListByDifficulty();
@@ -5180,7 +5202,7 @@ namespace MiKu.NET {
                                 conjoinedRail.FlipNoteTypeToBreaker(conjoinedRail.leader.thisNote.noteId, s_instance.selectedUsageType);
                             } else {
                                 // middle will break and create a conjoined rail in the middle of an existing one
-                                EditorNote leaderOfConjoinedRail = new EditorNote(noteFromNoteArea.transform.position, Track.CurrentTime, "Rail " + FormatNoteName(CurrentTime, s_instance.TotalNotes + 1, s_instance.selectedNoteType));
+                                EditorNote leaderOfConjoinedRail = new EditorNote(noteFromNoteArea.transform.position, Track.CurrentTime);
                                 leaderOfConjoinedRail.UsageType = s_instance.selectedUsageType;
                                 leaderOfConjoinedRail.HandType = s_instance.selectedNoteType;
                                 RailNoteWrapper nextNote = matchedRail.GetNoteAtThisOrFollowingTime(CurrentTime);
@@ -5197,9 +5219,9 @@ namespace MiKu.NET {
                                     nextRail.FlipNoteTypeToBreaker(middleNote.noteId, s_instance.selectedUsageType);
                                 } else {
                                     // need to create a new note here
-                                    EditorNote tailOfConjoinedRail = new EditorNote(noteFromNoteArea.transform.position, Track.CurrentTime, "Rail " + FormatNoteName(CurrentTime, s_instance.TotalNotes + 1, s_instance.selectedNoteType));
-                                    tailOfConjoinedRail.UsageType = s_instance.selectedUsageType;
-                                    tailOfConjoinedRail.HandType = s_instance.selectedNoteType;
+                                    EditorNote tailOfConjoinedRail = new EditorNote(Track.CurrentTime, 
+                                        noteFromNoteArea.transform.position, 
+                                          s_instance.selectedNoteType, s_instance.selectedUsageType);
                                     matchedRail.AddNote(tailOfConjoinedRail);
                                     nextRail.FlipNoteTypeToBreaker(tailOfConjoinedRail.noteId, s_instance.selectedUsageType);
                                 }
@@ -5208,9 +5230,8 @@ namespace MiKu.NET {
                             }
                         } else {
                             // this just simply places a new unbroken leader note but without joining it to anything
-
+                            CreateNewRailAndAddNoteToIt(noteFromNoteArea);
                         }
-                        
                         return;
                     }
 
@@ -5298,7 +5319,7 @@ namespace MiKu.NET {
                     }
 
                     Trace.WriteLine("Creating a note to add to some rail");
-                    EditorNote noteForRail = new EditorNote(noteFromNoteArea.transform.position, Track.CurrentTime, "Rail " + FormatNoteName(CurrentTime, s_instance.TotalNotes + 1, s_instance.selectedNoteType));
+                    EditorNote noteForRail = new EditorNote(noteFromNoteArea.transform.position, Track.CurrentTime);
                     noteForRail.UsageType = s_instance.selectedUsageType;
                     noteForRail.HandType = s_instance.selectedNoteType;
 
@@ -5324,9 +5345,7 @@ namespace MiKu.NET {
                         return;
                     }
                     
-                    // need to indicate junction point of two rails with a special note indicator (possibly two circles)
-                    // to select which rail to operate on: consider the previous time and use the one that was before
-                    // need ctrl+click or smth to forcibly place a new rail at the point where there is already another one
+                    
                     if(!addedToExistingRail) {
                         Trace.WriteLine("Attempting to find a rail that can be extended with this note");
                         // if we haven't added a note inside the existing rail, we need to test if there is an open one to the left
@@ -5348,28 +5367,58 @@ namespace MiKu.NET {
                                 continue;
                             }
 
+                            if(extendingTail) 
+                                Trace.WriteLine("Attempting to extend the TAIL");
+                            if(extendingHead)
+                                Trace.WriteLine("Attempting to extend the HEAD");
+
+                            // if we're still here and there's an ambiguity... well this is totally on the user
+                            // picking up the first one
+
                             if(testedRail.noteType == s_instance.selectedNoteType && !testedRail.scheduleForDeletion) {
-                                Trace.WriteLine("Rail starts BEFORE current time");
-                                if(testedRail.startTime > CurrentTime ||  testedRail.breakerTail == null) {
-                                    Trace.WriteLine("Rail does NOT have a breaker or is after the current time");
-                                    // now we need to make sure there are no single balls of special color between the rail end and this new line note
-                                    // ideally this should be checked between the ranges, but this will require too much refactoring rn
-                                    // so I will just go with bruteforcing ball/rail search for the interval
+                                // now we need to make sure there are no single balls of special color between the rail end and this new line note
+                                // ideally this should be checked between the ranges, but this will require too much refactoring rn
+                                // so I will just go with bruteforcing ball/rail search for the interval
 
-                                    //Dictionary<float, List<EditorNote>> workingTrack = s_instance.GetCurrentTrackDifficulty();
-                                    List<float> keys_tofilter = workingTrack.Keys.ToList();
+                                //Dictionary<float, List<EditorNote>> workingTrack = s_instance.GetCurrentTrackDifficulty();
+                                List<float> keys_tofilter = workingTrack.Keys.ToList();
 
-                                    float begin = CurrentTime < testedRail.startTime ? CurrentTime : testedRail.endTime;
-                                    float end = CurrentTime < testedRail.startTime ? testedRail.startTime : CurrentTime;
+                                float begin = CurrentTime < testedRail.startTime ? CurrentTime : testedRail.endTime;
+                                float end = CurrentTime < testedRail.startTime ? testedRail.startTime : CurrentTime;
 
-                                    bool hasPreventingNotes = s_instance.HasRailInterruptionsBetween(testedRail.railId, testedRail.railId, begin, end, testedRail.noteType);
-                                    
-                                    if(!hasPreventingNotes) {
-                                        Trace.WriteLine("Extending the rail and returning");
-                                        testedRail.AddNote(noteForRail);
-                                        addedToExistingRail = true;
-                                        return;
-                                    }
+                                bool hasPreventingNotes = s_instance.HasRailInterruptionsBetween(testedRail.railId, testedRail.railId, begin, end, testedRail.noteType);
+                                bool extensionBreaksTimeLimit = false;
+
+                                float beginOfConjoinedRailTime = default(float), endOfConjoinedRailTime = default(float);
+                                Vector3 beginOfConjoinedRailPos = default(Vector3), endOfConjoinedRailPos = default(Vector3);
+                                if(extendingTail) {
+                                    extensionBreaksTimeLimit = (testedRail.duration + (CurrentTime -  testedRail.endTime)) > Track.MAX_LINE_DURATION;
+                                    beginOfConjoinedRailTime = testedRail.endTime;
+                                    endOfConjoinedRailTime = CurrentTime;
+                                    EditorNote refNote = testedRail.GetLastNote().thisNote;
+                                    beginOfConjoinedRailPos = new Vector3(refNote.Position[0], refNote.Position[1], refNote.Position[3]);
+                                    endOfConjoinedRailPos = noteFromNoteArea.transform.position;
+                                }
+
+                                if(extendingHead) {
+                                    extensionBreaksTimeLimit = (testedRail.duration + (testedRail.startTime - CurrentTime)) > Track.MAX_LINE_DURATION;
+                                    beginOfConjoinedRailTime = CurrentTime;
+                                    endOfConjoinedRailTime = testedRail.startTime;
+                                    EditorNote refNote = testedRail.leader.thisNote;
+                                    beginOfConjoinedRailPos = noteFromNoteArea.transform.position;
+                                    endOfConjoinedRailPos = new Vector3(refNote.Position[0], refNote.Position[1], refNote.Position[3]); ;
+                                }
+
+                                if(!hasPreventingNotes) {
+                                    Trace.WriteLine("Extending the rail and returning");
+                                    testedRail.AddNote(noteForRail);
+                                    addedToExistingRail = true;
+                                    return;
+                                }
+                                if(extensionBreaksTimeLimit) {
+                                    Trace.WriteLine("Extending the current rail will break the time limit for the rail. Creating a conjoined rail instead");
+                                    CreateNewRailFromBeginEnd(beginOfConjoinedRailTime, endOfConjoinedRailTime, beginOfConjoinedRailPos, endOfConjoinedRailPos, s_instance.selectedNoteType, s_instance.selectedUsageType);
+                                    return;
                                 }
                             }
                         }
@@ -5391,7 +5440,7 @@ namespace MiKu.NET {
 
 
             // workingTrack[CurrentTime].Count
-            EditorNote noteForChart = new EditorNote(noteFromNoteArea.transform.position, Track.CurrentTime, FormatNoteName(CurrentTime, s_instance.TotalNotes + 1, s_instance.selectedNoteType));
+            EditorNote noteForChart = new EditorNote(noteFromNoteArea.transform.position, Track.CurrentTime);
             noteForChart.HandType = s_instance.selectedNoteType;
 
             // Check if the note placed if of special type 
@@ -5454,15 +5503,19 @@ namespace MiKu.NET {
             }
         }
 
-        /// <summary>
-        /// Return a string formated to be use as the note id
-        /// </summary>
-        /// <param name="_ms">Millesconds of the current position to use on the formating</param>
-        /// <param name="index">Index of the note to use on the formating</param>    
-        /// <param name="noteType">The type of note to look for, default is <see cref="EditorNote.NoteHandType.RightHanded" /></param>
-        public static string FormatNoteName(float _ms, int index, EditorNote.NoteHandType noteType = EditorNote.NoteHandType.RightHanded) {
-            return (_ms.ToString("R") + noteType.ToString() + index).ToString();
-        }
+        ///// <summary>
+        ///// Return a string formated to be use as the note id
+        ///// </summary>
+        ///// <param name="_ms">Millesconds of the current position to use on the formating</param>
+        ///// <param name="index">Index of the note to use on the formating</param>    
+        ///// <param name="noteType">The type of note to look for, default is <see cref="EditorNote.NoteHandType.RightHanded" /></param>
+        //public static string FormatNoteName(float _ms, int index, EditorNote.NoteHandType noteType = EditorNote.NoteHandType.RightHanded) {
+        //    return (_ms.ToString("R") + noteType.ToString() + index).ToString();
+        //}
+
+        //public static string FormatNoteName(float _ms) {
+        //    return (_ms.ToString("R") + s_instance.selectedNoteType.ToString() + s_instance.TotalNotes + 1).ToString();
+        //}
 
         /// <summary>
         /// Add the passed Note GameObject to the <see cref="disabledNotes" /> list of disabled objects
@@ -6080,16 +6133,16 @@ namespace MiKu.NET {
                             // And update the value on the Dictionary
                             n.Position = new float[3] { n.Position[0], n.Position[1], newPos };
                             // And update the position of the GameObject
-                            GameObject noteGO = GameObject.Find(n.Id);
+                            GameObject noteGO = GameObject.Find(n.name);
                             noteGO.transform.position = new Vector3(
                                 noteGO.transform.position.x,
                                 noteGO.transform.position.y,
                                 newPos);
 
                             // Update data
-                            n.Id = FormatNoteName(newTime, i, n.HandType);
+                            //n.name = FormatNoteName(newTime, i, n.HandType);
                             updateList.Add(n);
-                            noteGO.name = n.Id;
+                            noteGO.name = n.name;
 
                             if(n.Segments != null && n.Segments.GetLength(0) > 0) {
                                 for(int j = 0; j < n.Segments.GetLength(0); ++j) {
@@ -6349,7 +6402,7 @@ namespace MiKu.NET {
                         EditorNote n = _notes[i];
 
                         // And after find its related GameObject we delete it
-                        GameObject noteGO = GameObject.Find(n.Id);
+                        GameObject noteGO = GameObject.Find(n.name);
                         GameObject.DestroyImmediate(noteGO);
                     }
 
@@ -6449,7 +6502,7 @@ namespace MiKu.NET {
                         EditorNote n = _notes[i];
 
                         // And after find its related GameObject we delete it
-                        GameObject noteGO = GameObject.Find(n.Id);
+                        GameObject noteGO = GameObject.Find(n.name);
                         GameObject.DestroyImmediate(noteGO);
                     }
                 }

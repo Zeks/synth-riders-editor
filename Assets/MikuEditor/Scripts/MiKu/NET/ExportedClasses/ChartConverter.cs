@@ -105,14 +105,19 @@ namespace MiKu.NET.Charting {
             foreach(KeyValuePair<float, List<EditorNote>> entry in editorValue) {
                 if(!exportValue.ContainsKey(entry.Key))
                     exportValue.Add(entry.Key, new List<Note>());
-
+                // will need to create note's name in the format that game understands
                 foreach(var editorNote in entry.Value) {
                     Note exportNote = new Note(new UnityEngine.Vector3 { x = editorNote.Position[0], y = editorNote.Position[1], z = editorNote.Position[2] },
-                        editorNote.Id, editorNote.ComboId, ConvertEditorNoteTypeToGameNoteType(editorNote.HandType));
+                        editorNote.name, editorNote.ComboId, ConvertEditorNoteTypeToGameNoteType(editorNote.HandType));
                     exportNote.Segments = editorNote.Segments;
                     exportValue[entry.Key].Add(exportNote);
                 }
             }
+        }
+
+        string CreateNoteNameForGame(EditorNote note) {
+            return null;
+
         }
 
         // Fully passes the Game's single difficulty note data to Editor's note data
@@ -127,8 +132,9 @@ namespace MiKu.NET.Charting {
                     editorDictionary.Add(entry.Key, new List<EditorNote>());
 
                 foreach(var gameNote in entry.Value) {
-                    EditorNote exportNote = new EditorNote(new UnityEngine.Vector3 { x = gameNote.Position[0], y = gameNote.Position[1], z = gameNote.Position[2] }, entry.Key,
-                        gameNote.Id, gameNote.ComboId, ConvertGameNoteTypeToEditorNoteType(gameNote.Type));
+                    EditorNote exportNote = new EditorNote(
+                        new UnityEngine.Vector3 { x = gameNote.Position[0], y = gameNote.Position[1], z = gameNote.Position[2] }, entry.Key,
+                         gameNote.ComboId, ConvertGameNoteTypeToEditorNoteType(gameNote.Type));
                     exportNote.Segments = gameNote.Segments;
                     editorDictionary[entry.Key].Add(exportNote);
                 }

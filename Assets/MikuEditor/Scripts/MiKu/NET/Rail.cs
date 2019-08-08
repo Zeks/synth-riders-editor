@@ -670,7 +670,7 @@ namespace MiKu.NET {
             }
 
             noteGO.transform.parent = Track.s_instance.m_NotesHolder;
-            noteGO.name = note.Id;
+            noteGO.name = note.name;
             wrapper.thisNoteObject = noteGO;
             noteObjects.Add(note.noteId, noteGO);
         }
