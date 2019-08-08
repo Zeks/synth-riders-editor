@@ -475,7 +475,17 @@ namespace MiKu.NET {
             return noteType;
         }
 
-        Rail ConvertTheTailIntoNewRail(RailNoteWrapper note) {
+        public RailNoteWrapper GetNoteAtThisOrFollowingTime(float time) {
+            List<float> notes = notesByTime.Keys.ToList();
+            notes.Sort();
+            float first = notes.FirstOrDefault(x => x > time);
+            if(first == default(float))
+                return null;
+
+            return notesByTime[first];
+        }
+
+        public Rail ConvertTheTailIntoNewRail(RailNoteWrapper note) {
             if(note == null)
                 return null;
 
@@ -539,20 +549,6 @@ namespace MiKu.NET {
                 return;
             }
 
-            // longNote.segments is basically a temprorary prototype GameObjects that need to be used
-            // to initialize the actual Note object with Note.segments
-            // since I am doing my own housekeeping in the Rail, I can skip LongNote.segments altogether
-            // and go straight to rendered note setup
-            //if(rail.waveCustom != null) {
-            //    GameObject.DestroyImmediate(rail.waveCustom);
-            //    rail.waveCustom = null;
-            //}
-
-
-            // will render it myself?
-            //if(rail.linkedObject == null) {
-            //    rail.linkedObject = Track.Instance.AddNoteGameObjectToScene(rail.leader.thisNote);
-            //}
 
             EditorNote leaderNote = rail.leader.thisNote;
             leaderNote.Segments = new float[rail.notesByID.Count, 3];
@@ -629,7 +625,7 @@ namespace MiKu.NET {
             return true;
         }
 
-        void RecalcDuration() {
+        public void RecalcDuration() {
             Trace.WriteLine("Recalcualting rail duration for rail: " + this.railId);
             List<float> keys = notesByTime.Keys.ToList();
             if(keys.Count == 0) {
