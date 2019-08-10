@@ -39,7 +39,7 @@ namespace MiKu.NET {
             railId = railCounter++;
             Trace.WriteLine("Created new rail with ID: " + railId);
             notesByID = new Dictionary<int, RailNoteWrapper>();
-            notesByTime = new Dictionary<float, RailNoteWrapper>();
+            notesByTime = new SortedDictionary<float, RailNoteWrapper>();
             noteObjects = new Dictionary<int, GameObject>();
         }
 
@@ -235,13 +235,20 @@ namespace MiKu.NET {
         void RemoveBreakerNote(RailNoteWrapper wrapper) {
             Trace.WriteLine("Called to remove breaker note.");
             EditorNote note = wrapper.thisNote;
-            RailNoteWrapper previous = GetPreviousNote(note.TimePoint);
-            // by this point we've established this note isn't a sole note of a rail
-            // also at this point breaker can only be the last note in the segment
-            // by default removing a breaker does _not_ merge the rail to the next one
-            // neither does it automatically make the previous note a breaker
-            previous.nextNote = null;
-            breakerTail = null;
+
+            if(wrapper == breakerTail) {
+                RailNoteWrapper previous = GetPreviousNote(note.TimePoint);
+                previous.nextNote = null;
+                breakerTail = null;
+            }
+
+            if(wrapper == breakerHead) {
+                breakerHead = null;
+                if(wrapper.nextNote != null) {
+                    leader= wrapper.nextNote;
+                    wrapper.nextNote.AssignPreviousNote(null);
+                }
+            }
         }
 
         public void AddNote(EditorNote note, bool silent = false) {
@@ -312,6 +319,14 @@ namespace MiKu.NET {
                 wrapper.AssignPreviousNote(previous);
             }
         }
+        public bool WillBeNewHead(float time) {
+            if(notesByTime.Count == 0)
+                return true;
+            if(time < notesByTime.Keys.ToList()[0]) {
+                return true;
+            }
+            return false;
+        }
 
         //need to handle special case of adding a breaker to an already broken rail
         bool AddBreakerNote(RailNoteWrapper wrapper) {
@@ -319,7 +334,7 @@ namespace MiKu.NET {
                 // for simplicity we just flip an existing note to a breaker type
                 // otherwise it becomes very counterintuitive
                 EditorNote foundNote = GetNoteAtPosition(wrapper.thisNote.TimePoint);
-                FlipNoteTypeToBreaker(foundNote.noteId, EditorNote.NoteUsageType.Breaker);
+                FlipNoteTypeToBreaker(foundNote.noteId);
                 return false;
             }
         
@@ -328,8 +343,10 @@ namespace MiKu.NET {
 
             EditorNote note = wrapper.thisNote;
             Rail potentialNewRail = null;
-
-            breakerTail = wrapper;
+            if(WillBeNewHead(wrapper.thisNote.TimePoint))
+                breakerHead = wrapper;
+            else
+                breakerTail = wrapper;
 
             
 
@@ -395,10 +412,10 @@ namespace MiKu.NET {
             return true;
         }
 
-        public void FlipNoteTypeToBreaker(int noteId, EditorNote.NoteUsageType usageType) {
+        public void FlipNoteTypeToBreaker(int noteId) {
             Trace.WriteLine("Flipping the note on existing rail to breaker");
             RailNoteWrapper note = notesByID[noteId];
-            if(note == null)
+            if(note == null || note.thisNote.UsageType == EditorNote.NoteUsageType.Breaker)
                 return;
 
             RailNoteWrapper previous = GetPreviousNote(note.thisNote.TimePoint);
@@ -438,7 +455,7 @@ namespace MiKu.NET {
         public void FlipNoteTypeToLineWithoutMerging(int noteId) {
             Trace.WriteLine("Flipping the note on existing rail to line");
             RailNoteWrapper note = notesByID[noteId];
-            if(note == null)
+            if(note == null || note.thisNote.UsageType == EditorNote.NoteUsageType.Line)
                 return;
 
             note.thisNote.UsageType =  EditorNote.NoteUsageType.Line;
@@ -735,6 +752,196 @@ namespace MiKu.NET {
 
         }
 
+        public static Rail CreateNewRailFromBeginEnd(float begin, float end, 
+            Vector3 posBegin, Vector3 posEnd,
+            EditorNote.NoteHandType handType,
+            EditorNote.NoteUsageType note1UsageType, EditorNote.NoteUsageType note2UsageType) {
+            Trace.WriteLine("Creating a note to add to some rail");
+            EditorNote firstNote = new EditorNote(begin, posBegin, handType, note1UsageType);
+            firstNote.Log();
+
+            EditorNote secondNote = new EditorNote(end, posEnd, handType, note2UsageType);
+            secondNote.Log();
+
+            Rail rail = new Rail();
+            rail.noteType = handType;
+            rail.AddNote(firstNote);
+            rail.AddNote(secondNote);
+            rail.Log();
+            IdDictionaries.AddRail(rail);
+            List<Rail> tempRailList = Track.s_instance.GetCurrentRailListByDifficulty();
+            tempRailList.Add(rail);
+            return rail;
+        }
+
+        // attempts to find and extend some rail's head and returns the extended rail or null
+        public static Rail AttemptExtendHead(float time, Vector3 position, List<Rail> rails) {
+
+            Trace.WriteLine("Attempting to find a rail's head that can be extended with this note");
+            // first we need to find the closest rail that has unbroken head to the right of current time
+            rails.Sort((x, y) => x.startTime.CompareTo(y.startTime));
+            bool found = false;
+            Rail foundRail = null;
+            foreach(Rail testedRail in rails) {
+                if(testedRail.startTime > time && testedRail.breakerHead == null && testedRail.scheduleForDeletion != true) {
+                    found = true;
+                    foundRail = testedRail;
+                    break;
+                }
+            }
+            if(!found)
+                return null;
+            // this rail must no have a breaker head
+            if(foundRail.breakerHead != null) {
+                Trace.WriteLine("Potential candidate has a breaker head. Returning");
+                return null;
+            }
+
+            // now we need to check for hindrances to extension
+            bool hasHindrances = Track.s_instance.HasRailInterruptionsBetween(foundRail.railId, foundRail.railId, time, foundRail.startTime, foundRail.noteType);
+            if(hasHindrances) {
+                Trace.WriteLine("Potential candidate has something between it and the extension time.");
+                return null;
+            }
+
+            float beginOfConjoinedRailTime = default(float), endOfConjoinedRailTime = default(float);
+            Vector3 beginOfConjoinedRailPos = default(Vector3), endOfConjoinedRailPos = default(Vector3);
+
+            bool extensionBreaksTimeLimit = (foundRail.duration + (foundRail.startTime - time)) > Track.MAX_LINE_DURATION;
+            float gapSize = foundRail.startTime - time;
+            EditorNote noteForRail = new EditorNote(time, position,  foundRail.noteType, EditorNote.NoteUsageType.Line);
+            noteForRail.Log();
+
+            if(!extensionBreaksTimeLimit) {
+                foundRail.AddNote(noteForRail);
+                return foundRail;
+            }
+
+            // will only attempt to extend if the gap itself is less than max time
+            if(extensionBreaksTimeLimit ) {
+                if(gapSize > Track.MAX_LINE_DURATION) {
+                    Trace.WriteLine("Cannot extend if the gap is longer than max time.");
+                    return null;
+                }
+                if(foundRail.notesByID.Count == 1) {
+                    Trace.WriteLine("Cannot extend if the initial rail has just one note.");
+                    return null;
+                }
+            }
+
+            beginOfConjoinedRailTime = time;
+            endOfConjoinedRailTime = foundRail.startTime;
+            EditorNote refNote = foundRail.leader.thisNote;
+            beginOfConjoinedRailPos = position;
+            endOfConjoinedRailPos = new Vector3(refNote.Position[0], refNote.Position[1], refNote.Position[2]); ;
+            Rail result = CreateNewRailFromBeginEnd(beginOfConjoinedRailTime, endOfConjoinedRailTime, 
+                beginOfConjoinedRailPos, endOfConjoinedRailPos,
+                foundRail.noteType,
+                EditorNote.NoteUsageType.Line, EditorNote.NoteUsageType.Breaker);
+            return result;
+        }
+
+
+        // attempts to find and extend some rail's head and returns the extended rail or null
+        public static Rail AttemptExtendTail(float time, Vector3 position, List<Rail> rails) {
+
+            Trace.WriteLine("Attempting to find a rail's tail that can be extended with this note");
+            // first we need to find the closest rail that has unbroken head to the right of current time
+            rails.Sort((x, y) => y.startTime.CompareTo(x.startTime));
+            bool found = false;
+            Rail foundRail = null;
+            foreach(Rail testedRail in rails) {
+                if(testedRail.endTime < time && testedRail.breakerTail == null && testedRail.scheduleForDeletion != true) {
+                    found = true;
+                    foundRail = testedRail;
+                    break;
+                }
+            }
+            if(!found)
+                return null;
+            // this rail must no have a breaker head
+            if(foundRail.breakerTail != null) {
+                Trace.WriteLine("Potential candidate has a breaker head. Returning");
+                return null;
+            }
+
+            // now we need to check for hindrances to extension
+            bool hasHindrances = Track.s_instance.HasRailInterruptionsBetween(foundRail.railId, foundRail.railId, foundRail.endTime, time, foundRail.noteType);
+            if(hasHindrances) {
+                Trace.WriteLine("Potential candidate has something between it and the extension time.");
+                return null;
+            }
+
+            float beginOfConjoinedRailTime = default(float), endOfConjoinedRailTime = default(float);
+            Vector3 beginOfConjoinedRailPos = default(Vector3), endOfConjoinedRailPos = default(Vector3);
+
+            bool extensionBreaksTimeLimit = (foundRail.duration + (time - foundRail.endTime)) > Track.MAX_LINE_DURATION;
+            float gapSize = time - foundRail.endTime;
+            EditorNote noteForRail = new EditorNote(time, position, foundRail.noteType, EditorNote.NoteUsageType.Line);
+            noteForRail.Log();
+
+            if(!extensionBreaksTimeLimit) {
+                foundRail.AddNote(noteForRail);
+                return foundRail;
+            }
+
+            if(extensionBreaksTimeLimit) {
+                if(gapSize > Track.MAX_LINE_DURATION) {
+                    Trace.WriteLine("Cannot extend if the gap is longer than max time.");
+                    return null;
+                }
+                if(foundRail.notesByID.Count == 1) {
+                    Trace.WriteLine("Cannot extend if the initial rail has just one note.");
+                    return null;
+                }
+            }
+
+            beginOfConjoinedRailTime = foundRail.endTime;
+            endOfConjoinedRailTime = time;
+
+            EditorNote refNote = foundRail.GetLastNote().thisNote;
+            beginOfConjoinedRailPos= new Vector3(refNote.Position[0], refNote.Position[1], refNote.Position[2]); ;
+            endOfConjoinedRailPos  = position;
+            
+            Rail result = CreateNewRailFromBeginEnd(beginOfConjoinedRailTime, endOfConjoinedRailTime,
+                beginOfConjoinedRailPos, endOfConjoinedRailPos,
+                foundRail.noteType,
+                EditorNote.NoteUsageType.Breaker, EditorNote.NoteUsageType.Line);
+            return result;
+        }
+
+
+        public static Rail CreateNewRailAndAddNoteToIt(EditorNote note) {
+            if(note == null)
+                return null;
+            Trace.WriteLine("Creating a note to add to some rail");
+
+            Rail rail = new Rail();
+            rail.noteType = note.HandType;
+            rail.AddNote(note);
+            rail.Log();
+            IdDictionaries.AddRail(rail);
+            List<Rail> tempRailList = Track.s_instance.GetCurrentRailListByDifficulty();
+            tempRailList.Add(rail);
+            return rail;
+        }
+
+
+        public int Size() {
+            return notesByID.Count;
+        }
+
+        public static void DestroyRail(Rail rail) {
+            Trace.WriteLine("Deleting the rail: " + rail.railId);
+            foreach(int noteObjectKey in rail.noteObjects.Keys.ToList()){
+                rail.DestroyNoteObjectAndRemoveItFromTheRail(noteObjectKey);
+            }
+            rail.scheduleForDeletion = true;
+            IdDictionaries.RemoveRail(rail.railId);
+            List<Rail> tempRailList = Track.s_instance.GetCurrentRailListByDifficulty();
+            tempRailList.Remove(rail);
+        }
+
         //float CanReplaceNextNote()
         public static int railCounter = 0;
 
@@ -748,7 +955,7 @@ namespace MiKu.NET {
         public bool scheduleForDeletion = false;
 
         public Dictionary<int, RailNoteWrapper> notesByID;
-        public Dictionary<float, RailNoteWrapper> notesByTime;
+        public SortedDictionary<float, RailNoteWrapper> notesByTime;
         // rail does its own object housekeeping
         // and its own note object instantiation / destruction
         public Dictionary<int, GameObject> noteObjects; 
