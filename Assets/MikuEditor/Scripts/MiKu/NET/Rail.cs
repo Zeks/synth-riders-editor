@@ -8,6 +8,20 @@ using UnityEngine;
 using System.Diagnostics;
 
 namespace MiKu.NET {
+    public enum RailClickType {
+        NoNote = 0,
+        NoteAtTime = 1,
+        NoteAtTimeAndPlace= 2,
+    }
+
+    public class RailClickWrapper {
+        public RailClickWrapper(Rail rail, RailClickType type) {
+            this.rail = rail;
+            this.clickedPointType = type;
+        }
+        public Rail rail;
+        public RailClickType clickedPointType;
+    }
 
     public class RailNoteWrapper {
         public RailNoteWrapper(EditorNote note) {
@@ -798,7 +812,7 @@ namespace MiKu.NET {
             }
 
             // now we need to check for hindrances to extension
-            bool hasHindrances = Track.s_instance.HasRailInterruptionsBetween(foundRail.railId, foundRail.railId, time, foundRail.startTime, foundRail.noteType);
+            bool hasHindrances = Track.HasRailInterruptionsBetween(foundRail.railId, foundRail.railId, time, foundRail.startTime, foundRail.noteType);
             if(hasHindrances) {
                 Trace.WriteLine("Potential candidate has something between it and the extension time.");
                 return null;
@@ -866,7 +880,7 @@ namespace MiKu.NET {
             }
 
             // now we need to check for hindrances to extension
-            bool hasHindrances = Track.s_instance.HasRailInterruptionsBetween(foundRail.railId, foundRail.railId, foundRail.endTime, time, foundRail.noteType);
+            bool hasHindrances = Track.HasRailInterruptionsBetween(foundRail.railId, foundRail.railId, foundRail.endTime, time, foundRail.noteType);
             if(hasHindrances) {
                 Trace.WriteLine("Potential candidate has something between it and the extension time.");
                 return null;
@@ -942,6 +956,104 @@ namespace MiKu.NET {
             tempRailList.Remove(rail);
         }
 
+        public static void AddIntoDictionary(Dictionary<EditorNote.NoteHandType, List<RailClickWrapper>> dict, EditorNote.NoteHandType noteType, RailClickWrapper entity) {
+            if(!dict.ContainsKey(noteType))
+                dict.Add(noteType, new List<RailClickWrapper>());
+
+            dict[noteType].Add(entity);
+        }
+
+        public static bool CanPlaceSelectedRailTypeHere(float time, Vector2 clickedPoint, EditorNote.NoteHandType handType) {
+            float timeRangeDuplicatesStart = time - Track.MIN_TIME_OVERLAY_CHECK;
+            float timeRangeDuplicatesEnd = time + Track.MIN_TIME_OVERLAY_CHECK;
+            List<Rail> rails = Track.s_instance.GetCurrentRailListByDifficulty();
+
+            bool isInvalidPlacementByRail = false;
+
+            List<Rail> matches = new List<Rail>();
+            foreach(Rail testedRail in rails.OrEmptyIfNull()) {
+                if(testedRail.scheduleForDeletion)
+                    continue;
+
+                if(testedRail.startTime > timeRangeDuplicatesEnd) {
+                    Trace.WriteLine("DISCARDING Rail: " + testedRail.railId + " starts at: " + testedRail.startTime + " which is too late");
+                    continue;
+                }
+
+                if(testedRail.endTime < timeRangeDuplicatesStart) {
+                    Trace.WriteLine("DISCARDING Rail: " + testedRail.railId + " ends at: " + testedRail.endTime + " which is too early");
+                    continue;
+                }
+
+                if(testedRail.TimeInInterval(time)) {
+                    Trace.WriteLine("ADDING Rail: " + testedRail.railId + " contains the current time.");
+                    matches.Add(testedRail);
+                }
+                // needs optimization here
+            }
+
+            // for each matched rail we need to determine if we are clicking on the exact point it starts or ends or anywhere else
+            // if we're clicking on that same point
+            Dictionary<EditorNote.NoteHandType, List<RailClickWrapper>> railClicks = new Dictionary<EditorNote.NoteHandType, List<RailClickWrapper>>();
+            foreach(Rail rail in matches) {
+                EditorNote note = rail.GetNoteAtPosition(time);
+                if(note == null) {
+                    AddIntoDictionary(railClicks, rail.noteType, new RailClickWrapper(rail, RailClickType.NoNote));
+                    continue;
+                }
+                float distance = Vector2.Distance(new Vector2(note.Position[0], note.Position[1]), clickedPoint);
+                if(distance == 0) {
+                    AddIntoDictionary(railClicks, rail.noteType, new RailClickWrapper(rail, RailClickType.NoteAtTimeAndPlace));
+                }
+                else
+                    AddIntoDictionary(railClicks, rail.noteType, new RailClickWrapper(rail, RailClickType.NoteAtTime));
+            }
+
+            // now that we have collected this information we can decide if we can allow click here
+            {
+                foreach(KeyValuePair<EditorNote.NoteHandType, List<RailClickWrapper>> kvp in railClicks) {
+                    if(Track.IsOppositeNoteType(kvp.Key, handType)) {
+                        //red for blue or blue for red are allowed
+                        continue;
+                    }
+                    if(kvp.Value.Count == 1 && kvp.Value[0].clickedPointType == RailClickType.NoteAtTimeAndPlace) {
+                        // same point as the end of the different type rail, this is allowed
+                        continue;
+                    }
+                    if(kvp.Key == handType) {
+                        // obviously click on the same rail type is allowed
+                        continue;
+                    }
+
+                    //everything else is an error
+                    isInvalidPlacementByRail = true;
+                    break;
+                }
+            }
+            bool isInvalidPlacementByNote = false;
+            // now we need to collect information about notes
+            // any opposite note type that is not a rail is disallowed
+            Dictionary<float, List<EditorNote>> workingTrack = Track.s_instance.GetCurrentTrackDifficulty();
+            // we just need this exact point
+            if(workingTrack.ContainsKey(time)) {
+                List<EditorNote> notes = workingTrack[time];
+                if(notes != null) {
+                    foreach(EditorNote testedNote in notes) {
+                        if(testedNote.HandType == handType || Track.IsOppositeNoteType(testedNote.HandType,handType)) {
+                            // same or opposite type are allowed
+                            continue;
+                        }
+                        isInvalidPlacementByNote = true;
+                        // everything else is an error
+                        break;
+                    }
+                }
+            }
+
+            bool isAllowed = !isInvalidPlacementByRail && !isInvalidPlacementByNote;
+            return isAllowed;
+        }
+
         //float CanReplaceNextNote()
         public static int railCounter = 0;
 
@@ -967,4 +1079,5 @@ namespace MiKu.NET {
         Game_LineWaveCustom waveCustom;
         
     }
+
 }

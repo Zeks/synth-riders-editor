@@ -4948,14 +4948,14 @@ namespace MiKu.NET {
             }
             return false;
         }
-        public bool IsOppositeNoteType(EditorNote.NoteHandType handType1, EditorNote.NoteHandType handType2) {
+        public static bool IsOppositeNoteType(EditorNote.NoteHandType handType1, EditorNote.NoteHandType handType2) {
             if(handType1 == EditorNote.NoteHandType.LeftHanded && handType2 == EditorNote.NoteHandType.RightHanded)
                 return true;
             if(handType1 == EditorNote.NoteHandType.RightHanded && handType2 == EditorNote.NoteHandType.LeftHanded)
                 return true;
             return false;
         }
-        public bool HasRailInterruptionsBetween(int railId, int secondRailId, float startTime, float endTime, EditorNote.NoteHandType handType) {
+        public static bool HasRailInterruptionsBetween(int railId, int secondRailId, float startTime, float endTime, EditorNote.NoteHandType handType) {
             Dictionary<float, List<EditorNote>> notes = s_instance.GetCurrentTrackDifficulty();
             List<float> keys = notes.Keys.ToList();
             List<float>  filteredNoteTimes = keys.Where((time) => time > startTime && time < endTime).ToList();
@@ -5073,6 +5073,13 @@ namespace MiKu.NET {
             }
             if(IsRailNoteType(Track.s_instance.selectedUsageType)) {
                 Trace.WriteLine("Is in rail branch");
+
+                if(!Rail.CanPlaceSelectedRailTypeHere(CurrentTime, new Vector2(noteFromNoteArea.transform.position.x, noteFromNoteArea.transform.position.y), s_instance.selectedNoteType)) {
+                    // display a warning and exit
+                    Miku_DialogManager.ShowDialog(Miku_DialogManager.DialogType.Alert, StringVault.Alert_CantPlaceRail);
+                    return;
+                }
+
                 // check to see if there's an opposing rail note here
                 // if there is adjust the time to match
                 // if there is not just move the current rail note and reinstantiate the rail
@@ -5080,6 +5087,11 @@ namespace MiKu.NET {
                 float timeRangeDuplicatesEnd = CurrentTime + MIN_TIME_OVERLAY_CHECK;
                 List<Rail> rails = s_instance.GetCurrentRailListByDifficulty();
                 rails.Sort((x, y) => x.startTime.CompareTo(y.startTime));
+
+                
+
+                rails = rails.Where(filteredRail => filteredRail.noteType == s_instance.selectedNoteType).ToList();
+                
                 // we're looking for up to two rails overlapping this time point
                 // two - because the junction point of two rails will contain a head and a breaker at the same time
                 Trace.WriteLine("Attempting to find rail for this time point");
@@ -5271,7 +5283,7 @@ namespace MiKu.NET {
                                         if(nextRail != null && (nextRail.startTime - matchedRail.endTime) + matchedRail.duration + nextRail.duration <= Track.MAX_LINE_DURATION) {
                                             float nextRailStartTIme = nextRail.startTime;
                                             // for railEndTime and nextRailStartTIme we check if there are ANY notes not of the opposite type
-                                            if(!s_instance.HasRailInterruptionsBetween(matchedRail.railId, nextRail.railId, railEndTime, nextRailStartTIme, matchedRail.noteType)) {
+                                            if(!HasRailInterruptionsBetween(matchedRail.railId, nextRail.railId, railEndTime, nextRailStartTIme, matchedRail.noteType)) {
                                                 // no interrupting notes or rails, can link this rail and the next one
                                                 matchedRail.Merge(nextRail);
                                                 return;
@@ -6526,7 +6538,7 @@ namespace MiKu.NET {
         /// Get The current track difficulty based on the selected difficulty
         /// </summary>
         /// <returns>Returns <typeparamref name="Dictionary<float, List<Note>>"/></returns>
-        Dictionary<float, List<EditorNote>> GetCurrentTrackDifficulty() {
+        public Dictionary<float, List<EditorNote>> GetCurrentTrackDifficulty() {
             if(CurrentChart == null) return null;
 
             switch(CurrentDifficulty) {

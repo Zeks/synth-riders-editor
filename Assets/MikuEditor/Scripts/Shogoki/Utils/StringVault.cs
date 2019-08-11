@@ -34,9 +34,14 @@ namespace Shogoki.Utils {
 
 		[SerializeField]
 		[TextArea(3, 8)]
-		string alert_FileLoadError = "The selected file doesn't exist";  
+		string alert_FileLoadError = "The selected file doesn't exist";
 
-		[SerializeField]
+
+        [SerializeField]
+        [TextArea(3, 8)]
+        string alert_CantPlaceRail = "Can't place this rail type here";
+
+        [SerializeField]
 		[TextArea(3, 8)]
 		string alert_FileLoadNotAdmin = "The selected file can't be loaded"; 
 
@@ -374,6 +379,14 @@ namespace Shogoki.Utils {
             get
             {
                 return s_instance.alert_FileLoadError;
+            }
+        }
+
+        public static string Alert_CantPlaceRail
+        {
+            get
+            {
+                return s_instance.alert_CantPlaceRail;
             }
         }
 
