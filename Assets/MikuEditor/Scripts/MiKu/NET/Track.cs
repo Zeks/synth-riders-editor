@@ -1572,14 +1572,16 @@ namespace MiKu.NET {
                     CurrentChart.Tags = new List<string>();
                 }
 
-                EditorRails defaultRails = new EditorRails();
-                defaultRails.Easy = new List<Rail>();
-                defaultRails.Normal = new List<Rail>();
-                defaultRails.Hard = new List<Rail>();
-                defaultRails.Expert = new List<Rail>();
-                defaultRails.Master = new List<Rail>();
-                defaultRails.Custom = new List<Rail>();
-                CurrentChart.Rails = defaultRails;
+                if(CurrentChart.Rails == null) {
+                    EditorRails defaultRails = new EditorRails();
+                    defaultRails.Easy = new List<Rail>();
+                    defaultRails.Normal = new List<Rail>();
+                    defaultRails.Hard = new List<Rail>();
+                    defaultRails.Expert = new List<Rail>();
+                    defaultRails.Master = new List<Rail>();
+                    defaultRails.Custom = new List<Rail>();
+                    CurrentChart.Rails = defaultRails;
+                }
 
                 /* songClip = AudioClip.Create(CurrentChart.AudioName,
                     CurrentChart.AudioData.Length,
@@ -3260,7 +3262,7 @@ namespace MiKu.NET {
         /// </summary>
         /// <param name="_unit">Unity Units to convert</param>
         /// <returns>Returns <typeparamref name="float"/></returns>
-        float UnitToMS(float _unit) {
+        public static float UnitToMS(float _unit) {
             return (_unit / UsC) * MS;
         }
 
@@ -3736,9 +3738,17 @@ namespace MiKu.NET {
                             } */
                         }
 
-                        AddTimeToSFXList(key);
+                        AddTimeToSFXList(key); // todo, will need to restore it for rails
                     }
                 }
+                // need to also instantiate everything in the rails section
+                List<Rail> rails = GetCurrentRailListByDifficulty();
+                foreach(Rail rail in rails) {
+                    RailHelper.ReinstantiateRail(rail);
+                    AddTimeToSFXList(rail.startTime);
+                }
+
+
             }
 
             Track.LogMessage("Current Special ID: " + s_instance.currentSpecialSectionID);
@@ -5052,7 +5062,7 @@ namespace MiKu.NET {
                     if(!hasNotesWithinDeltaTime) {
                         Trace.WriteLine("Adding new time to track: " + CurrentTime);
                         workingTrack.Add(CurrentTime, new List<EditorNote>());
-                        s_instance.AddTimeToSFXList(CurrentTime);
+                        AddTimeToSFXList(CurrentTime);
                     } else {
                         // find and remove notes that overlaps and return if one was removed
                         // needs a rail handler inside because removed rail note requires whole rail recalc
@@ -5074,7 +5084,7 @@ namespace MiKu.NET {
             if(IsRailNoteType(Track.s_instance.selectedUsageType)) {
                 Trace.WriteLine("Is in rail branch");
 
-                if(!Rail.CanPlaceSelectedRailTypeHere(CurrentTime, new Vector2(noteFromNoteArea.transform.position.x, noteFromNoteArea.transform.position.y), s_instance.selectedNoteType)) {
+                if(!RailHelper.CanPlaceSelectedRailTypeHere(CurrentTime, new Vector2(noteFromNoteArea.transform.position.x, noteFromNoteArea.transform.position.y), s_instance.selectedNoteType)) {
                     // display a warning and exit
                     Miku_DialogManager.ShowDialog(Miku_DialogManager.DialogType.Alert, StringVault.Alert_CantPlaceRail);
                     return;
@@ -5171,7 +5181,7 @@ namespace MiKu.NET {
                                 // if matches == 2, we've reached the max saturation and are in the remove branch
                                 // if matches == 2 and size == 2 then we need to REMOVE the whole gap rail
                                 if(matchedRail.Size() == 2) {
-                                    Rail.DestroyRail(matchedRail);
+                                    RailHelper.DestroyRail(matchedRail);
                                     return;
                                 } else {
                                     Trace.WriteLine("Deleting sole note on the rail: " + matchedRail.railId);
@@ -5183,7 +5193,7 @@ namespace MiKu.NET {
                             }
                             else if(railNote.noteId == matchedRail.leader.thisNote.noteId) {
                                 // we check if there's a rail to the left we can expand with this position
-                                Rail rail =  Rail.AttemptExtendTail(CurrentTime, noteFromNoteArea.transform.position, rails);
+                                Rail rail = RailHelper.AttemptExtendTail(CurrentTime, noteFromNoteArea.transform.position, rails);
                                 if(rail != null) { 
                                     RailNoteWrapper lastNote = rail.GetLastNote();
                                     if(lastNote != null) {
@@ -5238,7 +5248,7 @@ namespace MiKu.NET {
                                     nextRail.FlipNoteTypeToBreaker(tailOfConjoinedRail.noteId);
                                 }
                                 matchedRail.RecalcDuration();
-                                Rail.ReinstantiateRail(matchedRail);
+                                RailHelper.ReinstantiateRail(matchedRail);
                             }
                         } else {
                             // this just simply places a new unbroken leader note but without joining it to anything
@@ -5278,7 +5288,7 @@ namespace MiKu.NET {
                                         // we're removing a breaker. need to check if there's a rail next to this one that we can attach to
                                         // for that we check if there are NO notes of any type other than the opposite hand until the next rail
                                         float railEndTime = matchedRail.endTime;
-                                        Rail nextRail = Rail.GetNextRail(matchedRail.railId, railEndTime, s_instance.selectedUsageType);
+                                        Rail nextRail = RailHelper.GetNextRail(matchedRail.railId, railEndTime, s_instance.selectedUsageType);
                                         // need to make sure that merged rail doesn't exceed duration
                                         if(nextRail != null && (nextRail.startTime - matchedRail.endTime) + matchedRail.duration + nextRail.duration <= Track.MAX_LINE_DURATION) {
                                             float nextRailStartTIme = nextRail.startTime;
@@ -5362,17 +5372,17 @@ namespace MiKu.NET {
                     
                     if(!addedToExistingRail) {
                         Trace.WriteLine("Attempting to find a rail that can be extended with this note");
-                        Rail extensionResult = Rail.AttemptExtendTail(CurrentTime, noteFromNoteArea.transform.position, rails);
+                        Rail extensionResult = RailHelper.AttemptExtendTail(CurrentTime, noteFromNoteArea.transform.position, rails);
                         if(extensionResult != null)
                             return;
-                        extensionResult = Rail.AttemptExtendHead(CurrentTime, noteFromNoteArea.transform.position, rails);
+                        extensionResult = RailHelper.AttemptExtendHead(CurrentTime, noteFromNoteArea.transform.position, rails);
                         if(extensionResult != null)
                             return;
                     }
 
                     Trace.WriteLine("!<><><><><><><><><><>RAIL CREATION<><><><><><><><><><><><><><><>!");
                     Trace.WriteLine("Haven't found a rail to extend. Creating a new one");
-                    Rail.CreateNewRailAndAddNoteToIt(noteForRail);
+                    RailHelper.CreateNewRailAndAddNoteToIt(noteForRail);
                     return;
                     // if we're here, we definitely need to add a completely new rail
                 }
@@ -5438,7 +5448,7 @@ namespace MiKu.NET {
         /// Add to hitEffectsSource list to manage the play of sfx
         /// </summary>
         /// <param name="_ms">Millesconds of the current position to use on the formating</param>
-        private void AddTimeToSFXList(float _ms) {
+        public static void AddTimeToSFXList(float _ms) {
             if(!s_instance.hitSFXSource.Contains(_ms)) {
                 s_instance.hitSFXSource.Add(_ms);
             }
@@ -6295,7 +6305,7 @@ namespace MiKu.NET {
         /// </summary>
         /// <param name="fromBPM">Overwrite the BPM use for the update</param>
         /// <returns>Returns <typeparamref name="float"/></returns>
-        float UpdateTimeToBPM(float ms, float fromBPM = 0) {
+        public float UpdateTimeToBPM(float ms, float fromBPM = 0) {
             //return ms - ( ( (MS*MINUTE)/CurrentChart.BPM ) - K );
             if(ms > 0) {
                 fromBPM = (fromBPM > 0) ? fromBPM : lastBPM;

@@ -115,13 +115,42 @@ namespace MiKu.NET.Charting {
             }
         }
 
+        void PassEditorRailDataToGame(List<Rail> rails, Dictionary<float, List<Note>> exportValue) {
+            if(rails == null)
+                return;
+
+            if(exportValue == null) {
+                exportValue = new Dictionary<float, List<Note>>();
+            }
+            foreach(Rail rail in rails) {
+                EditorNote leaderNote = rail.leader.thisNote;
+                // first we create a note to pass to the game, theb go over the rail assigning the segments
+                Vector3 pos = new Vector3(leaderNote.Position[0], leaderNote.Position[1], leaderNote.Position[2]);
+                Note gameNote = new Note(pos, "Rail_" + leaderNote.noteId, -1 /* will be assigned later */, ConvertEditorNoteTypeToGameNoteType(leaderNote.HandType));
+                gameNote.Segments = new float[rail.notesByTime.Count, 3];
+                int i = 0;
+                foreach(float time in rail.notesByTime.Keys) {
+                    EditorNote  segmentNote = rail.notesByTime[time].thisNote;
+                    gameNote.Segments[i, 0] = segmentNote.Position[0];
+                    gameNote.Segments[i, 1] = segmentNote.Position[1];
+                    gameNote.Segments[i, 2] = segmentNote.Position[2];
+                    i++;
+                }
+                if(exportValue[leaderNote.TimePoint] == null) {
+                    exportValue.Add(leaderNote.TimePoint, new List<Note>());
+                }
+                exportValue[leaderNote.TimePoint].Add(gameNote);
+            }
+        }
+
+
         string CreateNoteNameForGame(EditorNote note) {
             return null;
 
         }
 
         // Fully passes the Game's single difficulty note data to Editor's note data
-        void PassGameNoteDataToEditor(Dictionary<float, List<Note>> gameDictionary, Dictionary<float, List<EditorNote>> editorDictionary) {
+        void PassGameNoteDataToEditor(float bpm, Dictionary<float, List<Note>> gameDictionary, Dictionary<float, List<EditorNote>> editorDictionary, List<Rail> listOfRails) {
             if(gameDictionary == null)
                 return;
             if(editorDictionary == null) {
@@ -135,8 +164,19 @@ namespace MiKu.NET.Charting {
                     EditorNote exportNote = new EditorNote(
                         new UnityEngine.Vector3 { x = gameNote.Position[0], y = gameNote.Position[1], z = gameNote.Position[2] }, entry.Key,
                          gameNote.ComboId, ConvertGameNoteTypeToEditorNoteType(gameNote.Type));
+                    // if we have segments this means we need to create a rail from them
+                    // preferably NOT note by note and WITHOUT instantiation
+
                     exportNote.Segments = gameNote.Segments;
-                    editorDictionary[entry.Key].Add(exportNote);
+                    if(exportNote.Segments == null || exportNote.Segments.Length == 0)
+                        editorDictionary[entry.Key].Add(exportNote);
+                    else {
+                        // if there are segments, note belongs to a rail
+                        Rail rail = RailHelper.CreateRailFromSegments(bpm, entry.Key, exportNote);
+                        listOfRails.Add(rail);
+                        IdDictionaries.AddRail(rail);
+                        
+                    }
                 }
             }
         }
@@ -218,6 +258,31 @@ namespace MiKu.NET.Charting {
             if(gameChart.Bookmarks == null) {
                 gameChart.Bookmarks = new Bookmarks();
             }
+        }
+
+        void ReinstantiateComboIDs(int idBase, Dictionary<float, List<Note>> difficulty) {
+            List<float> times = difficulty.Keys.ToList();
+            times.Sort();
+            Note.NoteType previousType = Note.NoteType.NoHand;
+            foreach(float time in times) {
+                List<Note> notes = difficulty[time];
+                if(notes == null)
+                    continue;
+                //technically end of the rail can have the ball coincide with the beginning of special section
+                // so we really need to check for this usecase 
+                if(notes.Count == 1) {
+                    bool thisIsOfSpecialType = Track.IsOfSpecialType(ConvertGameNoteTypeToEditorNoteType(notes[0].Type));
+                    bool previousIsOfSpecialType = Track.IsOfSpecialType(ConvertGameNoteTypeToEditorNoteType(previousType));
+                    if(thisIsOfSpecialType && !previousIsOfSpecialType) {
+                        //need to create a new combo id
+                        idBase+=1;
+                    }
+                    if(thisIsOfSpecialType)
+                        notes[0].ComboId = idBase;
+                }
+
+            }
+
         }
 
         // Converts the Editor's chart into Game's chart and stores this new chart into a static instance
@@ -333,27 +398,6 @@ namespace MiKu.NET.Charting {
                     gameChart.Lights.Custom = editorChart.Lights.Custom;
             }
 
-            // passing values of drums into new lists 1 by 1
-            //var drumSamples = editorChart.DrumSamples;
-            //foreach(var editorValue in drumSamples.Custom) {
-            //    PassEditorDrumDataToGame(editorValue, gameChart.DrumSamples.Custom);
-            //}
-            //foreach(var editorValue in drumSamples.Easy) {
-            //    PassEditorDrumDataToGame(editorValue, gameChart.DrumSamples.Easy);
-            //}
-            //foreach(var editorValue in drumSamples.Normal) {
-            //    PassEditorDrumDataToGame(editorValue, gameChart.DrumSamples.Normal);
-            //}
-            //foreach(var editorValue in drumSamples.Hard) {
-            //    PassEditorDrumDataToGame(editorValue, gameChart.DrumSamples.Hard);
-            //}
-            //foreach(var editorValue in drumSamples.Expert) {
-            //    PassEditorDrumDataToGame(editorValue, gameChart.DrumSamples.Expert);
-            //}
-            //foreach(var editorValue in drumSamples.Master) {
-            //    PassEditorDrumDataToGame(editorValue, gameChart.DrumSamples.Master);
-            //}
-
             // slides holder may itself be null, checking
             var slides = editorChart.Slides;
             if(slides != null) {
@@ -378,18 +422,41 @@ namespace MiKu.NET.Charting {
             }
 
             // passing one dictionary of notes into another 
-            if(editorChart.Track.Custom != null)
+            if(editorChart.Track.Custom != null) {
                 PassEditorNoteDataToGame(editorChart.Track.Custom, gameChart.Track.Custom);
-            if(editorChart.Track.Easy != null)
-                PassEditorNoteDataToGame(editorChart.Track.Easy,   gameChart.Track.Easy);
-            if(editorChart.Track.Normal != null)
+                PassEditorRailDataToGame(editorChart.Rails.Custom, gameChart.Track.Custom);
+                // when everything is passed we need to create special combo ids
+                // for that we fish within the notes for uninterrupted special color segments (green and gold)
+
+            }
+
+            int idBase = 0;
+            if(editorChart.Track.Easy != null) {
+                PassEditorNoteDataToGame(editorChart.Track.Easy, gameChart.Track.Easy);
+                PassEditorRailDataToGame(editorChart.Rails.Easy, gameChart.Track.Easy);
+                ReinstantiateComboIDs(idBase, gameChart.Track.Easy);
+            }
+            if(editorChart.Track.Normal != null) {
                 PassEditorNoteDataToGame(editorChart.Track.Normal, gameChart.Track.Normal);
-            if(editorChart.Track.Hard != null)
-                PassEditorNoteDataToGame(editorChart.Track.Hard,   gameChart.Track.Hard);
-            if(editorChart.Track.Expert != null)
+                PassEditorRailDataToGame(editorChart.Rails.Normal, gameChart.Track.Normal);
+                ReinstantiateComboIDs(idBase, gameChart.Track.Normal);
+            }
+            if(editorChart.Track.Hard != null) {
+                PassEditorNoteDataToGame(editorChart.Track.Hard, gameChart.Track.Hard);
+                PassEditorRailDataToGame(editorChart.Rails.Hard, gameChart.Track.Hard);
+                ReinstantiateComboIDs(idBase, gameChart.Track.Hard);
+            }
+            if(editorChart.Track.Expert != null) {
                 PassEditorNoteDataToGame(editorChart.Track.Expert, gameChart.Track.Expert);
-            if(editorChart.Track.Master != null)
+                PassEditorRailDataToGame(editorChart.Rails.Expert, gameChart.Track.Expert);
+                ReinstantiateComboIDs(idBase, gameChart.Track.Expert);
+            }
+            if(editorChart.Track.Master != null) {
                 PassEditorNoteDataToGame(editorChart.Track.Master, gameChart.Track.Master);
+                PassEditorRailDataToGame(editorChart.Rails.Master, gameChart.Track.Master);
+                ReinstantiateComboIDs(idBase, gameChart.Track.Master);
+            }
+
             return true;
         }
 
@@ -397,7 +464,7 @@ namespace MiKu.NET.Charting {
         void InstantiateEditorChartDataStructures() {
             editorChart = new EditorChart();
 
-            if(editorChart.Effects == null) {
+            if(editorChart.Track == null) {
                 EditorBeats defaultBeats = new EditorBeats();
                 defaultBeats.Easy = new Dictionary<float, List<EditorNote>>();
                 defaultBeats.Normal = new Dictionary<float, List<EditorNote>>();
@@ -455,6 +522,18 @@ namespace MiKu.NET.Charting {
                 editorChart.Slides = defaultSlides;
             }
 
+            if(editorChart.Rails == null) {
+                EditorRails defaultRails = new EditorRails();
+                defaultRails.Easy = new List<Rail>();
+                defaultRails.Normal = new List<Rail>();
+                defaultRails.Hard = new List<Rail>();
+                defaultRails.Expert = new List<Rail>();
+                defaultRails.Master = new List<Rail>();
+                defaultRails.Custom = new List<Rail>();
+
+                editorChart.Rails = defaultRails;
+            }
+
             if(editorChart.Lights == null) {
                 EditorLights defaultLights = new EditorLights();
                 defaultLights.Easy = new List<float>();
@@ -496,6 +575,17 @@ namespace MiKu.NET.Charting {
                 time = editorSlide.time
             };
             slides.Add(slide);
+        }
+
+        public static float UpdateTimeToBPM(float ms, float bpm) {
+         
+            float K = (Track.MS * Track.MINUTE) / bpm;
+            //return ms - ( ( (MS*MINUTE)/CurrentChart.BPM ) - K );
+            if(ms > 0) {
+                return (K * ms) / ((Track.MS * Track.MINUTE) / bpm);
+            } else {
+                return ms;
+            }
         }
 
         // Converts the game's chart into editor's chart and stores this new chart into a static instance
@@ -611,27 +701,6 @@ namespace MiKu.NET.Charting {
                     editorChart.Lights.Custom = gameChart.Lights.Custom;
             }
 
-            // passing values of drums into new lists 1 by 1
-
-            //foreach(var editorValue in gameChart.DrumSamples.Custom) {
-            //    PassGameDrumDataToEditor(editorValue, editorChart.DrumSamples.Custom);
-            //}
-            //foreach(var editorValue in gameChart.DrumSamples.Easy) {
-            //    PassGameDrumDataToEditor(editorValue, editorChart.DrumSamples.Easy);
-            //}
-            //foreach(var editorValue in gameChart.DrumSamples.Normal) {
-            //    PassGameDrumDataToEditor(editorValue, editorChart.DrumSamples.Normal);
-            //}
-            //foreach(var editorValue in gameChart.DrumSamples.Hard) {
-            //    PassGameDrumDataToEditor(editorValue, editorChart.DrumSamples.Hard);
-            //}
-            //foreach(var editorValue in gameChart.DrumSamples.Expert) {
-            //    PassGameDrumDataToEditor(editorValue, editorChart.DrumSamples.Expert);
-            //}
-            //foreach(var editorValue in gameChart.DrumSamples.Master) {
-            //    PassGameDrumDataToEditor(editorValue, editorChart.DrumSamples.Master);
-            //}
-
             // Slides holder may itself be null, needs a check
             if(gameChart.Slides == null) {
                 editorChart.Slides = null;
@@ -660,17 +729,17 @@ namespace MiKu.NET.Charting {
 
             // passing one dictionary of notes into another 
             if(gameChart.Track.Custom != null)
-                PassGameNoteDataToEditor(gameChart.Track.Custom, editorChart.Track.Custom);
+                PassGameNoteDataToEditor(editorChart.BPM, gameChart.Track.Custom, editorChart.Track.Custom, editorChart.Rails.Custom);
             if(gameChart.Track.Easy != null)
-                PassGameNoteDataToEditor(gameChart.Track.Easy, editorChart.Track.Easy);
+                PassGameNoteDataToEditor(editorChart.BPM, gameChart.Track.Easy, editorChart.Track.Easy, editorChart.Rails.Easy);
             if(gameChart.Track.Normal != null)
-                PassGameNoteDataToEditor(gameChart.Track.Normal, editorChart.Track.Normal);
+                PassGameNoteDataToEditor(editorChart.BPM, gameChart.Track.Normal, editorChart.Track.Normal, editorChart.Rails.Normal);
             if(gameChart.Track.Hard != null)
-                PassGameNoteDataToEditor(gameChart.Track.Hard, editorChart.Track.Hard);
+                PassGameNoteDataToEditor(editorChart.BPM, gameChart.Track.Hard, editorChart.Track.Hard, editorChart.Rails.Hard);
             if(gameChart.Track.Expert != null)
-                PassGameNoteDataToEditor(gameChart.Track.Expert, editorChart.Track.Expert);
+                PassGameNoteDataToEditor(editorChart.BPM, gameChart.Track.Expert, editorChart.Track.Expert, editorChart.Rails.Expert);
             if(gameChart.Track.Master != null)
-                PassGameNoteDataToEditor(gameChart.Track.Master, editorChart.Track.Master);
+                PassGameNoteDataToEditor(editorChart.BPM, gameChart.Track.Master, editorChart.Track.Master, editorChart.Rails.Master);
             return true;
         }
     };
