@@ -22,6 +22,15 @@ namespace MiKu.NET {
             }
         }
 
+        public static void ReinstantiateRailSegmentObjects(Rail rail) {
+            List<float> times = rail.notesByTime.Keys.ToList();
+            if(times.Count == 1)
+                return;
+            for(int i = 1; i < times.Count; i++) {
+                rail.InstantiateNoteObject(rail.notesByTime[times[i]]);
+            }
+        }
+
         public static void ReinstantiateRail(Rail rail) {
             if(rail == null) {
                 Trace.WriteLine("Can't instantiate the null rail. Returning");
@@ -94,24 +103,59 @@ namespace MiKu.NET {
             }
         }
 
+        public static void CleanupRailObjects(Rail rail) {
+            List<int> ids = rail.noteObjects.Keys.ToList();
+            foreach(int id in ids)
+                GameObject.DestroyImmediate(rail.noteObjects[id]);
+            ids = rail.notesByID.Keys.ToList();
+            rail.noteObjects.Clear();
+            foreach(int id in ids) {
+                rail.notesByID[id].thisNoteObject = null;
+            }
+        }
+
         public static void Destroy(Rail rail) {
             //Trace.WriteLine("Called to destroy the rail: " + rail.railId);
             //GameObject.DestroyImmediate(rail.waveCustom);
         }
 
 
-        public static Rail GetNextRail(int previousRailId, float time, EditorNote.NoteUsageType type) {
+        public static Rail GetNextRail(int thisRailId, float time, EditorNote.NoteHandType handType = EditorNote.NoteHandType.NoHand,  EditorNote.NoteUsageType usageType = EditorNote.NoteUsageType.Line) {
 
-            Dictionary<int, Rail> rails = IdDictionaries.rails;
+            List<Rail> rails = Track.s_instance.GetCurrentRailListByDifficulty();
             if(rails == null)
                 return null;
-            List<int> railIdList = rails.Keys.ToList();
-            railIdList.Sort((id1, id2) => rails[id1].startTime.CompareTo(rails[id2].startTime));
-            foreach(int railId in railIdList) {
-                if(rails[railId].scheduleForDeletion)
+
+            if(handType != EditorNote.NoteHandType.NoHand)
+                rails = rails.Where(rail => rail.noteType == handType).ToList();
+
+            rails.Sort((rail1, rail2) => rail1.startTime.CompareTo(rail2.startTime));
+            foreach(Rail rail in rails) {
+                if(rail.scheduleForDeletion)
                     continue;
-                if(previousRailId != railId && rails[railId].startTime >= time)
-                    return rails[railId];
+                if(thisRailId != rail.railId && rail.startTime >= time)
+                    return rail;
+            }
+
+            return null;
+        }
+
+
+        public static Rail GetPreviousRail(int thisRailId, float time, EditorNote.NoteHandType handType = EditorNote.NoteHandType.NoHand, EditorNote.NoteUsageType usageType = EditorNote.NoteUsageType.Line) {
+
+            List<Rail> rails = Track.s_instance.GetCurrentRailListByDifficulty();
+            if(rails == null)
+                return null;
+
+            if(handType != EditorNote.NoteHandType.NoHand)
+                rails = rails.Where(rail => rail.noteType == handType).ToList();
+
+            rails.Sort((rail1, rail2) => rail2.startTime.CompareTo(rail1.startTime));
+            foreach(Rail rail in rails) {
+                if(rail.scheduleForDeletion)
+                    continue;
+                if(thisRailId != rail.railId && rail.startTime <= time)
+                    return rail;
             }
 
             return null;

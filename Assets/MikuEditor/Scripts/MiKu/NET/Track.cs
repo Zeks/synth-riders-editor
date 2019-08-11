@@ -896,6 +896,58 @@ namespace MiKu.NET {
             }
         }
 
+        public static float FindNextTime(float time) {
+            Dictionary<float, List<EditorNote>>  difficulty = Track.s_instance.GetCurrentTrackDifficulty();
+            List<float> times = difficulty.Keys.ToList();
+            List<Rail> rails = Track.s_instance.GetCurrentRailListByDifficulty();
+            foreach(Rail rail in rails) {
+                foreach(float noteTime in rail.notesByTime.Keys.ToList()) {
+                    if(!times.Contains(noteTime)) {
+                        times.Add(noteTime);
+                    }
+                }
+            }
+            List<EditorSlide> slides = Track.s_instance.GetCurrentMovementListByDifficulty();
+            foreach(EditorSlide slide in slides) {
+                if(!times.Contains(slide.time)) {
+                    times.Add(slide.time);
+                }
+            }
+
+            times.Sort();
+            var foundTimes = times.SkipWhile(testedTIme => testedTIme <= time);
+            if(foundTimes.Count() == 0)
+                return -1;
+
+            return foundTimes.First();
+        }
+
+        public static float FindPreviousTime(float time) {
+            Dictionary<float, List<EditorNote>> difficulty = Track.s_instance.GetCurrentTrackDifficulty();
+            List<float> times = difficulty.Keys.ToList();
+            List<Rail> rails = Track.s_instance.GetCurrentRailListByDifficulty();
+            foreach(Rail rail in rails) {
+                foreach(float noteTime in rail.notesByTime.Keys.ToList()) {
+                    if(!times.Contains(noteTime)) {
+                        times.Add(noteTime);
+                    }
+                }
+            }
+            List<EditorSlide> slides = Track.s_instance.GetCurrentMovementListByDifficulty();
+            foreach(EditorSlide slide in slides) {
+                if(!times.Contains(slide.time)) {
+                    times.Add(slide.time);
+                }
+            }
+            times.Sort();
+            times.Reverse();
+            var foundTimes = times.SkipWhile(testedTIme => testedTIme >= time);
+            if(foundTimes.Count() == 0)
+                return -1;
+
+            return foundTimes.First();
+        }
+
         // Update is called once per frame
         void Update() {
             if(isBusy || !IsInitilazed) { return; }
@@ -1213,6 +1265,15 @@ namespace MiKu.NET {
                 } else if(isCTRLDown) {
                     ChangeStepMeasure(true);
                 }
+                if(isALTDown) {
+                    // jump to next note time
+                    float time = Track.FindNextTime(CurrentTime);
+                    if(time != -1) { 
+                        MoveCamera(true, MStoUnit(time));
+                        DrawTrackXSLines();
+                        CurrentTime = time;
+                    }
+                }
             } else if(Input.GetAxis("Mouse ScrollWheel") < 0f && !IsPlaying && !PromtWindowOpen) // backwards
               {
                 if(!isCTRLDown && !isALTDown) {
@@ -1220,6 +1281,15 @@ namespace MiKu.NET {
                     DrawTrackXSLines();
                 } else if(isCTRLDown) {
                     ChangeStepMeasure(false);
+                }
+                if(isALTDown) {
+                    // jump to previous note time
+                    float time = Track.FindPreviousTime(CurrentTime);
+                    if(time != -1) {
+                        MoveCamera(true, MStoUnit(time));
+                        DrawTrackXSLines();
+                        CurrentTime = time;
+                    }
                 }
             }
 
@@ -3745,6 +3815,7 @@ namespace MiKu.NET {
                 List<Rail> rails = GetCurrentRailListByDifficulty();
                 foreach(Rail rail in rails) {
                     RailHelper.ReinstantiateRail(rail);
+                    RailHelper.ReinstantiateRailSegmentObjects(rail);
                     AddTimeToSFXList(rail.startTime);
                 }
 
@@ -5288,17 +5359,40 @@ namespace MiKu.NET {
                                         // we're removing a breaker. need to check if there's a rail next to this one that we can attach to
                                         // for that we check if there are NO notes of any type other than the opposite hand until the next rail
                                         float railEndTime = matchedRail.endTime;
-                                        Rail nextRail = RailHelper.GetNextRail(matchedRail.railId, railEndTime, s_instance.selectedUsageType);
-                                        // need to make sure that merged rail doesn't exceed duration
-                                        if(nextRail != null && (nextRail.startTime - matchedRail.endTime) + matchedRail.duration + nextRail.duration <= Track.MAX_LINE_DURATION) {
-                                            float nextRailStartTIme = nextRail.startTime;
-                                            // for railEndTime and nextRailStartTIme we check if there are ANY notes not of the opposite type
-                                            if(!HasRailInterruptionsBetween(matchedRail.railId, nextRail.railId, railEndTime, nextRailStartTIme, matchedRail.noteType)) {
-                                                // no interrupting notes or rails, can link this rail and the next one
-                                                matchedRail.Merge(nextRail);
-                                                return;
+
+                                        //todo
+                                        // need to differentiate between had and tail breakers here
+                                        // also it looks like the next rail can be picked as wrong color
+                                        bool mergeHappened = false;
+                                        if(railNote.railId == matchedRail.leader.thisNote.noteId) {
+                                            // flipping the leader note
+                                            Rail previousRail = RailHelper.GetPreviousRail(matchedRail.railId, matchedRail.startTime, s_instance.selectedNoteType, s_instance.selectedUsageType);
+                                            // need to make sure that merged rail doesn't exceed duration
+                                            if(previousRail != null && (previousRail.endTime - matchedRail.startTime) + matchedRail.duration + previousRail.duration <= Track.MAX_LINE_DURATION) {
+                                                float previousRailEndTime = previousRail.endTime;
+                                                // for railEndTime and nextRailStartTIme we check if there are ANY notes not of the opposite type
+                                                if(!HasRailInterruptionsBetween(matchedRail.railId, previousRail.railId, previousRailEndTime, matchedRail.startTime, matchedRail.noteType)) {
+                                                    // no interrupting notes or rails, can link this rail and the next one
+                                                    previousRail.Merge(matchedRail);
+                                                    return;
+                                                }
                                             }
                                         } else {
+                                            // flipping the tail note
+                                            Rail nextRail = RailHelper.GetNextRail(matchedRail.railId, railEndTime, s_instance.selectedNoteType, s_instance.selectedUsageType);
+                                            // need to make sure that merged rail doesn't exceed duration
+                                            if(nextRail != null && (nextRail.startTime - matchedRail.endTime) + matchedRail.duration + nextRail.duration <= Track.MAX_LINE_DURATION) {
+                                                float nextRailStartTIme = nextRail.startTime;
+                                                // for railEndTime and nextRailStartTIme we check if there are ANY notes not of the opposite type
+                                                if(!HasRailInterruptionsBetween(matchedRail.railId, nextRail.railId, railEndTime, nextRailStartTIme, matchedRail.noteType)) {
+                                                    // no interrupting notes or rails, can link this rail and the next one
+                                                    matchedRail.Merge(nextRail);
+                                                    return;
+                                                }
+                                            }
+
+                                        }
+                                        if(!mergeHappened) {
                                             matchedRail.FlipNoteTypeToLineWithoutMerging(railNote.noteId);
                                             return;
                                         }
@@ -6519,6 +6613,13 @@ namespace MiKu.NET {
                 }
             }
 
+            List<Rail> rails = GetCurrentRailListByDifficulty();
+            if(rails != null && rails.Count > 0) {
+                for(int i = 0; i < rails.Count; ++i) {
+                    RailHelper.CleanupRailObjects(rails[i]);
+                }
+            }
+
             hitSFXSource.Clear();
             isBusy = false;
         }
@@ -6530,6 +6631,8 @@ namespace MiKu.NET {
         void SetCurrentTrackDifficulty(TrackDifficulty difficulty) {
             currentSpecialSectionID = -1;
             CloseSpecialSection();
+            
+
 
             DeleteNotesGameObjects();
             CurrentDifficulty = difficulty;
