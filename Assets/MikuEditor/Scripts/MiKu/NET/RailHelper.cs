@@ -544,6 +544,7 @@ namespace MiKu.NET {
                 newRail.notesByTime.Add(note.thisNote.TimePoint, note);
                 newRail.notesByID.Add(note.thisNote.noteId, note);
             }
+            newRail.leader = newRail.notesByTime.First().Value;
             newRail.RecalcDuration();
             return newRail;
         }

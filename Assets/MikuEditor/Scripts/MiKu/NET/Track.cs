@@ -885,6 +885,7 @@ namespace MiKu.NET {
                 CurrentClipBoard.crouchs = new List<float>();
                 CurrentClipBoard.slides = new List<EditorSlide>();
                 CurrentClipBoard.lights = new List<float>();
+                CurrentClipBoard.rails = new List<Rail>();
 
                 if(m_selectionMarker != null) {
                     selectionStartPos = m_selectionMarker.GetPosition(0);
@@ -2663,13 +2664,18 @@ namespace MiKu.NET {
             DeleteNotesAtTheCurrentTime();
             // needs rails deleted too
             RailHelper.RemoveRailsWithinRange(s_instance.GetCurrentRailListByDifficulty(), CurrentTime, CurrentTime + CurrentClipBoard.lenght, RailHelper.RailRangeBehaviour.Allow);
+            // this needs to CLONE all the rails in the clipboard before moving them
 
+
+            List<Rail> newCLones = new List<Rail>();
             foreach(Rail rail in CurrentClipBoard.rails) {
-                rail.MoveEveryPointOnTheTimeline(shiftLength, true);
+                Rail cloneOfAClone = RailHelper.CloneRail(rail, rail.startTime, rail.endTime, RailHelper.RailRangeBehaviour.Allow);
+                cloneOfAClone.MoveEveryPointOnTheTimeline(shiftLength, true);
+                newCLones.Add(cloneOfAClone);
             }
 
             List<Rail> rails = GetCurrentRailListByDifficulty();
-            rails.AddRange(CurrentClipBoard.rails);
+            rails.AddRange(newCLones);
 
 
             List<float> note_keys = CurrentClipBoard.notes.Keys.ToList();
@@ -2717,7 +2723,11 @@ namespace MiKu.NET {
                         UpdateTotalNotes();
                     }
 
-                    workingTrack.Add(newTime, copyList);
+                    if(!workingTrack.ContainsKey(newTime))
+                        workingTrack.Add(newTime, copyList);
+                    else
+                        workingTrack[newTime].AddRange(copyList);
+
                     AddTimeToSFXList(newTime);
                 }
             }
