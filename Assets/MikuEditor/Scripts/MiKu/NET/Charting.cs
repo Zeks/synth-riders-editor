@@ -41,9 +41,19 @@ namespace MiKu.NET.Charting {
         ~EditorNote() {
             IdDictionaries.RemoveNote(noteId);
             TimeDictionaries.RemoveNote(this);
-        } 
+        }
 
-
+        public EditorNote Clone() {
+            EditorNote newNote = new EditorNote();
+            newNote.timePoint = this.timePoint;
+            newNote.ComboId = this.ComboId;
+            newNote.HandType = this.HandType;
+            newNote.UsageType = this.UsageType;
+            newNote.Position = this.Position;
+            newNote.Direction = this.Direction;
+            newNote.nullNote = this.nullNote;
+            return newNote;
+        }
 
         private string _id;
 

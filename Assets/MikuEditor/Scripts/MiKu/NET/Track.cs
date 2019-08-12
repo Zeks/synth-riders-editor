@@ -99,6 +99,7 @@ namespace MiKu.NET {
         public List<float> crouchs;
         public List<EditorSlide> slides;
         public List<float> lights;
+        public List<Rail> rails;
     }
 
     public struct TrackMetronome {
@@ -2542,6 +2543,7 @@ namespace MiKu.NET {
         /// Fill the clipboard with the data to be copied
         ///</summary>
         public void CopyAction() {
+            //todo needs to work with rail code
             isBusy = true;
 
             Dictionary<float, List<EditorNote>> workingTrack = s_instance.GetCurrentTrackDifficulty();
@@ -2550,6 +2552,7 @@ namespace MiKu.NET {
             List<float> crouchs = GetCurrentMovementListByDifficulty(false);
             List<EditorSlide> slides = GetCurrentMovementListByDifficulty();
             List<float> lights = GetCurrentLightsByDifficulty();
+            List<Rail> rails = GetCurrentRailListByDifficulty();
 
             CurrentClipBoard.notes.Clear();
             CurrentClipBoard.effects.Clear();
@@ -2557,6 +2560,7 @@ namespace MiKu.NET {
             CurrentClipBoard.crouchs.Clear();
             CurrentClipBoard.slides.Clear();
             CurrentClipBoard.lights.Clear();
+            CurrentClipBoard.rails.Clear();
 
             List<float> keys_tofilter = workingTrack.Keys.ToList();
             if(CurrentSelection.endTime > CurrentSelection.startTime) {
@@ -2580,6 +2584,9 @@ namespace MiKu.NET {
 
                 CurrentClipBoard.startTime = CurrentSelection.startTime;
                 CurrentClipBoard.lenght = CurrentSelection.endTime - CurrentSelection.startTime;
+
+                CurrentClipBoard.rails = RailHelper.GetCopyOfRailsInRange(rails, CurrentSelection.startTime, CurrentSelection.endTime, RailHelper.RailRangeBehaviour.Skip);
+
             } else {
                 RefreshCurrentTime();
 
@@ -2596,6 +2603,10 @@ namespace MiKu.NET {
                 CurrentClipBoard.lights = lights.Where(time => time == CurrentTime).ToList();
 
                 CurrentClipBoard.startTime = CurrentTime;
+
+                // will only copy rails consisting of one note like this
+                CurrentClipBoard.rails = RailHelper.GetCopyOfRailsInRange(rails, CurrentSelection.startTime, CurrentSelection.startTime, RailHelper.RailRangeBehaviour.Skip);
+
                 CurrentClipBoard.lenght = 0;
             }
 
@@ -2634,6 +2645,9 @@ namespace MiKu.NET {
             isBusy = true;
             float backUpTime = CurrentTime;
 
+            // this can be positive or negative
+            float shiftLength = CurrentTime - CurrentClipBoard.startTime;
+
             CurrentSelection.startTime = backUpTime;
             CurrentSelection.endTime = backUpTime + CurrentClipBoard.lenght;
 
@@ -2645,7 +2659,18 @@ namespace MiKu.NET {
                 return;
             }
 
+            
             DeleteNotesAtTheCurrentTime();
+            // needs rails deleted too
+            RailHelper.RemoveRailsWithinRange(s_instance.GetCurrentRailListByDifficulty(), CurrentTime, CurrentTime + CurrentClipBoard.lenght, RailHelper.RailRangeBehaviour.Allow);
+
+            foreach(Rail rail in CurrentClipBoard.rails) {
+                rail.MoveEveryPointOnTheTimeline(shiftLength, true);
+            }
+
+            List<Rail> rails = GetCurrentRailListByDifficulty();
+            rails.AddRange(CurrentClipBoard.rails);
+
 
             List<float> note_keys = CurrentClipBoard.notes.Keys.ToList();
             if(note_keys.Count > 0) {
@@ -3324,7 +3349,7 @@ namespace MiKu.NET {
         /// </summary>
         /// <param name="_ms">Milliseconds to convert</param>
         /// <returns>Returns <typeparamref name="float"/></returns>
-        float MStoUnit(float _ms) {
+        public static float MStoUnit(float _ms) {
             return (_ms / MS) * UsC;
         }
 
@@ -4052,7 +4077,7 @@ namespace MiKu.NET {
             effectGO.transform.localPosition = new Vector3(
                                                 0,
                                                 0,
-                                                s_instance.MStoUnit(ms)
+                                                MStoUnit(ms)
                                             );
             effectGO.transform.rotation = Quaternion.identity;
             effectGO.transform.parent = s_instance.m_NoNotesElementHolder;
@@ -4071,7 +4096,7 @@ namespace MiKu.NET {
             bookmarkGO.transform.localPosition = new Vector3(
                                                 0,
                                                 0,
-                                                s_instance.MStoUnit(ms)
+                                                MStoUnit(ms)
                                             );
             bookmarkGO.transform.rotation = Quaternion.identity;
             bookmarkGO.transform.parent = s_instance.m_NoNotesElementHolder;
@@ -4119,7 +4144,7 @@ namespace MiKu.NET {
             moveSectGO.transform.localPosition = new Vector3(
                                                 0,
                                                 0,
-                                                s_instance.MStoUnit(ms)
+                                                MStoUnit(ms)
                                             );
             moveSectGO.transform.rotation = Quaternion.identity;
             moveSectGO.transform.parent = s_instance.m_NoNotesElementHolder;
@@ -4137,7 +4162,7 @@ namespace MiKu.NET {
             lightGO.transform.localPosition = new Vector3(
                                                 0,
                                                 0,
-                                                s_instance.MStoUnit(ms)
+                                                MStoUnit(ms)
                                             );
             lightGO.transform.rotation = Quaternion.identity;
             lightGO.transform.parent = s_instance.m_NoNotesElementHolder;
@@ -4575,6 +4600,9 @@ namespace MiKu.NET {
             List<EditorSlide> slides_tofilter;
 
 
+
+
+
             if(CurrentSelection.endTime > CurrentSelection.startTime) {
                 keys_tofilter = keys_tofilter.Where(time => time >= CurrentSelection.startTime
                     && time <= CurrentSelection.endTime).ToList();
@@ -4594,7 +4622,7 @@ namespace MiKu.NET {
                 lights_tofilter = lights.Where(time => time >= CurrentSelection.startTime
                     && time <= CurrentSelection.endTime).ToList();
 
-            } else {
+           } else {
                 RefreshCurrentTime();
 
                 keys_tofilter = keys_tofilter.Where(time => time == CurrentTime).ToList();
@@ -5744,7 +5772,7 @@ namespace MiKu.NET {
         public static void JumpToTime(float time) {
             time = Mathf.Min(time, s_instance.TrackDuration * MS);
             s_instance._currentTime = s_instance.GetCloseStepMeasure(time, false);
-            s_instance.MoveCamera(true, s_instance.MStoUnit(s_instance._currentTime));
+            s_instance.MoveCamera(true, MStoUnit(s_instance._currentTime));
             if(PromtWindowOpen) {
                 s_instance.ClosePromtWindow();
             }
@@ -7464,7 +7492,7 @@ namespace MiKu.NET {
         {
             get
             {
-                return (s_instance != null) ? s_instance.MStoUnit(s_instance._currentTime) : 0;
+                return (s_instance != null) ? MStoUnit(s_instance._currentTime) : 0;
             }
         }
 

@@ -1,16 +1,17 @@
-using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Linq;
 using MiKu.NET.Charting;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Linq;
 using ThirdParty.Custom;
 using UnityEngine;
-using System.Diagnostics;
 
 
 namespace MiKu.NET {
     public static class RailHelper {
-
+        public enum RailRangeBehaviour {
+            Skip = 0,
+            Allow = 1,
+        }
 
 
         public static void Print2DArray<T>(T[,] matrix) {
@@ -492,6 +493,107 @@ namespace MiKu.NET {
             return newRail;
         }
 
-    }
+
+        public static Rail CloneRail(Rail rail, float start, float end, RailRangeBehaviour copyType) {
+            if(rail == null)
+                return null;
+
+            
+            bool skipWholeRail = false;
+            List<RailNoteWrapper> newList = new List<RailNoteWrapper>();
+            foreach(RailNoteWrapper note in rail.notesByTime.Values) {
+                RailNoteWrapper nextNote = note.nextNote;
+                if(note.thisNote.TimePoint >= start && note.thisNote.TimePoint <= end) {
+                    newList.Add(new RailNoteWrapper(note.thisNote.Clone()));
+                    continue;
+                }
+                if(note.thisNote.TimePoint < start && note.nextNote != null && note.nextNote.thisNote.TimePoint >= start) {
+                    if(copyType == RailRangeBehaviour.Allow) {
+                        newList.Add(new RailNoteWrapper(note.thisNote.Clone()));
+                        continue;
+                    }
+                }
+                if(note.thisNote.TimePoint > end && note.GetPreviousNote() != null && note.GetPreviousNote().thisNote.TimePoint <= end) {
+                    if(copyType == RailRangeBehaviour.Allow) {
+                        newList.Add(new RailNoteWrapper(note.thisNote.Clone()));
+                        continue;
+                    }
+                }
+                skipWholeRail = true;
+                break;
+            }
+            if(skipWholeRail)
+                return null;
+
+            RailNoteWrapper previousNote = null;
+            foreach(RailNoteWrapper note in newList) {
+                note.AssignPreviousNote(previousNote);
+                if(previousNote != null)
+                    previousNote.nextNote = note;
+                previousNote = note;
+            }
+
+            if(newList.Count == 0)
+                return null;
+
+            Rail newRail = new Rail();
+            newRail.noteType = rail.noteType;
+            newRail.Log();
+
+            foreach(RailNoteWrapper note in newList) {
+                newRail.notesByTime.Add(note.thisNote.TimePoint, note);
+                newRail.notesByID.Add(note.thisNote.noteId, note);
+            }
+            newRail.RecalcDuration();
+            return newRail;
+        }
+
+        public static List<Rail> GetCopyOfRailsInRange(List<Rail> rails, float rangeStart, float rangeEnd, RailRangeBehaviour copyType) {
+            List<Rail> copies = new List<Rail>();
+            foreach(Rail rail in rails) {
+                Rail copy = CloneRail(rail, rangeStart, rangeEnd, copyType);
+                if(copy != null)
+                    copies.Add(copy);
+            }
+            if(copies.Count == 0)
+                return null;
+
+            return copies;
+        }
+
+        public static List<Rail> GetListOfRailsInRange(List<Rail> rails, float rangeStart, float rangeEnd, RailRangeBehaviour fetchType) {
+            List<Rail> fetchedRails = new List<Rail>();
+            foreach(Rail rail in rails) {
+                if(rail.startTime >= rangeStart && rail.endTime <= rangeEnd) { 
+                    fetchedRails.Add(rail);
+                    continue;
+                }
+                if(rail.startTime >= rangeStart && rail.startTime <= rangeEnd && rail.endTime > rangeEnd && fetchType == RailRangeBehaviour.Allow) {
+                    fetchedRails.Add(rail);
+                    continue;
+                }
+                if(rail.startTime < rangeStart && rail.endTime >= rangeStart && rail.endTime <= rangeEnd && fetchType == RailRangeBehaviour.Allow) {
+                    fetchedRails.Add(rail);
+                    continue;
+                }
+            }
+            if(fetchedRails.Count == 0)
+                return null;
+            return fetchedRails;
+        }
+
+        public static void RemoveRailsWithinRange(List<Rail> rails, float rangeStart, float rangeEnd, RailRangeBehaviour copyType) {
+            List<Rail> fetchedRails = GetListOfRailsInRange(rails, rangeStart, rangeEnd, copyType);
+            if(fetchedRails == null)
+                return;
+
+            foreach(Rail rail in fetchedRails) {
+                RailHelper.DestroyRail(rail);
+            }
+        }
+
+        }
+
+
 
 }

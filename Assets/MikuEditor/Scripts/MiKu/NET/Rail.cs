@@ -60,6 +60,7 @@ namespace MiKu.NET {
             noteObjects = new Dictionary<int, GameObject>();
         }
 
+
         ~Rail() {
             if(leader != null) {
 
@@ -669,6 +670,26 @@ namespace MiKu.NET {
             tempRailList.Remove(nextRail);
             nextRail.DestroyLeader();
 
+        }
+
+        public void MoveEveryPointOnTheTimeline(float shift, bool reinstantiate = false) {
+            foreach(RailNoteWrapper note in notesByTime.Values) {
+                note.thisNote.TimePoint += shift;
+                note.thisNote.Position[2] = Track.MStoUnit(note.thisNote.TimePoint);
+            }
+            // need to recreate the time hash
+            List<RailNoteWrapper> rails = notesByTime.Values.ToList();
+            notesByTime.Clear();
+            foreach(RailNoteWrapper note in rails) {
+                if(note != null)
+                    notesByTime.Add(note.thisNote.TimePoint, note);
+            }
+
+            RecalcDuration();
+            if(reinstantiate) {
+                RailHelper.ReinstantiateRail(this);
+                RailHelper.ReinstantiateRailSegmentObjects(this);
+            }
         }
 
 
