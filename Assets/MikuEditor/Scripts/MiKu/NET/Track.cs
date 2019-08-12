@@ -1270,8 +1270,9 @@ namespace MiKu.NET {
                     float time = Track.FindNextTime(CurrentTime);
                     if(time != -1) { 
                         MoveCamera(true, MStoUnit(time));
-                        DrawTrackXSLines();
                         CurrentTime = time;
+                        DrawTrackXSLines();
+                        
                     }
                 }
             } else if(Input.GetAxis("Mouse ScrollWheel") < 0f && !IsPlaying && !PromtWindowOpen) // backwards
@@ -1287,8 +1288,8 @@ namespace MiKu.NET {
                     float time = Track.FindPreviousTime(CurrentTime);
                     if(time != -1) {
                         MoveCamera(true, MStoUnit(time));
-                        DrawTrackXSLines();
                         CurrentTime = time;
+                        DrawTrackXSLines();
                     }
                 }
             }
@@ -5255,11 +5256,17 @@ namespace MiKu.NET {
                                     RailHelper.DestroyRail(matchedRail);
                                     return;
                                 } else {
-                                    Trace.WriteLine("Deleting sole note on the rail: " + matchedRail.railId);
-                                    // otherwise we only really need to remove a single note
-                                    EditorNote noteToRemove = matchedRail.GetNoteAtPosition(CurrentTime);
-                                    matchedRail.RemoveNote(noteToRemove.noteId);
-                                    return;
+                                    if(!Track.s_instance.isSHIFDown) {
+                                        Trace.WriteLine("Deleting sole note on the rail: " + matchedRail.railId);
+                                        // otherwise we only really need to remove a single note
+                                        EditorNote noteToRemove = matchedRail.GetNoteAtPosition(CurrentTime);
+                                        matchedRail.RemoveNote(noteToRemove.noteId);
+                                        return;
+                                    } else {
+                                        Trace.WriteLine("Deleting whole rail" + matchedRail.railId);
+                                        RailHelper.DestroyRail(matchedRail);
+                                        return;
+                                    }
                                 }
                             }
                             else if(railNote.noteId == matchedRail.leader.thisNote.noteId) {
@@ -5341,7 +5348,12 @@ namespace MiKu.NET {
                             } else {
                                 // we've clicked on the current note. this means we either want to delete it or change its subtype
                                 if(s_instance.selectedUsageType == railNote.UsageType) {
-                                    matchedRail.RemoveNote(railNote.noteId);
+                                    if(!Track.s_instance.isSHIFDown) {
+                                        matchedRail.RemoveNote(railNote.noteId);
+                                    } else {
+                                        // if shift is clicked we're deleting whole rail instead
+                                        RailHelper.DestroyRail(matchedRail);
+                                    }
                                     return;
                                 } else {
                                     // we're in type change branch
