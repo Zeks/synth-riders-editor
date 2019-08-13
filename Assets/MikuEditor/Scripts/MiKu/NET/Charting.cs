@@ -39,8 +39,6 @@ namespace MiKu.NET.Charting {
         };
 
         ~EditorNote() {
-            IdDictionaries.RemoveNote(noteId);
-            TimeDictionaries.RemoveNote(this);
         }
 
         public EditorNote Clone() {
@@ -137,9 +135,6 @@ namespace MiKu.NET.Charting {
             noteId = noteCounter++;
             name = noteId.ToString();
 
-            IdDictionaries.AddNote(noteId, this);
-            if(time != default(float))
-                TimeDictionaries.AddNote(time, this);
             timePoint = time;
             ComboId = idCmb;
             HandType = t;
@@ -152,9 +147,6 @@ namespace MiKu.NET.Charting {
             noteId = noteCounter++;
             name = noteId.ToString();
 
-            IdDictionaries.AddNote(noteId, this);
-            if(time != default(float))
-                TimeDictionaries.AddNote(time, this);
             timePoint = time;
             HandType = handType;
             UsageType = usageType;

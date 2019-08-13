@@ -67,7 +67,6 @@ namespace MiKu.NET {
                 DestroyNoteObjectAndRemoveItFromTheRail(leader.thisNote.noteId);
             }
             Trace.WriteLine("DESTRUCTOR called for rail with ID: " + railId);
-            IdDictionaries.RemoveRail(railId);
         }
 
         public void Log() {
@@ -529,7 +528,6 @@ namespace MiKu.NET {
             Trace.WriteLine("!<><><><><><><><><><>RAIL CREATION<><><><><><><><><><><><><><><>!");
             Rail newRail = new Rail();
             newRail.noteType = noteType;
-            IdDictionaries.AddRail(newRail);
             List<Rail> railList = Track.s_instance.GetCurrentRailListByDifficulty();
             railList.Add(newRail);
 
@@ -665,7 +663,6 @@ namespace MiKu.NET {
            }
 
             Trace.WriteLine("Deleting the rail: " + nextRail.railId);
-            IdDictionaries.RemoveRail(nextRail.railId);
             List<Rail> tempRailList = Track.s_instance.GetCurrentRailListByDifficulty();
             tempRailList.Remove(nextRail);
             nextRail.DestroyLeader();

@@ -179,7 +179,6 @@ namespace MiKu.NET {
             rail.AddNote(firstNote);
             rail.AddNote(secondNote);
             rail.Log();
-            IdDictionaries.AddRail(rail);
             List<Rail> tempRailList = Track.s_instance.GetCurrentRailListByDifficulty();
             tempRailList.Add(rail);
             return rail;
@@ -331,7 +330,6 @@ namespace MiKu.NET {
             rail.noteType = note.HandType;
             rail.AddNote(note);
             rail.Log();
-            IdDictionaries.AddRail(rail);
             List<Rail> tempRailList = Track.s_instance.GetCurrentRailListByDifficulty();
             tempRailList.Add(rail);
             return rail;
@@ -346,7 +344,6 @@ namespace MiKu.NET {
                 rail.DestroyNoteObjectAndRemoveItFromTheRail(noteObjectKey);
             }
             rail.scheduleForDeletion = true;
-            IdDictionaries.RemoveRail(rail.railId);
             List<Rail> tempRailList = Track.s_instance.GetCurrentRailListByDifficulty();
             tempRailList.Remove(rail);
         }

@@ -174,8 +174,6 @@ namespace MiKu.NET.Charting {
                         // if there are segments, note belongs to a rail
                         Rail rail = RailHelper.CreateRailFromSegments(bpm, entry.Key, exportNote);
                         listOfRails.Add(rail);
-                        IdDictionaries.AddRail(rail);
-                        
                     }
                 }
             }

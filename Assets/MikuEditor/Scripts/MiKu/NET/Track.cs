@@ -361,7 +361,7 @@ namespace MiKu.NET {
         private GameObject m_TwoHandsBreaker;
 
         [SerializeField]
-        public  float m_NoteSegmentMarkerRedution = 0.5f;
+        public float m_NoteSegmentMarkerRedution = 0.5f;
 
         [SerializeField]
         private GameObject m_NotesDropArea;
@@ -899,7 +899,7 @@ namespace MiKu.NET {
         }
 
         public static float FindNextTime(float time) {
-            Dictionary<float, List<EditorNote>>  difficulty = Track.s_instance.GetCurrentTrackDifficulty();
+            Dictionary<float, List<EditorNote>> difficulty = Track.s_instance.GetCurrentTrackDifficulty();
             List<float> times = difficulty.Keys.ToList();
             List<Rail> rails = Track.s_instance.GetCurrentRailListByDifficulty();
             foreach(Rail rail in rails) {
@@ -1270,11 +1270,11 @@ namespace MiKu.NET {
                 if(isALTDown) {
                     // jump to next note time
                     float time = Track.FindNextTime(CurrentTime);
-                    if(time != -1) { 
+                    if(time != -1) {
                         MoveCamera(true, MStoUnit(time));
                         CurrentTime = time;
                         DrawTrackXSLines();
-                        
+
                     }
                 }
             } else if(Input.GetAxis("Mouse ScrollWheel") < 0f && !IsPlaying && !PromtWindowOpen) // backwards
@@ -2660,7 +2660,7 @@ namespace MiKu.NET {
                 return;
             }
 
-            
+
             DeleteNotesAtTheCurrentTime();
             // needs rails deleted too
             RailHelper.RemoveRailsWithinRange(s_instance.GetCurrentRailListByDifficulty(), CurrentTime, CurrentTime + CurrentClipBoard.lenght, RailHelper.RailRangeBehaviour.Allow);
@@ -4633,7 +4633,7 @@ namespace MiKu.NET {
                 lights_tofilter = lights.Where(time => time >= CurrentSelection.startTime
                     && time <= CurrentSelection.endTime).ToList();
 
-           } else {
+            } else {
                 RefreshCurrentTime();
 
                 keys_tofilter = keys_tofilter.Where(time => time == CurrentTime).ToList();
@@ -4893,6 +4893,33 @@ namespace MiKu.NET {
             return targetpPos;
         }
 
+        public static void RemoveNoteFromTrack(EditorNote note) {
+
+            GameObject nToDelete = note.GameObject;
+            if(nToDelete) {
+                DestroyImmediate(nToDelete);
+            }
+
+            Dictionary<float, List<EditorNote>> workingTrack = s_instance.GetCurrentTrackDifficulty();
+            if(!workingTrack.ContainsKey(note.TimePoint))
+                return;
+
+
+            List<EditorNote> list = workingTrack[note.TimePoint];
+            bool lastNote = list.Count == 1;
+            list.Remove(note);
+            s_instance.DecreaseTotalNotesCount();
+            if(lastNote) {
+                // need to check if there are rails still alive at this timepoint
+                List<Rail> rails = s_instance.GetCurrentRailListByDifficulty();
+                Rail railsAtThisTIme = rails.Find(rail => rail.startTime == note.TimePoint);
+                if(railsAtThisTIme == null) {
+                    workingTrack.Remove(note.TimePoint);
+                    s_instance.hitSFXSource.Remove(note.TimePoint);
+                }
+            }
+        }
+
         private static bool RemoveOverlappingNote(Dictionary<float, List<EditorNote>> workingTrack, List<float> keys_tofilter, GameObject noteFromNoteArea) {
             Trace.WriteLine("Requested to remove a note from track: " + CurrentTime);
             int totalFilteredTime = keys_tofilter.Count;
@@ -4912,39 +4939,8 @@ namespace MiKu.NET {
                             potentialOverlap.Position[2]
                         ));
                     if(hasActualOverlap) {
-
-                        // need to check if the note is of the correct type
-                        // for the time being let's make only rail notes to remove other rail notes
-                        // and only balls to remove balls
-                        if(IsRailNoteType(potentialOverlap.UsageType) &&
-                            IsRailNoteType(Track.s_instance.selectedUsageType)) {
-                            // this adjusts the rail but actual outside note is for this code to handle
-                            Rail rail = IdDictionaries.GetRail(potentialOverlap.railId);
-                            rail.RemoveNote(potentialOverlap.noteId);
-                        }
-
-                        if(IsSameUsageTypeClass(potentialOverlap.UsageType, Track.s_instance.selectedUsageType)) {
-                            // removing just the note object
-                            GameObject nToDelete = potentialOverlap.GameObject;
-                            if(nToDelete) {
-                                DestroyImmediate(nToDelete);
-                            }
-
-                            notes.Remove(potentialOverlap);
-                            totalNotesAtCurrentTime--;
-                            s_instance.DecreaseTotalNotesCount();
-                            if(totalNotesAtCurrentTime <= 0) {
-                                workingTrack.Remove(targetTime);
-                                s_instance.hitSFXSource.Remove(targetTime);
-                            } else {
-                                EditorNote newRangeBegin = notes[0];
-                                if(newRangeBegin.HandType == EditorNote.NoteHandType.OneHandSpecial) {
-                                    GameObject newRangeBeginObject = newRangeBegin.GameObject;
-                                    //newRangeBegin.name = FormatNoteName(targetTime, 0, newRangeBegin.HandType);
-                                    newRangeBeginObject.name = newRangeBegin.name;
-                                }
-                            }
-                        }
+                        // removing just the note object
+                        RemoveNoteFromTrack(potentialOverlap);
                         return true;
                     }
                 }
@@ -5079,8 +5075,8 @@ namespace MiKu.NET {
         public static bool HasRailInterruptionsBetween(int railId, int secondRailId, float startTime, float endTime, EditorNote.NoteHandType handType) {
             Dictionary<float, List<EditorNote>> notes = s_instance.GetCurrentTrackDifficulty();
             List<float> keys = notes.Keys.ToList();
-            List<float>  filteredNoteTimes = keys.Where((time) => time > startTime && time < endTime).ToList();
-            
+            List<float> filteredNoteTimes = keys.Where((time) => time > startTime && time < endTime).ToList();
+
             List<Rail> rails = s_instance.GetCurrentRailListByDifficulty();
             List<Rail> filteredRails = rails.Where((rail) => rail.startTime > startTime && rail.startTime < endTime).ToList();
             bool hasInterruptions = false;
@@ -5130,7 +5126,6 @@ namespace MiKu.NET {
             rail.noteType = s_instance.selectedNoteType;
             rail.AddNote(newNote);
             rail.Log();
-            IdDictionaries.AddRail(rail);
             List<Rail> tempRailList = s_instance.GetCurrentRailListByDifficulty();
             tempRailList.Add(rail);
             return rail;
@@ -5209,10 +5204,10 @@ namespace MiKu.NET {
                 List<Rail> rails = s_instance.GetCurrentRailListByDifficulty();
                 rails.Sort((x, y) => x.startTime.CompareTo(y.startTime));
 
-                
+
 
                 rails = rails.Where(filteredRail => filteredRail.noteType == s_instance.selectedNoteType).ToList();
-                
+
                 // we're looking for up to two rails overlapping this time point
                 // two - because the junction point of two rails will contain a head and a breaker at the same time
                 Trace.WriteLine("Attempting to find rail for this time point");
@@ -5307,11 +5302,10 @@ namespace MiKu.NET {
                                         return;
                                     }
                                 }
-                            }
-                            else if(railNote.noteId == matchedRail.leader.thisNote.noteId) {
+                            } else if(railNote.noteId == matchedRail.leader.thisNote.noteId) {
                                 // we check if there's a rail to the left we can expand with this position
                                 Rail rail = RailHelper.AttemptExtendTail(CurrentTime, noteFromNoteArea.transform.position, rails);
-                                if(rail != null) { 
+                                if(rail != null) {
                                     RailNoteWrapper lastNote = rail.GetLastNote();
                                     if(lastNote != null) {
                                         if(rail.Size() > 1) {
@@ -5358,8 +5352,8 @@ namespace MiKu.NET {
                                     nextRail.FlipNoteTypeToBreaker(middleNote.noteId);
                                 } else {
                                     // need to create a new note here
-                                    EditorNote tailOfConjoinedRail = new EditorNote(Track.CurrentTime, 
-                                        noteFromNoteArea.transform.position, 
+                                    EditorNote tailOfConjoinedRail = new EditorNote(Track.CurrentTime,
+                                        noteFromNoteArea.transform.position,
                                           s_instance.selectedNoteType, s_instance.selectedUsageType);
                                     matchedRail.AddNote(tailOfConjoinedRail);
                                     nextRail.FlipNoteTypeToBreaker(tailOfConjoinedRail.noteId);
@@ -5377,7 +5371,7 @@ namespace MiKu.NET {
                     // if we found a match we move the rail note to a new position and recalc the rail
                     if(matchedRail != null) {
                         EditorNote railNote = matchedRail.GetNoteAtPosition(CurrentTime);
-                        if(railNote != null ) {
+                        if(railNote != null) {
                             Vector2 foundNotePosition = new Vector2(railNote.Position[0], railNote.Position[1]);
                             Vector2 clickedPosition = new Vector2(noteFromNoteArea.transform.position.x, noteFromNoteArea.transform.position.y);
                             float distance = Vector2.Distance(foundNotePosition, clickedPosition);
@@ -5396,7 +5390,7 @@ namespace MiKu.NET {
                                     return;
                                 } else {
                                     // we're in type change branch
-                                    
+
                                     // removing a breaker
                                     bool wasBreaker = railNote.UsageType == EditorNote.NoteUsageType.Breaker;
                                     bool wasSimpleLine = railNote.UsageType == EditorNote.NoteUsageType.Line;
@@ -5449,16 +5443,15 @@ namespace MiKu.NET {
                                         }
                                     }
                                 }
-                                    railNote.UsageType = s_instance.selectedUsageType;
-                                    // we've switched the note usage type, the result might be that a rail merge or break is necessary
-                                    //public bool HasRailInterruptionsBetween(int railId, float startTime, float endTime, EditorNote.NoteHandType handType) {
-                                    
+                                railNote.UsageType = s_instance.selectedUsageType;
+                                // we've switched the note usage type, the result might be that a rail merge or break is necessary
+                                //public bool HasRailInterruptionsBetween(int railId, float startTime, float endTime, EditorNote.NoteHandType handType) {
+
                             }
 
                             if(matchedRail.scheduleForDeletion) {
 
                                 Trace.WriteLine("Deleting the rail: " + matchedRail.railId);
-                                IdDictionaries.RemoveRail(matchedRail.railId);
                                 List<Rail> tempRailList = s_instance.GetCurrentRailListByDifficulty();
                                 tempRailList.Remove(matchedRail);
                                 matchedRail.DestroyLeader();
@@ -5482,7 +5475,7 @@ namespace MiKu.NET {
                         Trace.WriteLine("Working on a SIMPLE rail");
 
                     if(!simpleRail && matches != null && matches.Count > 0) {
-                        if(matches.Count == 1 && matches[0].noteType != s_instance.selectedNoteType) { 
+                        if(matches.Count == 1 && matches[0].noteType != s_instance.selectedNoteType) {
                             Trace.WriteLine("Displaying INCOMPATIBLE warning");
                             Miku_DialogManager.ShowDialog(Miku_DialogManager.DialogType.Alert, StringVault.Alert_CantPlaceRailOfDifferntSubtype);
                             return;
@@ -5515,8 +5508,8 @@ namespace MiKu.NET {
                         Trace.WriteLine("Returning");
                         return;
                     }
-                    
-                    
+
+
                     if(!addedToExistingRail) {
                         Trace.WriteLine("Attempting to find a rail that can be extended with this note");
                         Rail extensionResult = RailHelper.AttemptExtendTail(CurrentTime, noteFromNoteArea.transform.position, rails);
@@ -6684,7 +6677,7 @@ namespace MiKu.NET {
         void SetCurrentTrackDifficulty(TrackDifficulty difficulty) {
             currentSpecialSectionID = -1;
             CloseSpecialSection();
-            
+
 
 
             DeleteNotesGameObjects();
@@ -7489,7 +7482,7 @@ namespace MiKu.NET {
         {
             get
             {
-                return (s_instance != null) ? s_instance._previousTime: 0;
+                return (s_instance != null) ? s_instance._previousTime : 0;
             }
 
             set
