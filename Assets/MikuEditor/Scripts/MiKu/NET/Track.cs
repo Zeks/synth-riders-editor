@@ -4004,11 +4004,12 @@ namespace MiKu.NET {
             noteGO.transform.rotation = Quaternion.identity;
             noteGO.transform.parent = m_NotesHolder;
             noteGO.name = noteData.name;
+            noteData.GameObject = noteGO;
 
-            // if note has segments we added it
-            if(noteData.Segments != null && noteData.Segments.Length > 0) {
-                AddNoteSegmentsObject(noteData, noteGO.transform.Find("LineArea"));
-            }
+            // Segments aren't added here now
+            //if(noteData.Segments != null && noteData.Segments.Length > 0) {
+            //    AddNoteSegmentsObject(noteData, noteGO.transform.Find("LineArea"));
+            //}
 
             if(noteData.Direction != EditorNote.NoteDirection.None) {
                 AddNoteDirectionObject(noteData);
@@ -4056,7 +4057,7 @@ namespace MiKu.NET {
         /// <param name="noteData">The Note from where the data for the instantiation will be read</param>
         void AddNoteDirectionObject(EditorNote noteData) {
             if(noteData.Direction != EditorNote.NoteDirection.None) {
-                GameObject parentGO = GameObject.Find(noteData.name);
+                GameObject parentGO = noteData.GameObject;
                 GameObject dirGO;
                 Transform dirTrans = parentGO.transform.Find("DirectionWrap/DirectionMarker");
 
@@ -4659,7 +4660,7 @@ namespace MiKu.NET {
                     for(int i = 0; i < totalNotes; ++i) {
                         EditorNote toRemove = notes[i];
 
-                        targetToDelete = GameObject.Find(toRemove.name);
+                        targetToDelete = toRemove.GameObject;
                         // print(targetToDelete);
                         if(targetToDelete) {
                             DestroyImmediate(targetToDelete);
@@ -4924,7 +4925,7 @@ namespace MiKu.NET {
 
                         if(IsSameUsageTypeClass(potentialOverlap.UsageType, Track.s_instance.selectedUsageType)) {
                             // removing just the note object
-                            GameObject nToDelete = GameObject.Find(potentialOverlap.name);
+                            GameObject nToDelete = potentialOverlap.GameObject;
                             if(nToDelete) {
                                 DestroyImmediate(nToDelete);
                             }
@@ -4938,7 +4939,7 @@ namespace MiKu.NET {
                             } else {
                                 EditorNote newRangeBegin = notes[0];
                                 if(newRangeBegin.HandType == EditorNote.NoteHandType.OneHandSpecial) {
-                                    GameObject newRangeBeginObject = GameObject.Find(newRangeBegin.name);
+                                    GameObject newRangeBeginObject = newRangeBegin.GameObject;
                                     //newRangeBegin.name = FormatNoteName(targetTime, 0, newRangeBegin.HandType);
                                     newRangeBeginObject.name = newRangeBegin.name;
                                 }
@@ -6230,7 +6231,7 @@ namespace MiKu.NET {
                             // And update the value on the Dictionary
                             n.Position = new float[3] { n.Position[0], n.Position[1], newPos };
                             // And update the position of the GameObject
-                            GameObject noteGO = GameObject.Find(n.name);
+                            GameObject noteGO = n.GameObject;
                             noteGO.transform.position = new Vector3(
                                 noteGO.transform.position.x,
                                 noteGO.transform.position.y,
@@ -6499,7 +6500,7 @@ namespace MiKu.NET {
                         EditorNote n = _notes[i];
 
                         // And after find its related GameObject we delete it
-                        GameObject noteGO = GameObject.Find(n.name);
+                        GameObject noteGO = n.GameObject;
                         GameObject.DestroyImmediate(noteGO);
                     }
 
@@ -6599,7 +6600,7 @@ namespace MiKu.NET {
                         EditorNote n = _notes[i];
 
                         // And after find its related GameObject we delete it
-                        GameObject noteGO = GameObject.Find(n.name);
+                        GameObject noteGO = n.GameObject;
                         GameObject.DestroyImmediate(noteGO);
                     }
                 }

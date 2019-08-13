@@ -85,6 +85,7 @@ namespace MiKu.NET.Charting {
             }
         }
 
+        public GameObject GameObject { get; set; }
 
 
         /// <value>
