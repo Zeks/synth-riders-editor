@@ -5481,9 +5481,11 @@ namespace MiKu.NET {
                         Trace.WriteLine("Working on a SIMPLE rail");
 
                     if(!simpleRail && matches != null && matches.Count > 0) {
-                        Trace.WriteLine("Displaying INCOMPATIBLE warning");
-                        Miku_DialogManager.ShowDialog(Miku_DialogManager.DialogType.Alert, StringVault.Alert_CantPlaceRailOfDifferntSubtype);
-                        return;
+                        if(matches.Count == 1 && matches[0].noteType != s_instance.selectedNoteType) { 
+                            Trace.WriteLine("Displaying INCOMPATIBLE warning");
+                            Miku_DialogManager.ShowDialog(Miku_DialogManager.DialogType.Alert, StringVault.Alert_CantPlaceRailOfDifferntSubtype);
+                            return;
+                        }
                     }
 
                     Trace.WriteLine("Creating a note to add to some rail");
