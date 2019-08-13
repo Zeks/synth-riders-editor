@@ -898,6 +898,31 @@ namespace MiKu.NET {
             }
         }
 
+        public static HashSet<float> CollectOccupiedTimes() {
+            HashSet<float> setOfTImes = new HashSet<float>();
+            List<float> noteTimes = Track.s_instance.GetCurrentTrackDifficulty().Keys.ToList();
+            foreach(float time in noteTimes) {
+                setOfTImes.Add(time);
+            }
+            List<Rail> rails = Track.s_instance.GetCurrentRailListByDifficulty();
+            foreach(Rail rail in rails) {
+                setOfTImes.Add(rail.startTime);
+            }
+
+            List<float> lights = Track.s_instance.GetCurrentLightsByDifficulty();
+            foreach(float time in lights) {
+                setOfTImes.Add(time);
+            }
+
+            List<EditorSlide> slides = Track.s_instance.GetCurrentMovementListByDifficulty();
+            foreach(EditorSlide slide in slides) {
+                setOfTImes.Add(slide.time);
+            }
+
+            return setOfTImes;
+        }
+
+
         public static float FindNextTime(float time) {
             Dictionary<float, List<EditorNote>> difficulty = Track.s_instance.GetCurrentTrackDifficulty();
             List<float> times = difficulty.Keys.ToList();
