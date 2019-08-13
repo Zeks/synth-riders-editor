@@ -5154,6 +5154,25 @@ namespace MiKu.NET {
             Dictionary<float, List<EditorNote>> workingTrack = s_instance.GetCurrentTrackDifficulty();
             if(IsBallNoteType(Track.s_instance.selectedUsageType)) {
                 Trace.WriteLine("Is in note branch");
+
+                // need to check that we aren't in the incorrect rails section
+                // for that we first filter which rails appear at this time point
+                List<Rail> rails = s_instance.GetCurrentRailListByDifficulty();
+                List<Rail> railsAtCurrentTIme = RailHelper.GetListOfRailsInRange(rails, CurrentTime, CurrentTime, RailHelper.RailRangeBehaviour.Allow);
+                bool isIncorrectPlacement = false;
+                if(railsAtCurrentTIme != null) { 
+                    foreach(Rail rail in railsAtCurrentTIme) {
+                        // this is fine
+                        if(rail.noteType == s_instance.selectedNoteType || IsOppositeNoteType(rail.noteType, s_instance.selectedNoteType))
+                            continue;
+                        // if we're here this means we need to check if the time point is beggining or ending time of that rail.
+                        if(CurrentTime == rail.startTime || CurrentTime == rail.endTime)
+                            continue;
+                        // if we're here the note definitely can't be placed here.
+                        isIncorrectPlacement = true;
+                    }
+                }
+
                 // first we check if theres is any note in that time period
                 // We need to check the track difficulty selected
                 if(workingTrack != null) {
@@ -5164,8 +5183,11 @@ namespace MiKu.NET {
                     keys_tofilter = keys_tofilter.Where(time => time >= timeRangeDuplicatesStart
                             && time <= timeRangeDuplicatesEnd).ToList();
                     bool hasNotesWithinDeltaTime = keys_tofilter.Count != 0;
+
+                    
+
                     // if there are no notes to overlap, instantiate time in the dictionary
-                    if(!hasNotesWithinDeltaTime) {
+                    if(!hasNotesWithinDeltaTime && !isIncorrectPlacement) {
                         Trace.WriteLine("Adding new time to track: " + CurrentTime);
                         workingTrack.Add(CurrentTime, new List<EditorNote>());
                         AddTimeToSFXList(CurrentTime);
@@ -5180,6 +5202,11 @@ namespace MiKu.NET {
                         {
                             if(ReachedMaxNotesOfCurrentType(workingTrack, keys_tofilter, noteFromNoteArea)) {
                                 Trace.WriteLine("Reached maximum note density for type. Returning");
+                                return;
+                            }
+
+                            if(isIncorrectPlacement) {
+                                Miku_DialogManager.ShowDialog(Miku_DialogManager.DialogType.Alert, string.Format(StringVault.Alert_MaxNumberOfTypeNotes, s_instance.selectedNoteType.ToString()));
                                 return;
                             }
                             AdjustCurrentTimeToFoundBallNotes(workingTrack, keys_tofilter);

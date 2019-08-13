@@ -574,6 +574,10 @@ namespace MiKu.NET {
                     fetchedRails.Add(rail);
                     continue;
                 }
+                if(rail.startTime < rangeStart && rail.endTime >= rangeEnd && fetchType == RailRangeBehaviour.Allow) {
+                    fetchedRails.Add(rail);
+                    continue;
+                }
             }
             if(fetchedRails.Count == 0)
                 return null;
