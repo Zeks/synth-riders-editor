@@ -898,16 +898,25 @@ namespace MiKu.NET {
             }
         }
 
-        public static HashSet<float> CollectOccupiedTimes() {
+        public static HashSet<float> CollectOccupiedTimes(bool collectRailSegments = true) {
             HashSet<float> setOfTImes = new HashSet<float>();
             List<float> noteTimes = Track.s_instance.GetCurrentTrackDifficulty().Keys.ToList();
             foreach(float time in noteTimes) {
                 setOfTImes.Add(time);
             }
             List<Rail> rails = Track.s_instance.GetCurrentRailListByDifficulty();
-            foreach(Rail rail in rails) {
-                setOfTImes.Add(rail.startTime);
+            if(collectRailSegments) {
+                foreach(Rail rail in rails) {
+                    foreach(float time in rail.notesByTime.Keys.ToList()) {
+                        setOfTImes.Add(time);
+                    }
+                }
+            } else {
+                foreach(Rail rail in rails) {
+                    setOfTImes.Add(rail.startTime);
+                }
             }
+            
 
             List<float> lights = Track.s_instance.GetCurrentLightsByDifficulty();
             foreach(float time in lights) {
@@ -924,23 +933,7 @@ namespace MiKu.NET {
 
 
         public static float FindNextTime(float time) {
-            Dictionary<float, List<EditorNote>> difficulty = Track.s_instance.GetCurrentTrackDifficulty();
-            List<float> times = difficulty.Keys.ToList();
-            List<Rail> rails = Track.s_instance.GetCurrentRailListByDifficulty();
-            foreach(Rail rail in rails) {
-                foreach(float noteTime in rail.notesByTime.Keys.ToList()) {
-                    if(!times.Contains(noteTime)) {
-                        times.Add(noteTime);
-                    }
-                }
-            }
-            List<EditorSlide> slides = Track.s_instance.GetCurrentMovementListByDifficulty();
-            foreach(EditorSlide slide in slides) {
-                if(!times.Contains(slide.time)) {
-                    times.Add(slide.time);
-                }
-            }
-
+            List<float> times = CollectOccupiedTimes().ToList();
             times.Sort();
             var foundTimes = times.SkipWhile(testedTIme => testedTIme <= time);
             if(foundTimes.Count() == 0)
@@ -950,22 +943,7 @@ namespace MiKu.NET {
         }
 
         public static float FindPreviousTime(float time) {
-            Dictionary<float, List<EditorNote>> difficulty = Track.s_instance.GetCurrentTrackDifficulty();
-            List<float> times = difficulty.Keys.ToList();
-            List<Rail> rails = Track.s_instance.GetCurrentRailListByDifficulty();
-            foreach(Rail rail in rails) {
-                foreach(float noteTime in rail.notesByTime.Keys.ToList()) {
-                    if(!times.Contains(noteTime)) {
-                        times.Add(noteTime);
-                    }
-                }
-            }
-            List<EditorSlide> slides = Track.s_instance.GetCurrentMovementListByDifficulty();
-            foreach(EditorSlide slide in slides) {
-                if(!times.Contains(slide.time)) {
-                    times.Add(slide.time);
-                }
-            }
+            List<float> times = CollectOccupiedTimes().ToList();
             times.Sort();
             times.Reverse();
             var foundTimes = times.SkipWhile(testedTIme => testedTIme >= time);
