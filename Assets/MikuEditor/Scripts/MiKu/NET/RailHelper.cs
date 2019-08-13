@@ -223,6 +223,7 @@ namespace MiKu.NET {
             noteForRail.Log();
 
             if(!extensionBreaksTimeLimit) {
+
                 foundRail.AddNote(noteForRail);
                 return foundRail;
             }
@@ -339,6 +340,7 @@ namespace MiKu.NET {
 
 
         public static void DestroyRail(Rail rail) {
+            float oldTime = rail.startTime;
             Trace.WriteLine("Deleting the rail: " + rail.railId);
             foreach(int noteObjectKey in rail.noteObjects.Keys.ToList()) {
                 rail.DestroyNoteObjectAndRemoveItFromTheRail(noteObjectKey);
@@ -346,6 +348,10 @@ namespace MiKu.NET {
             rail.scheduleForDeletion = true;
             List<Rail> tempRailList = Track.s_instance.GetCurrentRailListByDifficulty();
             tempRailList.Remove(rail);
+            var set = Track.CollectOccupiedTimes();
+            if(!set.Contains(oldTime)) {
+                Track.RemoveTimeFromSFXList(oldTime);
+            }
         }
 
         public static void AddIntoDictionary(Dictionary<EditorNote.NoteHandType, List<RailClickWrapper>> dict, EditorNote.NoteHandType noteType, RailClickWrapper entity) {

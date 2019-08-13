@@ -173,7 +173,11 @@ namespace MiKu.NET {
                 Trace.WriteLine("Note not found, exiting");
                 return;
             }
+
+
             Trace.WriteLine("Note found: " + notesByID[id].thisNote.noteId + "positioned at x:" + notesByID[id].thisNote.Position[0] + " y:" + notesByID[id].thisNote.Position[1] + " z:" + notesByID[id].thisNote.Position[2]);
+
+            RailNoteWrapper leaderStorage = leader;
 
             // three distinct cases here, removing sole leader, breaker and removing simple note
             // first removes the rail altogether
@@ -195,6 +199,15 @@ namespace MiKu.NET {
                 RemoveBreakerNote(removedNote);
             else
                 RemoveSimpleNote(removedNote);
+
+            //if rail has changed the leader we need to adjust the sound effects list to reflect it
+            if(leaderStorage != null && leaderStorage != leader) {
+                List<float> times = Track.CollectOccupiedTimes(false).ToList();
+                if(!times.Contains(leaderStorage.thisNote.TimePoint)) {
+                    Track.RemoveTimeFromSFXList(leaderStorage.thisNote.TimePoint);
+                }
+                Track.AddTimeToSFXList(leader.thisNote.TimePoint);
+            }
 
             Trace.WriteLine("Removing note from rails dictionaries");
             notesByID.Remove(id);
@@ -272,6 +285,8 @@ namespace MiKu.NET {
             Trace.WriteLine("////NOTE ADD/////" + note.noteId);
             // extending past the railbraker needs to make a new note railbreaker
             RailNoteWrapper wrapper = new RailNoteWrapper(note);
+            RailNoteWrapper leaderStorage = leader;
+
             bool added = true;
             if(IsBreakerNote(note.UsageType)) { 
                 added = AddBreakerNote(wrapper);
@@ -280,6 +295,15 @@ namespace MiKu.NET {
 
             if(!added)
                 return;
+
+            //if rail has changed the leader we need to adjust the sound effects list to reflect it
+            if(leaderStorage != null && leaderStorage != leader) {
+                List<float> times = Track.CollectOccupiedTimes(false).ToList();
+                if(!times.Contains(leaderStorage.thisNote.TimePoint)) {
+                    Track.RemoveTimeFromSFXList(leaderStorage.thisNote.TimePoint);
+                }
+                Track.AddTimeToSFXList(leader.thisNote.TimePoint);
+            }
 
             notesByID[note.noteId] = wrapper;
             notesByTime[note.TimePoint] = wrapper;

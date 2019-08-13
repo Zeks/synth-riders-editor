@@ -2675,6 +2675,7 @@ namespace MiKu.NET {
                 Rail cloneOfAClone = RailHelper.CloneRail(rail, rail.startTime, rail.endTime, RailHelper.RailRangeBehaviour.Allow);
                 cloneOfAClone.MoveEveryPointOnTheTimeline(shiftLength, true);
                 newCLones.Add(cloneOfAClone);
+                AddTimeToSFXList(cloneOfAClone.startTime);
             }
 
             List<Rail> rails = GetCurrentRailListByDifficulty();
@@ -5621,6 +5622,12 @@ namespace MiKu.NET {
         public static void AddTimeToSFXList(float _ms) {
             if(!s_instance.hitSFXSource.Contains(_ms)) {
                 s_instance.hitSFXSource.Add(_ms);
+            }
+        }
+
+        public static void RemoveTimeFromSFXList(float _ms) {
+            if(s_instance.hitSFXSource.Contains(_ms)) {
+                s_instance.hitSFXSource.Remove(_ms);
             }
         }
 
