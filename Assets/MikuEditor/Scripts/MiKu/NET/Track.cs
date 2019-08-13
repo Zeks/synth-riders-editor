@@ -146,6 +146,8 @@ namespace MiKu.NET {
         #region Constanst
         // Time constants
         // A second is 1000 Milliseconds
+        public static bool newLaunch = true;
+
         public const int MS = 1000;
 
         // A minute is 60 seconds
@@ -796,8 +798,11 @@ namespace MiKu.NET {
 
         // Use this for initialization
         void Awake() {
-            File.Delete("../editor-build/editor.log");
-            Trace.Listeners.Add(new TextWriterTraceListener("../editor-build/editor.log"));
+            if(newLaunch) { 
+                File.Delete("../editor-build/editor.log");
+                Trace.Listeners.Add(new TextWriterTraceListener("../editor-build/editor.log"));
+            }
+            newLaunch = false;
             Trace.AutoFlush = true;
             // Initilization of the Game Object to use for the line drawing
             drawedLines = new List<GameObject>();
@@ -2155,10 +2160,6 @@ namespace MiKu.NET {
                     ""
                 )
             );
-
-            // need to null these on any song switch
-            ChartConverter.editorChart = null;
-            ChartConverter.gameChart = null;
         }
 
         /// <summary>
