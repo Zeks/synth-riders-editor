@@ -206,6 +206,8 @@ public class Miku_LoadFileHelper : MonoBehaviour {
         }
 	}
 
+    
+
 
     private void LoadAudioChart(string absoluteUri, bool isJSON = false)
     {
@@ -218,87 +220,22 @@ public class Miku_LoadFileHelper : MonoBehaviour {
 				editPanelAnimator.Play("Panel In");
 				editModePanelAnimator.Play("Panel Out");
 
-				editNameField.text = ChartConverter.editorChart.Name;
-				editAuthorField.text = ChartConverter.editorChart.Author;
-				editTrackField.text = (ChartConverter.editorChart.AudioData != null) ? string.Empty : ChartConverter.editorChart.AudioName;
-				editMapperField.text = ChartConverter.editorChart.Beatmapper;
+				editNameField.text = Serializer.ChartData.Name;
+				editAuthorField.text = Serializer.ChartData.Author;
+				editTrackField.text = (Serializer.ChartData.AudioData != null) ? string.Empty : Serializer.ChartData.AudioName;
+				editMapperField.text = Serializer.ChartData.Beatmapper;
 				if(!isJSON) {
-                    ChartConverter.editorChart.FilePath = absoluteUri;
+                    Serializer.ChartData.FilePath = absoluteUri;
 				}				
 
 				// For the artwork texture
-				if(ChartConverter.editorChart.ArtworkBytes == null) {
-                    ChartConverter.editorChart.Artwork = "Default Artwork";
-                    ChartConverter.editorChart.ArtworkBytes = defaultArtworkData;								
+				if(Serializer.ChartData.ArtworkBytes == null) {
+                    Serializer.ChartData.Artwork = "Default Artwork";
+                    Serializer.ChartData.ArtworkBytes = defaultArtworkData;								
 				} 
 
 				SetSpriteToImage(editArtworkField, ChartConverter.editorChart.ArtworkBytes);
-
-				// If not has effect data
-				if(ChartConverter.editorChart.Effects == null) {
-					EditorEffects defaultEffects = new EditorEffects();
-					defaultEffects.Easy = new List<float>();
-					defaultEffects.Normal = new List<float>();
-					defaultEffects.Hard = new List<float>();
-					defaultEffects.Expert = new List<float>();
-					defaultEffects.Master = new List<float>();
-					defaultEffects.Custom = new List<float>();
-
-                    ChartConverter.editorChart.Effects = defaultEffects;
-				}
-
-				if(ChartConverter.editorChart.Jumps == null) {
-					EditorJumps defaultJumps = new EditorJumps();
-					defaultJumps.Easy = new List<float>();
-					defaultJumps.Normal = new List<float>();
-					defaultJumps.Hard = new List<float>();
-					defaultJumps.Expert = new List<float>();
-					defaultJumps.Master = new List<float>();
-					defaultJumps.Custom = new List<float>();
-
-                    ChartConverter.editorChart.Jumps = defaultJumps;
-				}
-
-				if(ChartConverter.editorChart.Crouchs == null) {
-                    EditorCrouchs defaultCrouchs = new EditorCrouchs();
-					defaultCrouchs.Easy = new List<float>();
-					defaultCrouchs.Normal = new List<float>();
-					defaultCrouchs.Hard = new List<float>();
-					defaultCrouchs.Expert = new List<float>();
-					defaultCrouchs.Master = new List<float>();
-					defaultCrouchs.Custom = new List<float>();
-
-                    ChartConverter.editorChart.Crouchs = defaultCrouchs;
-				}
-
-				if(ChartConverter.editorChart.Slides == null) {
-                    EditorSlides defaultSlides = new EditorSlides();
-					defaultSlides.Easy = new List<EditorSlide>();
-					defaultSlides.Normal = new List<EditorSlide>();
-					defaultSlides.Hard = new List<EditorSlide>();
-					defaultSlides.Expert = new List<EditorSlide>();
-					defaultSlides.Master = new List<EditorSlide>();
-					defaultSlides.Custom = new List<EditorSlide>();
-
-                    ChartConverter.editorChart.Slides = defaultSlides;
-				}
-
-				if(ChartConverter.editorChart.Lights == null) {
-                    EditorLights defaultLights = new EditorLights();
-					defaultLights.Easy = new List<float>();
-					defaultLights.Normal = new List<float>();
-					defaultLights.Hard = new List<float>();
-					defaultLights.Expert = new List<float>();
-					defaultLights.Master = new List<float>();
-					defaultLights.Custom = new List<float>();
-
-                    ChartConverter.editorChart.Lights = defaultLights;
-				}
-
-				if(ChartConverter.editorChart.Bookmarks == null) {
-                    ChartConverter.editorChart.Bookmarks = new EditorBookmarks();
-				}
-
+				
 				InitFormsSelection(true);	
 			}			
 		}

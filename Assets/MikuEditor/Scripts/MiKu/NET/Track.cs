@@ -1602,6 +1602,10 @@ namespace MiKu.NET {
         private void InitChart() {
             if(Serializer.Initialized) {
                 // reading the currently available data from converter into the Track
+                // the result needs to be assigned to Track later
+                ChartConverter converter = new ChartConverter();
+                converter.ConvertGameChartToEditorChart(Serializer.ChartData);
+
                 CurrentChart = ChartConverter.editorChart;
                 BPM = CurrentChart.BPM;
 
