@@ -597,6 +597,7 @@ namespace MiKu.NET {
 
             foreach(Rail rail in fetchedRails) {
                 RailHelper.DestroyRail(rail);
+                Track.s_instance.DecreaseTotalDisplayedNotesCount();
             }
         }
 

@@ -453,11 +453,11 @@ namespace MiKu.NET {
             return true;
         }
 
-        public void FlipNoteTypeToBreaker(int noteId) {
+        public bool FlipNoteTypeToBreaker(int noteId) {
             Trace.WriteLine("Flipping the note on existing rail to breaker");
             RailNoteWrapper note = notesByID[noteId];
             if(note == null || note.thisNote.UsageType == EditorNote.NoteUsageType.Breaker)
-                return;
+                return false;
 
             RailNoteWrapper previous = GetPreviousNote(note.thisNote.TimePoint);
             if(previous != null)
@@ -468,13 +468,12 @@ namespace MiKu.NET {
 
             RailNoteWrapper previousLeftPoint = previous;
             RailNoteWrapper previousRightPoint = note.nextNote;
-
+            Rail potentialNewRail = null;
             // two cases here: we're breaking the rail OR marking a leader as a closed one
             if(note != leader) {
                 // note isn't a leader, this means we are cutting off the tail
                 note.nextNote = null;
 
-                Rail potentialNewRail = null;
                 potentialNewRail = ConvertTheTailIntoNewRail(previousRightPoint);
                 if(potentialNewRail != null)
                     Trace.WriteLine("The tail of this rail has created a new rail with id:" + potentialNewRail.railId);
@@ -491,6 +490,7 @@ namespace MiKu.NET {
 
             InstantiateNoteObject(note);
             RailHelper.ReinstantiateRail(this);
+            return potentialNewRail != null;            
         }
 
         public void FlipNoteTypeToLineWithoutMerging(int noteId) {

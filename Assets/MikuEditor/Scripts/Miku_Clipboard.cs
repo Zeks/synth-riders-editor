@@ -15,6 +15,7 @@ public class Miku_Clipboard : MonoBehaviour {
 
     // The clipboard dictionary
     private Dictionary<float, List<EditorNote>> clipboardDict;
+    private List<Rail> clipboardRails;
 
     private float clipboardBPM = 0;
 
@@ -73,6 +74,7 @@ public class Miku_Clipboard : MonoBehaviour {
                 CopiedDict.Add(kvp.Key, copiedList);
             }
         }
+        CopiedRails = RailHelper.GetCopyOfRailsInRange(Track.s_instance.GetCurrentRailListByDifficulty(), 0, Track.s_instance.TrackDuration, RailHelper.RailRangeBehaviour.Allow);
     }
 
     public static Dictionary<float, List<EditorNote>> CopiedDict
@@ -88,6 +90,18 @@ public class Miku_Clipboard : MonoBehaviour {
         }
     }
 
+    public static List<Rail> CopiedRails
+    {
+        get
+        {
+            return s_instance.clipboardRails;
+        }
+
+        set
+        {
+            s_instance.clipboardRails = value;
+        }
+    }
     public static float ClipboardBPM
     {
         get

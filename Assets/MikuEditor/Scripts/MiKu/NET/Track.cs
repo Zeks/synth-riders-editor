@@ -659,7 +659,7 @@ namespace MiKu.NET {
         private bool keyIsHold = false;
         private bool isCTRLDown = false;
         private bool isALTDown = false;
-        private bool isSHIFDown = false;
+        private bool isSHIFTDown = false;
         //
 
         private float lastBPM = 120f;
@@ -683,6 +683,7 @@ namespace MiKu.NET {
         private bool wasMetronomePlayed = false;
 
         public int TotalNotes { get; set; }
+        public int TotalDisplayedNotes { get; set; }
 
         // For the ease of resizing of notes when to close of the front camera
         private List<GameObject> resizedNotes;
@@ -858,7 +859,7 @@ namespace MiKu.NET {
 
                 isALTDown = false;
                 isCTRLDown = false;
-                isSHIFDown = false;
+                isSHIFTDown = false;
             } else {
                 if(isPlaying) {
                     TogglePlay();
@@ -989,7 +990,7 @@ namespace MiKu.NET {
             // Input.GetKeyDown(KeyCode.LeftAlt)
             if(Input.GetButtonDown("Input Modifier3")) {
                 if(!PromtWindowOpen && !isPlaying) {
-                    isSHIFDown = true;
+                    isSHIFTDown = true;
                     RefreshCurrentTime();
                     ToggleSelectionArea();
                 }
@@ -998,7 +999,7 @@ namespace MiKu.NET {
             // Input.GetKeyUp(KeyCode.LeftAlt)
             if(Input.GetButtonUp("Input Modifier3")) {
                 if(!PromtWindowOpen && !isPlaying) {
-                    isSHIFDown = false;
+                    isSHIFTDown = false;
                     ToggleSelectionArea(true);
                 }
             }
@@ -1029,7 +1030,7 @@ namespace MiKu.NET {
                 vertAxis = Input.GetAxis("Vertical");
             }
 
-            if(Input.GetAxis("Vertical Free Camera") != 0 && SelectedCamera != m_FreeViewCamera && !isSHIFDown) {
+            if(Input.GetAxis("Vertical Free Camera") != 0 && SelectedCamera != m_FreeViewCamera && !isSHIFTDown) {
                 vertAxis = Input.GetAxis("Vertical Free Camera");
             }
 
@@ -1083,7 +1084,7 @@ namespace MiKu.NET {
 
             // Play/Stop
             // Input.GetKeyDown(KeyCode.Space)
-            if((Input.GetButtonDown("Play") || (Input.GetButtonDown("PlayReturn") && !isSHIFDown)) && !PromtWindowOpen) {
+            if((Input.GetButtonDown("Play") || (Input.GetButtonDown("PlayReturn") && !isSHIFTDown)) && !PromtWindowOpen) {
                 CloseSpecialSection();
                 TogglePlay(Input.GetButton("PlayReturn"));
             }
@@ -1489,14 +1490,14 @@ namespace MiKu.NET {
                 HighlightNotes();
             }
 
-            if(isSHIFDown) {
+            if(isSHIFTDown) {
                 CurrentSelection.endTime = CurrentTime;
                 UpdateSelectionMarker();
             }
 
             // Directional Notes
 
-            if(isSHIFDown && !promtWindowOpen && !isPlaying) {
+            if(isSHIFTDown && !promtWindowOpen && !isPlaying) {
                 if(Input.GetKeyDown(KeyCode.D)) {
                     ToggleNoteDirectionMarker(EditorNote.NoteDirection.Right);
                 } else if(Input.GetKeyDown(KeyCode.C)) {
@@ -2676,6 +2677,7 @@ namespace MiKu.NET {
                 Rail cloneOfAClone = RailHelper.CloneRail(rail, rail.startTime, rail.endTime, RailHelper.RailRangeBehaviour.Allow);
                 cloneOfAClone.MoveEveryPointOnTheTimeline(shiftLength, true);
                 newCLones.Add(cloneOfAClone);
+                s_instance.IncreaseTotalDisplayedNotesCount();
                 AddTimeToSFXList(cloneOfAClone.startTime);
             }
 
@@ -2725,7 +2727,7 @@ namespace MiKu.NET {
 
                         AddNoteGameObjectToScene(copyNote);
                         copyList.Add(copyNote);
-                        UpdateTotalNotes();
+                        s_instance.IncreaseTotalDisplayedNotesCount();
                     }
 
                     if(!workingTrack.ContainsKey(newTime))
@@ -3791,7 +3793,8 @@ namespace MiKu.NET {
         /// </summary>
         private void LoadChartNotes() {
             isBusy = true;
-            UpdateTotalNotes(true);
+            //UpdateTotalNotes(true);
+            ResetTotalNotesCount();
             Dictionary<float, List<EditorNote>> workingTrack = GetCurrentTrackDifficulty();
             Dictionary<float, List<EditorNote>>.ValueCollection valueColl = workingTrack.Values;
 
@@ -3833,7 +3836,8 @@ namespace MiKu.NET {
 
                             // And add the note game object to the screen
                             AddNoteGameObjectToScene(n);
-                            UpdateTotalNotes();
+                            IncreaseTotalDisplayedNotesCount();
+                            //UpdateTotalNotes();
 
                             // Uncoment to enable sound on line end
                             /* if(n.Segments != null && n.Segments.GetLength(0) > 0) {
@@ -3857,6 +3861,7 @@ namespace MiKu.NET {
                 foreach(Rail rail in rails) {
                     RailHelper.ReinstantiateRail(rail);
                     RailHelper.ReinstantiateRailSegmentObjects(rail);
+                    s_instance.IncreaseTotalDisplayedNotesCount();
                     AddTimeToSFXList(rail.startTime);
                 }
 
@@ -3942,7 +3947,7 @@ namespace MiKu.NET {
         [Obsolete("Method deprecated use PasteAction")]
         private void PasteChartNotes() {
             isBusy = true;
-            UpdateTotalNotes(true);
+            ResetTotalNotesCount();
             // First Clear the current chart data
             ClearNotePositions();
 
@@ -3975,8 +3980,7 @@ namespace MiKu.NET {
 
                         // And add the note game object to the screen
                         AddNoteGameObjectToScene(newNote);
-                        UpdateTotalNotes();
-
+                        IncreaseTotalDisplayedNotesCount();
 
                         copiedList.Add(newNote);
                     }
@@ -3985,6 +3989,16 @@ namespace MiKu.NET {
                     workingTrack.Add(kvp.Key, copiedList);
                 }
             }
+
+            // todo needs to also receive rails
+            List<Rail> newClones = Miku_Clipboard.CopiedRails;
+            foreach(Rail rail in newClones) {
+                Rail cloneOfAClone = RailHelper.CloneRail(rail, rail.startTime, rail.endTime, RailHelper.RailRangeBehaviour.Allow);
+                newClones.Add(cloneOfAClone);
+                s_instance.IncreaseTotalDisplayedNotesCount();
+                AddTimeToSFXList(cloneOfAClone.startTime);
+            }
+
 
             Miku_DialogManager.ShowDialog(Miku_DialogManager.DialogType.Info, StringVault.Info_NotePasteSuccess);
 
@@ -4192,36 +4206,54 @@ namespace MiKu.NET {
         /// </summary>
         /// <param name="clear">If true, will reset count to 0</param>
         /// <param name="deleted">If true, the count will be decreased</param>
-        void UpdateTotalNotes(bool clear = false, bool deleted = false) {
-            if(clear) {
-                TotalNotes = 0;
-            } else {
-                if(deleted) TotalNotes--;
-                else TotalNotes++;
-            }
-            // todo will need to create it dynamically from relevant data
-            m_statsTotalNotesText.SetText(TotalNotes.ToString() + " Notes");
-        }
+        //void UpdateTotalNotes(bool clear = false, bool deleted = false) {
+        //    if(clear) {
+        //        TotalNotes = 0;
+        //    } else {
+        //        if(deleted) TotalNotes--;
+        //        else TotalNotes++;
+        //    }
+        //    // todo will need to create it dynamically from relevant data
+        //    m_statsTotalNotesText.SetText(TotalNotes.ToString() + " Notes");
+        //}
 
         /// <summary>
         /// Increase the <see cref="TotalNotes" /> stat
         /// </summary>
-        void IncreaseTotalNotesCount() {
-            TotalNotes++;
-            m_statsTotalNotesText.SetText(TotalNotes.ToString() + " Notes");
+        //void IncreaseTotalNotesCount() {
+        //    TotalNotes++;
+        //    m_statsTotalNotesText.SetText(TotalNotes.ToString() + " Notes");
+        //}
+        /// <summary>
+        /// Decrease the <see cref="TotalNotes" /> stat
+        /// </summary>
+        //void DecreaseTotalNotesCount() {
+        //    TotalNotes--;
+        //    m_statsTotalNotesText.SetText(TotalNotes.ToString() + " Notes");
+        //}
+
+
+        /// <summary>
+        /// Increase the <see cref="TotalNotes" /> stat
+        /// </summary>
+        public void IncreaseTotalDisplayedNotesCount() {
+            TotalDisplayedNotes++;
+            m_statsTotalNotesText.SetText(TotalDisplayedNotes.ToString() + " Notes");
         }
         /// <summary>
         /// Decrease the <see cref="TotalNotes" /> stat
         /// </summary>
-        void DecreaseTotalNotesCount() {
-            TotalNotes--;
-            m_statsTotalNotesText.SetText(TotalNotes.ToString() + " Notes");
+        public void DecreaseTotalDisplayedNotesCount() {
+            TotalDisplayedNotes--;
+            m_statsTotalNotesText.SetText(TotalDisplayedNotes.ToString() + " Notes");
         }
+
         /// <summary>
         /// Reset the <see cref="TotalNotes" /> stat
         /// </summary>
         void ResetTotalNotesCount() {
-            TotalNotes = 0;
+            //TotalNotes = 0;
+            TotalDisplayedNotes = 0;
             m_statsTotalNotesText.SetText(TotalNotes.ToString() + " Notes");
         }
         /// <summary>
@@ -4669,9 +4701,8 @@ namespace MiKu.NET {
                         // print(targetToDelete);
                         if(targetToDelete) {
                             DestroyImmediate(targetToDelete);
+                            s_instance.DecreaseTotalDisplayedNotesCount();
                         }
-
-                        s_instance.UpdateTotalNotes(false, true);
                     }
 
                     notes.Clear();
@@ -4913,7 +4944,7 @@ namespace MiKu.NET {
             List<EditorNote> list = workingTrack[note.TimePoint];
             bool lastNote = list.Count == 1;
             list.Remove(note);
-            s_instance.DecreaseTotalNotesCount();
+            s_instance.DecreaseTotalDisplayedNotesCount();
             if(lastNote) {
                 // need to check if there are rails still alive at this timepoint
                 List<Rail> rails = s_instance.GetCurrentRailListByDifficulty();
@@ -5320,9 +5351,10 @@ namespace MiKu.NET {
                                 // if matches == 2 and size == 2 then we need to REMOVE the whole gap rail
                                 if(matchedRail.Size() == 2) {
                                     RailHelper.DestroyRail(matchedRail);
+                                    s_instance.DecreaseTotalDisplayedNotesCount();
                                     return;
                                 } else {
-                                    if(!Track.s_instance.isSHIFDown) {
+                                    if(!Track.s_instance.isSHIFTDown) {
                                         Trace.WriteLine("Deleting sole note on the rail: " + matchedRail.railId);
                                         // otherwise we only really need to remove a single note
                                         EditorNote noteToRemove = matchedRail.GetNoteAtPosition(CurrentTime);
@@ -5331,6 +5363,7 @@ namespace MiKu.NET {
                                     } else {
                                         Trace.WriteLine("Deleting whole rail" + matchedRail.railId);
                                         RailHelper.DestroyRail(matchedRail);
+                                        s_instance.DecreaseTotalDisplayedNotesCount();
                                         return;
                                     }
                                 }
@@ -5343,8 +5376,12 @@ namespace MiKu.NET {
                                         if(rail.Size() > 1) {
                                             rail.FlipNoteTypeToBreaker(lastNote.thisNote.noteId);
                                             rail.FlipNoteTypeToBreaker(rail.leader.thisNote.noteId);
-                                            if(matchedRail != null)
-                                                matchedRail.FlipNoteTypeToBreaker(matchedRail.leader.thisNote.noteId);
+                                            if(matchedRail != null) { 
+                                                bool createdNewRail = matchedRail.FlipNoteTypeToBreaker(matchedRail.leader.thisNote.noteId);
+                                                if(createdNewRail)
+                                                    s_instance.IncreaseTotalDisplayedNotesCount();
+                                            }
+                                            
                                         }
                                         return;
                                     }
@@ -5353,6 +5390,7 @@ namespace MiKu.NET {
                                 // tail will create a leader note of a conjoined rail with tail breaker on the original rail and head breaker on the new one 
                                 // flip the note of the matched rail to breaker
                                 matchedRail.FlipNoteTypeToBreaker(railNote.noteId);
+                                                                    
                                 // create a new rail, will need to optimise code to remove redundancy with later parts
                                 Rail conjoinedRail = CreateNewRailAndAddNoteToIt(noteFromNoteArea);
                                 if(conjoinedRail == null) {
@@ -5365,6 +5403,9 @@ namespace MiKu.NET {
                                 }
                                 if(matchedRail != null)
                                     matchedRail.FlipNoteTypeToBreaker(matchedRail.GetLastNote().thisNote.noteId);
+
+                                s_instance.IncreaseTotalDisplayedNotesCount();
+                                return;
                             } else {
                                 // middle will break and create a conjoined rail in the middle of an existing one
                                 EditorNote leaderOfConjoinedRail = new EditorNote(noteFromNoteArea.transform.position, Track.CurrentTime);
@@ -5392,10 +5433,12 @@ namespace MiKu.NET {
                                 }
                                 matchedRail.RecalcDuration();
                                 RailHelper.ReinstantiateRail(matchedRail);
+                                s_instance.IncreaseTotalDisplayedNotesCount();
                             }
                         } else {
                             // this just simply places a new unbroken leader note but without joining it to anything
                             CreateNewRailAndAddNoteToIt(noteFromNoteArea);
+                            s_instance.IncreaseTotalDisplayedNotesCount();
                         }
                         return;
                     }
@@ -5413,10 +5456,11 @@ namespace MiKu.NET {
                             } else {
                                 // we've clicked on the current note. this means we either want to delete it or change its subtype
                                 if(s_instance.selectedUsageType == railNote.UsageType) {
-                                    if(!Track.s_instance.isSHIFDown) {
+                                    if(!Track.s_instance.isSHIFTDown) {
                                         matchedRail.RemoveNote(railNote.noteId);
                                     } else {
                                         // if shift is clicked we're deleting whole rail instead
+                                        s_instance.DecreaseTotalDisplayedNotesCount();
                                         RailHelper.DestroyRail(matchedRail);
                                     }
                                     return;
@@ -5428,7 +5472,9 @@ namespace MiKu.NET {
                                     bool wasSimpleLine = railNote.UsageType == EditorNote.NoteUsageType.Line;
                                     if(wasSimpleLine) {
                                         // we're adding a new breaker. need to split the rail
-                                        matchedRail.FlipNoteTypeToBreaker(railNote.noteId);
+                                        bool createdNewRail =  matchedRail.FlipNoteTypeToBreaker(railNote.noteId);
+                                        if(createdNewRail)
+                                            s_instance.IncreaseTotalDisplayedNotesCount();
                                         return;
                                     }
                                     // only extend if the rauil would be able to be instantiated then
@@ -5451,6 +5497,7 @@ namespace MiKu.NET {
                                                 if(!HasRailInterruptionsBetween(matchedRail.railId, previousRail.railId, previousRailEndTime, matchedRail.startTime, matchedRail.noteType)) {
                                                     // no interrupting notes or rails, can link this rail and the next one
                                                     previousRail.Merge(matchedRail);
+                                                    s_instance.DecreaseTotalDisplayedNotesCount();
                                                     return;
                                                 }
                                             }
@@ -5464,6 +5511,7 @@ namespace MiKu.NET {
                                                 if(!HasRailInterruptionsBetween(matchedRail.railId, nextRail.railId, railEndTime, nextRailStartTIme, matchedRail.noteType)) {
                                                     // no interrupting notes or rails, can link this rail and the next one
                                                     matchedRail.Merge(nextRail);
+                                                    s_instance.DecreaseTotalDisplayedNotesCount();
                                                     return;
                                                 }
                                             }
@@ -5487,6 +5535,7 @@ namespace MiKu.NET {
                                 List<Rail> tempRailList = s_instance.GetCurrentRailListByDifficulty();
                                 tempRailList.Remove(matchedRail);
                                 matchedRail.DestroyLeader();
+                                s_instance.DecreaseTotalDisplayedNotesCount();
                             }
                             Trace.WriteLine("Moved the note. Returning");
                         }
@@ -5587,8 +5636,8 @@ namespace MiKu.NET {
             if(workingTrack.ContainsKey(CurrentTime)) {
                 // print("Trying currentTime "+CurrentTime);
                 workingTrack[CurrentTime].Add(noteForChart);
+                s_instance.IncreaseTotalDisplayedNotesCount();
                 s_instance.AddNoteGameObjectToScene(noteForChart);
-                s_instance.UpdateTotalNotes();
             } else {
                 Track.LogMessage("Time does not exist");
             }
@@ -6604,7 +6653,7 @@ namespace MiKu.NET {
             _currentTime = 0;
             MoveCamera(true, _currentTime);
 
-            UpdateTotalNotes(true);
+            ResetTotalNotesCount();
 
             hitSFXSource.Clear();
 
