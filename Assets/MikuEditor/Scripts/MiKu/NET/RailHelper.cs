@@ -671,6 +671,13 @@ namespace MiKu.NET {
                 }
             }
         }
+        public static List<float> CollectRailStartTimes() {
+            List<float> times = new List<float>();
+            foreach(Rail rail in Track.s_instance.GetCurrentRailListByDifficulty()) {
+                times.Add(rail.startTime);
+            }
+            return times;
+        }
     }
-
+    
 }

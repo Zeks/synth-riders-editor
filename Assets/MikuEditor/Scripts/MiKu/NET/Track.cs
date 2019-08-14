@@ -938,8 +938,16 @@ namespace MiKu.NET {
         }
 
 
-        public static float FindNextTime(float time) {
-            List<float> times = CollectOccupiedTimes().ToList();
+        public static float FindNextTime(float time, bool forRailsOnly = false) {
+            List<float> times = null;
+            if(!forRailsOnly)
+                times = CollectOccupiedTimes().ToList();
+            else
+                times = RailHelper.CollectRailStartTimes();
+
+            if(times == null)
+                return time;
+
             times.Sort();
             var foundTimes = times.SkipWhile(testedTIme => testedTIme <= time);
             if(foundTimes.Count() == 0)
@@ -948,8 +956,15 @@ namespace MiKu.NET {
             return foundTimes.First();
         }
 
-        public static float FindPreviousTime(float time) {
-            List<float> times = CollectOccupiedTimes().ToList();
+        public static float FindPreviousTime(float time, bool forRailsOnly = false) {
+            List<float> times = null;
+            if(!forRailsOnly)
+                times = CollectOccupiedTimes().ToList();
+            else
+                times = RailHelper.CollectRailStartTimes();
+            if(times == null)
+                return time;
+
             times.Sort();
             times.Reverse();
             var foundTimes = times.SkipWhile(testedTIme => testedTIme >= time);
@@ -1312,7 +1327,7 @@ namespace MiKu.NET {
                 }
                 if(isALTDown) {
                     // jump to next note time
-                    float time = Track.FindNextTime(CurrentTime);
+                    float time = Track.FindNextTime(CurrentTime, s_instance.selectedUsageType == EditorNote.NoteUsageType.Ball ? false : true);
                     if(time != -1) {
                         MoveCamera(true, MStoUnit(time));
                         CurrentTime = time;
@@ -1330,7 +1345,7 @@ namespace MiKu.NET {
                 }
                 if(isALTDown) {
                     // jump to previous note time
-                    float time = Track.FindPreviousTime(CurrentTime);
+                    float time = Track.FindPreviousTime(CurrentTime, s_instance.selectedUsageType == EditorNote.NoteUsageType.Ball ? false : true);
                     if(time != -1) {
                         MoveCamera(true, MStoUnit(time));
                         CurrentTime = time;
