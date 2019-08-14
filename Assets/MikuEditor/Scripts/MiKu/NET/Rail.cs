@@ -713,6 +713,18 @@ namespace MiKu.NET {
             }
         }
 
+        public void SwitchHandTo(EditorNote.NoteHandType type) {
+            foreach(RailNoteWrapper note in notesByTime.Values) {
+                note.thisNote.HandType = type;
+            }
+        }
+
+        public void ShiftEveryNoteBy(Vector2 vec) {
+            foreach(RailNoteWrapper note in notesByTime.Values) {
+                note.thisNote.Position[0] += vec.x;
+                note.thisNote.Position[1] += vec.y;
+            }
+        }
 
         public int Size() {
             return notesByID.Count;

@@ -31,6 +31,35 @@ public class GridManager : MonoBehaviour
         return result;
     }
 
+    public enum GridShiftBehaviour {
+        Horizonal = 0,
+        Vertical = 1,
+        Depth = 2,
+    }
+
+    public Vector3 GetNextPointOnGrid(Vector3 position, bool positiveMovement, GridShiftBehaviour shiftBehaviour) {
+        position -= transform.position;
+
+        int xCount = Mathf.RoundToInt(position.x / separationSize);
+        if(shiftBehaviour == GridShiftBehaviour.Horizonal)
+            xCount+= positiveMovement ? 1 : -1;
+        int yCount = Mathf.RoundToInt(position.y / separationSize);
+        if(shiftBehaviour == GridShiftBehaviour.Vertical)
+            yCount+= positiveMovement ? 1 : -1;
+        int zCount = Mathf.RoundToInt(position.z / separationSize);
+        if(shiftBehaviour == GridShiftBehaviour.Depth)
+            zCount+= positiveMovement ? 1 : -1;
+
+        Vector3 result = new Vector3(
+            (float)xCount * separationSize,
+            (float)yCount * separationSize,
+            (float)zCount * separationSize);
+
+        result += transform.position;
+
+        return result;
+    }
+
     private void OnDrawGizmos()
     {
         /*Gizmos.color = Color.yellow;

@@ -2,6 +2,7 @@ using MiKu.NET.Charting;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System;
 using ThirdParty.Custom;
 using UnityEngine;
 
@@ -121,7 +122,7 @@ namespace MiKu.NET {
         }
 
 
-        public static Rail GetNextRail(int thisRailId, float time, EditorNote.NoteHandType handType = EditorNote.NoteHandType.NoHand,  EditorNote.NoteUsageType usageType = EditorNote.NoteUsageType.Line) {
+        public static Rail GetNextRail(int thisRailId, float time, EditorNote.NoteHandType handType = EditorNote.NoteHandType.NoHand, EditorNote.NoteUsageType usageType = EditorNote.NoteUsageType.Line) {
 
             List<Rail> rails = Track.s_instance.GetCurrentRailListByDifficulty();
             if(rails == null)
@@ -461,8 +462,8 @@ namespace MiKu.NET {
                 if(i > 0) {
                     float ms = Track.UnitToMS(segments[i, 2]);
                     ms = ChartConverter.UpdateTimeToBPM(ms, bpm);
-                    railNote = new EditorNote(ms, new Vector3(segments[i,0], segments[i, 1], segments[i, 2]), note.HandType, EditorNote.NoteUsageType.Line);
-                } else { 
+                    railNote = new EditorNote(ms, new Vector3(segments[i, 0], segments[i, 1], segments[i, 2]), note.HandType, EditorNote.NoteUsageType.Line);
+                } else {
                     railNote = note;
                     railNote.UsageType = EditorNote.NoteUsageType.Breaker;
                 }
@@ -501,7 +502,7 @@ namespace MiKu.NET {
             if(rail == null)
                 return null;
 
-            
+
             bool skipWholeRail = false;
             List<RailNoteWrapper> newList = new List<RailNoteWrapper>();
             foreach(RailNoteWrapper note in rail.notesByTime.Values) {
@@ -568,7 +569,7 @@ namespace MiKu.NET {
         public static List<Rail> GetListOfRailsInRange(List<Rail> rails, float rangeStart, float rangeEnd, RailRangeBehaviour fetchType) {
             List<Rail> fetchedRails = new List<Rail>();
             foreach(Rail rail in rails) {
-                if(rail.startTime >= rangeStart && rail.endTime <= rangeEnd) { 
+                if(rail.startTime >= rangeStart && rail.endTime <= rangeEnd) {
                     fetchedRails.Add(rail);
                     continue;
                 }
@@ -611,8 +612,65 @@ namespace MiKu.NET {
             }
             Track.s_instance.ResetCurrentRailList();
         }
-    }
-    
 
+        public static Rail ClosestRailButNotAtThisPoint(float time, Vector2 point) {
+            List<Rail> railsAtCurrentTime = RailHelper.GetListOfRailsInRange(Track.s_instance.GetCurrentRailListByDifficulty(), time, time, RailHelper.RailRangeBehaviour.Allow);
+
+            List<Rail> railsWithJunctionsAtThisTime = new List<Rail>();
+            foreach(Rail rail in railsAtCurrentTime) {
+                if(rail.HasNoteAtTime(time))
+                    railsWithJunctionsAtThisTime.Add(rail);
+            }
+
+            Dictionary<float, Rail> dictOfDistances = new Dictionary<float, Rail>();
+            foreach(Rail rail in railsWithJunctionsAtThisTime) {
+                EditorNote note = rail.GetNoteAtPosition(time);
+                float distance = Vector2.Distance(point, new Vector2(note.Position[0], note.Position[1]));
+                if(distance != 0)
+                    dictOfDistances.Add(Vector2.Distance(point, new Vector2(note.Position[0], note.Position[1])), rail);
+            }
+
+            List<float> distances = dictOfDistances.Keys.ToList();
+            distances.Sort();
+            if(distances.Count == 0)
+                return null;
+            return dictOfDistances[distances[0]];
+        }
+
+        public static void ShiftHorizontalPositionOFCurrentRail(float time, float value, EditorNote.NoteHandType handType) {
+            List<Rail> railsAtCurrentTime = RailHelper.GetListOfRailsInRange(Track.s_instance.GetCurrentRailListByDifficulty(), time, time, RailHelper.RailRangeBehaviour.Allow);
+
+            List<Rail> railsWithJunctionsAtThisTime = new List<Rail>();
+            foreach(Rail rail in railsAtCurrentTime) {
+                if(rail.HasNoteAtTime(time) && rail.noteType == handType) {
+                    EditorNote note = rail.GetNoteAtPosition(time);
+                    Vector3 newPos = NotesArea.s_instance.grid.GetNextPointOnGrid(new Vector3(note.Position[0], note.Position[1], note.Position[2]), value > 0, GridManager.GridShiftBehaviour.Horizonal);
+                    float xDiff = Math.Abs(newPos.x - note.Position[0]);
+                    if(value < 0)
+                        xDiff*=-1;
+                    rail.ShiftEveryNoteBy(new Vector2(xDiff, 0));
+                    ReinstantiateRail(rail);
+                    ReinstantiateRailSegmentObjects(rail);
+                }
+            }
+        }
+        public static void ShiftVerticalPositionOFCurrentRail(float time, float value, EditorNote.NoteHandType handType) {
+            List<Rail> railsAtCurrentTime = RailHelper.GetListOfRailsInRange(Track.s_instance.GetCurrentRailListByDifficulty(), time, time, RailHelper.RailRangeBehaviour.Allow);
+
+            List<Rail> railsWithJunctionsAtThisTime = new List<Rail>();
+            foreach(Rail rail in railsAtCurrentTime) {
+                if(rail.HasNoteAtTime(time) && rail.noteType == handType) {
+                    EditorNote note = rail.GetNoteAtPosition(time);
+                    Vector3 newPos = NotesArea.s_instance.grid.GetNextPointOnGrid(new Vector3(note.Position[0], note.Position[1], note.Position[2]), value > 0, GridManager.GridShiftBehaviour.Vertical);
+                    float yDiff = Math.Abs(newPos.y - note.Position[1]);
+                    if(value < 0)
+                        yDiff*=-1;
+                    rail.ShiftEveryNoteBy(new Vector2(0, yDiff));
+                    ReinstantiateRail(rail);
+                    ReinstantiateRailSegmentObjects(rail);
+                }
+            }
+        }
+    }
 
 }

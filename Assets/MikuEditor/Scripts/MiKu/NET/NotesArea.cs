@@ -10,7 +10,7 @@ namespace MiKu.NET {
         public static NotesArea s_instance;
 
         [SerializeField]
-        private GridManager grid;
+        public GridManager grid;
 
         [Space(20)]
         [SerializeField]
