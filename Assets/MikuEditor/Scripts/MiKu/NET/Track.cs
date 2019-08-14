@@ -5426,14 +5426,14 @@ namespace MiKu.NET {
 
                                 if(matchedRail.GetNoteAtPosition(CurrentTime) != null) {
                                     EditorNote middleNote = matchedRail.GetNoteAtPosition(CurrentTime);
-                                    nextRail.FlipNoteTypeToBreaker(middleNote.noteId);
+                                    matchedRail.FlipNoteTypeToBreaker(middleNote.noteId);
                                 } else {
                                     // need to create a new note here
                                     EditorNote tailOfConjoinedRail = new EditorNote(Track.CurrentTime,
                                         noteFromNoteArea.transform.position,
                                           s_instance.selectedNoteType, s_instance.selectedUsageType);
                                     matchedRail.AddNote(tailOfConjoinedRail);
-                                    nextRail.FlipNoteTypeToBreaker(tailOfConjoinedRail.noteId);
+                                    matchedRail.FlipNoteTypeToBreaker(tailOfConjoinedRail.noteId);
                                 }
                                 matchedRail.RecalcDuration();
                                 RailHelper.ReinstantiateRail(matchedRail);
