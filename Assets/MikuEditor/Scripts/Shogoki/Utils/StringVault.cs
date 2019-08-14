@@ -36,6 +36,9 @@ namespace Shogoki.Utils {
 		[TextArea(3, 8)]
 		string alert_FileLoadError = "The selected file doesn't exist";
 
+        [SerializeField]
+        [TextArea(3, 8)]
+        string alert_MergedRailTooLong = "Merged rail will exceed duration. Can't merge.";
 
         [SerializeField]
         [TextArea(3, 8)]
@@ -379,6 +382,14 @@ namespace Shogoki.Utils {
             get
             {
                 return s_instance.alert_FileLoadError;
+            }
+        }
+
+        public static string Alert_MergedRailTooLong
+        {
+            get
+            {
+                return s_instance.alert_MergedRailTooLong;
             }
         }
 

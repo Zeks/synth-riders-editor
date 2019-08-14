@@ -313,11 +313,6 @@ namespace MiKu.NET {
                     string jsonDATA = reader.ReadToEnd();
                     ChartData = JsonConvert.DeserializeObject<Chart>(jsonDATA);
 
-                    // using chartconverter to pass the deserialized class into the editor's structures
-                    // the result needs to be assigned to Track later
-                    ChartConverter converter = new ChartConverter();
-                    converter.ConvertGameChartToEditorChart(ChartData);
-
                 } catch(Exception) {
                     Debug.Log("File made in version previous to 1.8, trying BinaryFormatter");
                     // Section for load of files previos to version 1.8					
@@ -329,12 +324,6 @@ namespace MiKu.NET {
 
                     BinaryFormatter bf = new BinaryFormatter();
                     ChartData = (Chart)bf.Deserialize(memStream);
-
-                    // using chartconverter to pass the deserialized class into the editor's structures
-                    // the result needs to be assigned to Track later
-                    ChartConverter converter = new ChartConverter();
-                    converter.ConvertGameChartToEditorChart(ChartData);
-
                 }
 
             } catch(Exception) {
@@ -344,10 +333,9 @@ namespace MiKu.NET {
                     BinaryFormatter bf = new BinaryFormatter();
                     ChartData = (Chart)bf.Deserialize(file);
 
-                    // using chartconverter to pass the deserialized class into the editor's structures
-                    // the result needs to be assigned to Track later
-                    ChartConverter converter = new ChartConverter();
-                    converter.ConvertGameChartToEditorChart(ChartData);
+                    
+                    
+                    
                     file.Close();
                 } catch(Exception e) {
                     Debug.LogError("Deserialization Error");
@@ -413,8 +401,6 @@ namespace MiKu.NET {
                 IsBusy = false;
                 return false;
             }
-            ChartConverter converter = new ChartConverter();
-            converter.ConvertGameChartToEditorChart(ChartData);
             IsBusy = false;
             return true;
         }

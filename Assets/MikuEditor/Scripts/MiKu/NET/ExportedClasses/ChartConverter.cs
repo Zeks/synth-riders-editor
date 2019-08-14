@@ -180,7 +180,7 @@ namespace MiKu.NET.Charting {
         }
 
         // Pre-Instantiates necessary structs for exported data
-        void InstantiateExportedChartDataStructures() {
+        public void InstantiateExportedChartDataStructures() {
             gameChart = new Chart();
 
             if(gameChart.Effects == null) {
@@ -459,7 +459,7 @@ namespace MiKu.NET.Charting {
         }
 
         // Pre-Instantiates necessary structs for imported data
-        void InstantiateEditorChartDataStructures() {
+        public void InstantiateEditorChartDataStructures() {
             editorChart = new EditorChart();
 
             if(editorChart.Track == null) {

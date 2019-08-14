@@ -234,7 +234,7 @@ public class Miku_LoadFileHelper : MonoBehaviour {
                     Serializer.ChartData.ArtworkBytes = defaultArtworkData;								
 				} 
 
-				SetSpriteToImage(editArtworkField, ChartConverter.editorChart.ArtworkBytes);
+				SetSpriteToImage(editArtworkField, Serializer.ChartData.ArtworkBytes);
 				
 				InitFormsSelection(true);	
 			}			
