@@ -456,17 +456,16 @@ namespace MiKu.NET {
             float[,] segments = note.Segments;
             Rail newRail = new Rail();
             newRail.noteType = note.HandType;
+            note.UsageType = EditorNote.NoteUsageType.Breaker;
+            newRail.AddNote(note);
+
             for(int i = 0; i < segments.GetLength(0); i++) {
                 EditorNote railNote = null;
                 // we need to create a separate note unless it's the first note of the sequence
-                if(i > 0) {
-                    float ms = Track.UnitToMS(segments[i, 2]);
-                    ms = ChartConverter.UpdateTimeToBPM(ms, bpm);
-                    railNote = new EditorNote(ms, new Vector3(segments[i, 0], segments[i, 1], segments[i, 2]), note.HandType, EditorNote.NoteUsageType.Line);
-                } else {
-                    railNote = note;
-                    railNote.UsageType = EditorNote.NoteUsageType.Breaker;
-                }
+
+                float ms = Track.UnitToMS(segments[i, 2]);
+                ms = ChartConverter.UpdateTimeToBPM(ms, bpm);
+                railNote = new EditorNote(ms, new Vector3(segments[i, 0], segments[i, 1], segments[i, 2]), note.HandType, EditorNote.NoteUsageType.Line);
 
                 RailNoteWrapper wrapper = new RailNoteWrapper(railNote);
                 newRail.notesByID.Add(railNote.noteId, wrapper);

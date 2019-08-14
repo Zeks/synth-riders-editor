@@ -124,20 +124,22 @@ namespace MiKu.NET.Charting {
             }
             foreach(Rail rail in rails) {
                 EditorNote leaderNote = rail.leader.thisNote;
+                if(!exportValue.ContainsKey(leaderNote.TimePoint)) {
+                    exportValue.Add(leaderNote.TimePoint, new List<Note>());
+                }
                 // first we create a note to pass to the game, theb go over the rail assigning the segments
                 Vector3 pos = new Vector3(leaderNote.Position[0], leaderNote.Position[1], leaderNote.Position[2]);
                 Note gameNote = new Note(pos, "Rail_" + leaderNote.noteId, -1 /* will be assigned later */, ConvertEditorNoteTypeToGameNoteType(leaderNote.HandType));
-                gameNote.Segments = new float[rail.notesByTime.Count, 3];
+                gameNote.Segments = new float[rail.notesByTime.Count-1, 3];
                 int i = 0;
                 foreach(float time in rail.notesByTime.Keys) {
+                    if(leaderNote.TimePoint == time)
+                        continue;
                     EditorNote  segmentNote = rail.notesByTime[time].thisNote;
                     gameNote.Segments[i, 0] = segmentNote.Position[0];
                     gameNote.Segments[i, 1] = segmentNote.Position[1];
                     gameNote.Segments[i, 2] = segmentNote.Position[2];
                     i++;
-                }
-                if(exportValue[leaderNote.TimePoint] == null) {
-                    exportValue.Add(leaderNote.TimePoint, new List<Note>());
                 }
                 exportValue[leaderNote.TimePoint].Add(gameNote);
             }
@@ -167,7 +169,17 @@ namespace MiKu.NET.Charting {
                     // if we have segments this means we need to create a rail from them
                     // preferably NOT note by note and WITHOUT instantiation
 
-                    exportNote.Segments = gameNote.Segments;
+                    //exportNote.Segments = gameNote.Segments;
+                    if(gameNote.Segments != null) {
+                        exportNote.Segments = new float[gameNote.Segments.GetLength(0), 3];
+
+                        for(int i = 0; i < gameNote.Segments.GetLength(0); i++) {
+                            exportNote.Segments[i, 0] = gameNote.Segments[i, 0];
+                            exportNote.Segments[i, 1] = gameNote.Segments[i, 1];
+                            exportNote.Segments[i, 2] = gameNote.Segments[i, 2];
+                        }
+                    }
+
                     if(exportNote.Segments == null || exportNote.Segments.Length == 0)
                         editorDictionary[entry.Key].Add(exportNote);
                     else {
