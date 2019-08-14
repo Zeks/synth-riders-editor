@@ -600,9 +600,19 @@ namespace MiKu.NET {
                 Track.s_instance.DecreaseTotalDisplayedNotesCount();
             }
         }
-
+        public static void DestroyAllRailsForCurrentDifficulty() {
+            List<Rail> rails = Track.s_instance.GetCurrentRailListByDifficulty();
+            foreach(Rail rail in rails) {
+                Trace.WriteLine("Deleting the rail: " + rail.railId);
+                foreach(int noteObjectKey in rail.noteObjects.Keys.ToList()) {
+                    rail.DestroyNoteObjectAndRemoveItFromTheRail(noteObjectKey);
+                }
+                rail.scheduleForDeletion = true;
+            }
+            Track.s_instance.ResetCurrentRailList();
         }
-
+    }
+    
 
 
 }

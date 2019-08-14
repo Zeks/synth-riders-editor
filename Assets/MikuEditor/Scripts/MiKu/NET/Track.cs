@@ -6649,6 +6649,8 @@ namespace MiKu.NET {
             }
             lights.Clear();
 
+            RailHelper.DestroyAllRailsForCurrentDifficulty();
+
             // Reset the current time
             _currentTime = 0;
             MoveCamera(true, _currentTime);
@@ -7189,6 +7191,23 @@ namespace MiKu.NET {
             }
 
             return CurrentChart.Rails.Easy; ;
+        }
+
+        public void ResetCurrentRailList() {
+            switch(CurrentDifficulty) {
+                case TrackDifficulty.Easy:
+                    CurrentChart.Rails.Easy = new List<Rail>(); break;
+                case TrackDifficulty.Normal:
+                    CurrentChart.Rails.Normal = new List<Rail>(); break;
+                case TrackDifficulty.Hard:
+                 CurrentChart.Rails.Hard = new List<Rail>(); break;
+                case TrackDifficulty.Expert:
+                    CurrentChart.Rails.Expert = new List<Rail>(); break;
+                case TrackDifficulty.Master:
+                    CurrentChart.Rails.Master = new List<Rail>(); break;
+                case TrackDifficulty.Custom:
+                    CurrentChart.Rails.Custom = new List<Rail>(); break;
+            }
         }
 
         /// <summary>
