@@ -308,9 +308,6 @@ namespace MiKu.NET {
             notesByID[note.noteId] = wrapper;
             notesByTime[note.TimePoint] = wrapper;
 
-            
-
-
             if(silent)
                 return;
 

@@ -1205,6 +1205,10 @@ namespace MiKu.NET {
                     } else {
                         SetNoteMarkerType(GetNoteMarkerTypeIndex(EditorNote.NoteHandType.LeftHanded));
                         markerWasUpdated = true;
+                        s_instance.selectedUsageType = EditorNote.NoteUsageType.Ball;
+                        if(isALTDown) {
+                            s_instance.selectedUsageType = EditorNote.NoteUsageType.Line;
+                        }
                     }
                 }
             }
@@ -1217,6 +1221,10 @@ namespace MiKu.NET {
                     } else {
                         SetNoteMarkerType(GetNoteMarkerTypeIndex(EditorNote.NoteHandType.RightHanded));
                         markerWasUpdated = true;
+                        s_instance.selectedUsageType = EditorNote.NoteUsageType.Ball;
+                        if(isALTDown) {
+                            s_instance.selectedUsageType = EditorNote.NoteUsageType.Line;
+                        }
                     }
                 }
             }
@@ -1229,6 +1237,10 @@ namespace MiKu.NET {
                     } else {
                         SetNoteMarkerType(GetNoteMarkerTypeIndex(EditorNote.NoteHandType.OneHandSpecial));
                         markerWasUpdated = true;
+                        s_instance.selectedUsageType = EditorNote.NoteUsageType.Ball;
+                        if(isALTDown) {
+                            s_instance.selectedUsageType = EditorNote.NoteUsageType.Line;
+                        }
                     }
                 }
             }
@@ -1241,6 +1253,10 @@ namespace MiKu.NET {
                     } else {
                         SetNoteMarkerType(GetNoteMarkerTypeIndex(EditorNote.NoteHandType.BothHandsSpecial));
                         markerWasUpdated = true;
+                        s_instance.selectedUsageType = EditorNote.NoteUsageType.Ball;
+                        if(isALTDown) {
+                            s_instance.selectedUsageType = EditorNote.NoteUsageType.Line;
+                        }
                     }
                 }
             }
@@ -5314,6 +5330,19 @@ namespace MiKu.NET {
         }
 
 
+        public static EditorNote GetSimpleNoteAtTime(float time, EditorNote.NoteHandType handType) {
+            Dictionary<float, List<EditorNote>> workingTrack = s_instance.GetCurrentTrackDifficulty();
+            if(!workingTrack.ContainsKey(time))
+                return null;
+
+            List<EditorNote> notes = workingTrack[time];
+            foreach(EditorNote note in notes) {
+                if(note.HandType == handType)
+                    return note;
+            }
+            return null;
+        }
+
 
         /// <summary>
         /// Add note to chart
@@ -5366,6 +5395,63 @@ namespace MiKu.NET {
                             && time <= timeRangeDuplicatesEnd).ToList();
                     bool hasNotesWithinDeltaTime = keys_tofilter.Count != 0;
 
+                    if(s_instance.isALTDown) {
+                        // if alt is down we don't care about any limits 
+                        // if there is no note at this time point we place one 
+                        // if there is a note fo this color, we move it here
+                        EditorNote potentialMovedNote = GetSimpleNoteAtTime(CurrentTime, s_instance.selectedNoteType);
+                        if(potentialMovedNote == null) {
+                            //nothing to move, we just instantiate a new one
+                            EditorNote newNote = new EditorNote(noteFromNoteArea.transform.position, Track.CurrentTime);
+                            newNote.HandType = s_instance.selectedNoteType;
+
+                            // Check if the note placed if of special type 
+                            if(IsOfSpecialType(newNote)) {
+                                // If whe are no creating a special, Then we init the new special section
+                                if(!s_instance.specialSectionStarted) {
+                                    s_instance.specialSectionStarted = true;
+                                    s_instance.currentSpecialSectionID++;
+                                    Miku_DialogManager.ShowDialog(Miku_DialogManager.DialogType.Info, StringVault.Info_SpecialModeStarted);
+                                    s_instance.ToggleWorkingStateAlertOn(StringVault.Info_UserOnSpecialSection);
+                                }
+
+                                // Assing the Special ID to the note
+                                newNote.ComboId = s_instance.currentSpecialSectionID;
+
+                                Track.LogMessage("Current Special ID: " + s_instance.currentSpecialSectionID);
+                            }
+                            if(!workingTrack.ContainsKey(CurrentTime)) {
+                                workingTrack.Add(CurrentTime, new List<EditorNote>());
+                                AddTimeToSFXList(CurrentTime);
+                            }
+                            // Finally we added the note to the dictonary
+                            // ref of the note for easy of access to properties                        
+                            if(workingTrack.ContainsKey(CurrentTime)) {
+                                // print("Trying currentTime "+CurrentTime);
+                                workingTrack[CurrentTime].Add(newNote);
+                                s_instance.IncreaseTotalDisplayedNotesCount();
+                                s_instance.AddNoteGameObjectToScene(newNote);
+                            } else {
+                                Track.LogMessage("Time does not exist");
+                            }
+                            return;
+                        } else {
+                            // we move the note to the clicked position
+                            // first we remove the note's gameobject to remove it from the track
+                            DestroyImmediate(potentialMovedNote.GameObject);
+                            //next we move it
+                            float xDiff = Math.Abs(noteFromNoteArea.transform.position.x - potentialMovedNote.Position[0]);
+                            float yDiff = Math.Abs(noteFromNoteArea.transform.position.y - potentialMovedNote.Position[1]);
+                            if(noteFromNoteArea.transform.position.x < potentialMovedNote.Position[0])
+                                xDiff*=-1;
+                            if(noteFromNoteArea.transform.position.y < potentialMovedNote.Position[1])
+                                yDiff*=-1;
+                            potentialMovedNote.Position[0]+=xDiff;
+                            potentialMovedNote.Position[1]+=yDiff;
+                            s_instance.AddNoteGameObjectToScene(potentialMovedNote);
+                        }
+                        return;
+                    }
 
 
                     // if there are no notes to overlap, instantiate time in the dictionary
