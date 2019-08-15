@@ -439,113 +439,61 @@ public class Miku_LoadFileHelper : MonoBehaviour {
 	/// </sumary>
 	public void StartEditor(bool isEdit = false) {
 		if(Serializer.Initialized) {
-			//if(ChartConverter.editorChart == null) {
-			//	EditorChart chart = new EditorChart();
-			//	EditorBeats defaultBeats = new EditorBeats();
-			//	defaultBeats.Easy = new Dictionary<float, List<EditorNote>>();
-			//	defaultBeats.Normal = new Dictionary<float, List<EditorNote>>();
-			//	defaultBeats.Hard = new Dictionary<float, List<EditorNote>>();
-			//	defaultBeats.Expert = new Dictionary<float, List<EditorNote>>();
-			//	defaultBeats.Master = new Dictionary<float, List<EditorNote>>();
-			//	defaultBeats.Custom = new Dictionary<float, List<EditorNote>>();
+            if(ChartConverter.editorChart == null) {
+                
+                ChartConverter converter = new ChartConverter();
+                converter.InstantiateEditorChartDataStructures();
+                EditorChart chart = ChartConverter.editorChart;
 
-			//	EditorEffects defaultEffects = new EditorEffects();
-			//	defaultEffects.Easy = new List<float>();
-			//	defaultEffects.Normal = new List<float>();
-			//	defaultEffects.Hard = new List<float>();
-			//	defaultEffects.Expert = new List<float>();
-			//	defaultEffects.Master = new List<float>();
-			//	defaultEffects.Custom = new List<float>();
+                /// For testing				
+                /*var list = new List<Note>();
+				list.Add(new Note(new Vector3(-0.5756355f, 0.2400601f, 0), 1));
+				defaultBeats.Easy.Add(0, list);
+				list = new List<Note>();
+				list.Add(new Note(new Vector3(-0.7826607f, 0.3006552f, 20f), 2002));
+				defaultBeats.Easy.Add(2000, list);
+				list = new List<Note>();
+				list.Add(new Note(new Vector3(0.1514833f, 0.3359979f, 40f), 4001));
+				defaultBeats.Easy.Add(4000, list);	*/
+                chart.Name = nameField.text;
+                chart.Author = authorField.text;
+                chart.AudioName = trackField.text;
+                chart.AudioData = null; //audioData;
+                if(loadedClip != null) { 
+                    chart.AudioFrecuency = loadedClip.frequency;
+                    chart.AudioChannels = loadedClip.channels;
+                }
+                chart.BPM = 120;
+                chart.FilePath = null;
+                chart.Artwork = artWorkField;
+                chart.ArtworkBytes = loadedArtwork;
+                chart.IsAdminOnly = Serializer.IsAdmin();
+                chart.Beatmapper = mapperField.text;
+                chart.CustomDifficultyName = "Custom";
+                chart.CustomDifficultySpeed = 1;
+                chart.Tags = new List<string>();
+            }
 
-			//	EditorJumps defaultJumps = new EditorJumps();
-			//	defaultJumps.Easy = new List<float>();
-			//	defaultJumps.Normal = new List<float>();
-			//	defaultJumps.Hard = new List<float>();
-			//	defaultJumps.Expert = new List<float>();
-			//	defaultJumps.Master = new List<float>();
-			//	defaultJumps.Custom = new List<float>();
+            if(artworkEdited) {
+                ChartConverter.editorChart.Artwork = artWorkField;
+                ChartConverter.editorChart.ArtworkBytes = loadedArtwork;
+            }
 
-			//	EditorCrouchs defaultCrouchs = new EditorCrouchs();
-			//	defaultCrouchs.Easy = new List<float>();
-			//	defaultCrouchs.Normal = new List<float>();
-			//	defaultCrouchs.Hard = new List<float>();
-			//	defaultCrouchs.Expert = new List<float>();
-			//	defaultCrouchs.Master = new List<float>();
-			//	defaultCrouchs.Custom = new List<float>();
+            if(audioEdited) {
+                // Serializer.ChartData.AudioData = audioData;
+                ChartConverter.editorChart.AudioFrecuency = loadedClip.frequency;
+                ChartConverter.editorChart.AudioChannels = loadedClip.channels;
+            }
 
-			//	EditorSlides defaultSlides = new EditorSlides();
-			//	defaultSlides.Easy = new List<EditorSlide>();
-			//	defaultSlides.Normal = new List<EditorSlide>();
-			//	defaultSlides.Hard = new List<EditorSlide>();
-			//	defaultSlides.Expert = new List<EditorSlide>();
-			//	defaultSlides.Master = new List<EditorSlide>();
-			//	defaultSlides.Custom = new List<EditorSlide>();
+            if(isEdit) {
+                ChartConverter.editorChart.Name = editNameField.text;
+                ChartConverter.editorChart.Author = editAuthorField.text;
+                ChartConverter.editorChart.AudioName = editTrackField.text;
+                ChartConverter.editorChart.Beatmapper = editMapperField.text;
+            }
 
-			//	EditorLights defaultLights= new EditorLights();
-			//	defaultLights.Easy = new List<float>();
-			//	defaultLights.Normal = new List<float>();
-			//	defaultLights.Hard = new List<float>();
-			//	defaultLights.Expert = new List<float>();
-			//	defaultLights.Master = new List<float>();
-			//	defaultLights.Custom = new List<float>();
-				
-			//	/// For testing				
-			//	/*var list = new List<Note>();
-			//	list.Add(new Note(new Vector3(-0.5756355f, 0.2400601f, 0), 1));
-			//	defaultBeats.Easy.Add(0, list);
-			//	list = new List<Note>();
-			//	list.Add(new Note(new Vector3(-0.7826607f, 0.3006552f, 20f), 2002));
-			//	defaultBeats.Easy.Add(2000, list);
-			//	list = new List<Note>();
-			//	list.Add(new Note(new Vector3(0.1514833f, 0.3359979f, 40f), 4001));
-			//	defaultBeats.Easy.Add(4000, list);	*/			
-
-			//	chart.Track = defaultBeats; 
-			//	chart.Effects = defaultEffects;
-			//	chart.Jumps = defaultJumps;
-			//	chart.Crouchs = defaultCrouchs;
-			//	chart.Slides = defaultSlides;
-			//	chart.Bookmarks = new EditorBookmarks();
-			//	chart.Name = nameField.text;
-			//	chart.Author = authorField.text;
-			//	chart.AudioName = trackField.text;
-			//	chart.AudioData = null; //audioData;
-			//	chart.AudioFrecuency = loadedClip.frequency;
-			//	chart.AudioChannels = loadedClip.channels;
-			//	chart.BPM = 120;
-			//	chart.FilePath = null;
-			//	chart.Artwork = artWorkField;
-			//	chart.ArtworkBytes = loadedArtwork;
-			//	chart.IsAdminOnly = Serializer.IsAdmin();
-			//	chart.Beatmapper = mapperField.text;
-			//	chart.CustomDifficultyName = "Custom";
-			//	chart.CustomDifficultySpeed = 1;
-			//	chart.Tags = new List<string>();
-			//	chart.Lights = defaultLights;
-				
-			//	ChartConverter.editorChart = chart;
-			//}
-
-			//if(artworkEdited) {
-   //             ChartConverter.editorChart.Artwork = artWorkField;
-   //             ChartConverter.editorChart.ArtworkBytes = loadedArtwork;
-			//}
-
-			//if(audioEdited) {
-   //             // Serializer.ChartData.AudioData = audioData;
-   //             ChartConverter.editorChart.AudioFrecuency = loadedClip.frequency;
-   //             ChartConverter.editorChart.AudioChannels = loadedClip.channels;
-			//}
-
-			//if(isEdit) {
-			//	ChartConverter.editorChart.Name = editNameField.text;
-			//	ChartConverter.editorChart.Author = editAuthorField.text;
-			//	ChartConverter.editorChart.AudioName = editTrackField.text;
-   //             ChartConverter.editorChart.Beatmapper = editMapperField.text;
-			//}
-			// Complete editor process
-			// Serializer.SerializeToFile();			
-			Miku_LoaderHelper.LauchPreloader();
+             //Serializer.SerializeToFile();
+            Miku_LoaderHelper.LauchPreloader();
 		}
 	}
 

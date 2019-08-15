@@ -308,14 +308,14 @@ namespace MiKu.NET {
             notesByID[note.noteId] = wrapper;
             notesByTime[note.TimePoint] = wrapper;
 
-            InstantiateNoteObject(wrapper);
+            
 
 
             if(silent)
                 return;
 
+            InstantiateNoteObject(wrapper);
             RecalcDuration();
-
             RailHelper.ReinstantiateRail(this);
         }
 

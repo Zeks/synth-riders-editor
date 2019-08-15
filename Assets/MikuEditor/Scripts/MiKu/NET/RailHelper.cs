@@ -457,7 +457,7 @@ namespace MiKu.NET {
             Rail newRail = new Rail();
             newRail.noteType = note.HandType;
             note.UsageType = EditorNote.NoteUsageType.Breaker;
-            newRail.AddNote(note);
+            newRail.AddNote(note, true);
 
             for(int i = 0; i < segments.GetLength(0); i++) {
                 EditorNote railNote = null;
@@ -672,7 +672,8 @@ namespace MiKu.NET {
         }
         public static List<float> CollectRailStartTimes() {
             List<float> times = new List<float>();
-            foreach(Rail rail in Track.s_instance.GetCurrentRailListByDifficulty()) {
+            List<Rail> rails = Track.s_instance.GetCurrentRailListByDifficulty();
+            foreach(Rail rail in rails) {
                 times.Add(rail.startTime);
             }
             return times;

@@ -51,7 +51,7 @@ namespace MiKu.NET {
         SpriteRenderer boundBoxSpriteRenderer;
 
         public LayerMask targetMask = 11;
-        private bool isCTRLDown;
+        private bool isAltDown;
 
         Vector3 finalPosition, mirroredPosition;
         GameObject[] multipleNotes;
@@ -124,20 +124,20 @@ namespace MiKu.NET {
 
         void OnApplicationFocus(bool hasFocus) {
             if(hasFocus) {
-                isCTRLDown = false;
+                isAltDown = false;
             }
         }
 
         void Update() {
             if(Input.GetKeyDown(KeyCode.LeftAlt) || Input.GetKeyDown(KeyCode.RightAlt)) {
-                isCTRLDown = true;
+                isAltDown = true;
             }
 
             if(Input.GetKeyUp(KeyCode.LeftAlt) || Input.GetKeyUp(KeyCode.RightAlt)) {
-                isCTRLDown = false;
+                isAltDown = false;
             }
 
-            if(!isCTRLDown && Input.GetMouseButtonDown(0) && selectedNote != null) {
+            if(Input.GetMouseButtonDown(0) && selectedNote != null) {
                 Trace.WriteLine("======================================NOTE AREA CLICK===================================================");
                 if(Track.IsOnMirrorMode) {
                     System.Array.Clear(multipleNotes, 0, 2);

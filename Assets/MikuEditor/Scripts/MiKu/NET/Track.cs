@@ -1329,8 +1329,9 @@ namespace MiKu.NET {
                     // jump to next note time
                     float time = Track.FindNextTime(CurrentTime, s_instance.selectedUsageType == EditorNote.NoteUsageType.Ball ? false : true);
                     if(time != -1) {
-                        MoveCamera(true, MStoUnit(time));
+                        float moveTarget = MStoUnit(time);
                         CurrentTime = time;
+                        MoveCamera(true, moveTarget);
                         DrawTrackXSLines();
 
                     }
@@ -1347,8 +1348,9 @@ namespace MiKu.NET {
                     // jump to previous note time
                     float time = Track.FindPreviousTime(CurrentTime, s_instance.selectedUsageType == EditorNote.NoteUsageType.Ball ? false : true);
                     if(time != -1) {
-                        MoveCamera(true, MStoUnit(time));
+                        float moveTarget = MStoUnit(time);
                         CurrentTime = time;
+                        MoveCamera(true, moveTarget);
                         DrawTrackXSLines();
                     }
                 }
@@ -1422,7 +1424,7 @@ namespace MiKu.NET {
                                 // need to differentiate between had and tail breakers here
                                 // also it looks like the next rail can be picked as wrong color
                                 bool mergeHappened = false;
-                                if(railNote.railId == rail.leader.thisNote.noteId) {
+                                if(railNote.noteId == rail.leader.thisNote.noteId) {
                                     // flipping the leader note
                                     Rail previousRail = RailHelper.GetPreviousRail(rail.railId, rail.startTime, s_instance.selectedNoteType, s_instance.selectedUsageType);
 
@@ -1743,7 +1745,8 @@ namespace MiKu.NET {
                 // reading the currently available data from converter into the Track
                 // the result needs to be assigned to Track later
                 ChartConverter converter = new ChartConverter();
-                converter.ConvertGameChartToEditorChart(Serializer.ChartData);
+                if(Serializer.ChartData != null)
+                    converter.ConvertGameChartToEditorChart(Serializer.ChartData);
 
                 CurrentChart = ChartConverter.editorChart;
                 BPM = CurrentChart.BPM;
@@ -5408,6 +5411,25 @@ namespace MiKu.NET {
                     }
                 }
 
+                if(s_instance.isALTDown) {
+                    Rail rail = RailHelper.ClosestRailButNotAtThisPoint(CurrentTime, new Vector2(noteFromNoteArea.transform.position.x, noteFromNoteArea.transform.position.y));
+                    if(rail != null) {
+                        EditorNote note = rail.GetNoteAtPosition(CurrentTime);
+                        float xDiff = Math.Abs(noteFromNoteArea.transform.position.x - note.Position[0]);
+                        float yDiff = Math.Abs(noteFromNoteArea.transform.position.y - note.Position[1]);
+                        if(noteFromNoteArea.transform.position.x < note.Position[0])
+                            xDiff*=-1;
+                        if(noteFromNoteArea.transform.position.y < note.Position[1])
+                            yDiff*=-1;
+
+                        rail.ShiftEveryNoteBy(new Vector2(xDiff, yDiff));
+                        RailHelper.ReinstantiateRail(rail);
+                        RailHelper.ReinstantiateRailSegmentObjects(rail);
+                        return;
+                    }
+                }
+
+
                 if(!RailHelper.CanPlaceSelectedRailTypeHere(CurrentTime, new Vector2(noteFromNoteArea.transform.position.x, noteFromNoteArea.transform.position.y), s_instance.selectedNoteType)) {
                     // display a warning and exit
                     Miku_DialogManager.ShowDialog(Miku_DialogManager.DialogType.Alert, StringVault.Alert_CantPlaceRail);
@@ -5643,7 +5665,7 @@ namespace MiKu.NET {
                                         // need to differentiate between had and tail breakers here
                                         // also it looks like the next rail can be picked as wrong color
                                         bool mergeHappened = false;
-                                        if(railNote.railId == matchedRail.leader.thisNote.noteId) {
+                                        if(railNote.noteId == matchedRail.leader.thisNote.noteId) {
                                             // flipping the leader note
                                             Rail previousRail = RailHelper.GetPreviousRail(matchedRail.railId, matchedRail.startTime, s_instance.selectedNoteType, s_instance.selectedUsageType);
 
@@ -6917,6 +6939,26 @@ namespace MiKu.NET {
                     GameObject.DestroyImmediate(lightGO);
                 }
             }
+            // need to diagnose rails state here
+            List<Rail> expertRails = CurrentChart.Rails.Expert;
+            List<Rail> customRails = CurrentChart.Rails.Custom;
+            expertRails.Sort((rail1, rail2) => rail1.startTime.CompareTo(rail2.startTime));
+            customRails.Sort((rail1, rail2) => rail1.startTime.CompareTo(rail2.startTime));
+            Trace.WriteLine("Expert rails");
+            foreach(Rail rail in expertRails) {
+                Trace.WriteLine("Rail id:" + rail.railId + " starts at: " + rail.startTime + " ends at: " + rail.endTime);
+                foreach(RailNoteWrapper note in rail.notesByTime.Values) {
+                    Trace.WriteLine("Rail segment point is located at:" + note.thisNote.Position[2] + " note type is: " + note.thisNote.UsageType);
+                }
+            }
+            Trace.WriteLine("Custom rails");
+            foreach(Rail rail in customRails) {
+                Trace.WriteLine("Rail id:" + rail.railId + " starts at: " + rail.startTime + " ends at: " + rail.endTime);
+                foreach(RailNoteWrapper note in rail.notesByTime.Values) {
+                    Trace.WriteLine("Rail segment point is located at:" + note.thisNote.Position[2] + " note type is: " + note.thisNote.UsageType);
+                }
+            }
+
 
             List<Rail> rails = GetCurrentRailListByDifficulty();
             if(rails != null && rails.Count > 0) {
