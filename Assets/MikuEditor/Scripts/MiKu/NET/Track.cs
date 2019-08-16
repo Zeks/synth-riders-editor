@@ -932,6 +932,7 @@ namespace MiKu.NET {
             } else {
                 foreach(Rail rail in rails) {
                     setOfTImes.Add(rail.startTime);
+                    setOfTImes.Add(rail.endTime);
                 }
             }
 
@@ -955,7 +956,7 @@ namespace MiKu.NET {
             if(!forRailsOnly)
                 times = CollectOccupiedTimes().ToList();
             else
-                times = RailHelper.CollectRailStartTimes();
+                times = RailHelper.CollectRailEdgeTimes();
 
             if(times == null)
                 return time;
@@ -973,7 +974,7 @@ namespace MiKu.NET {
             if(!forRailsOnly)
                 times = CollectOccupiedTimes().ToList();
             else
-                times = RailHelper.CollectRailStartTimes();
+                times = RailHelper.CollectRailEdgeTimes();
             if(times == null)
                 return time;
 
@@ -5282,7 +5283,10 @@ namespace MiKu.NET {
                 return true;
             return false;
         }
-        public static bool HasRailInterruptionsBetween(int railId, int secondRailId, float startTime, float endTime, EditorNote.NoteHandType handType) {
+        public static bool HasRailInterruptionsBetween(int railId, int secondRailId, 
+            float startTime, float endTime, 
+            EditorNote.NoteHandType handType, RailHelper.RailExtensionPolicy extensionPolicy = RailHelper.RailExtensionPolicy.NoInterruptions) {
+
             Dictionary<float, List<EditorNote>> notes = s_instance.GetCurrentTrackDifficulty();
             List<float> keys = notes.Keys.ToList();
             List<float> filteredNoteTimes = keys.Where((time) => time > startTime && time < endTime).ToList();
@@ -5294,6 +5298,8 @@ namespace MiKu.NET {
                 List<EditorNote> notesAtTIme = notes[time];
                 foreach(EditorNote note in notesAtTIme) {
                     if(IsOppositeNoteType(note.HandType, handType))
+                        continue;
+                    else if(note.HandType ==  handType && extensionPolicy == RailHelper.RailExtensionPolicy.AllowNotesOfSameColor)
                         continue;
                     else {
                         hasInterruptions = true;
@@ -5645,7 +5651,8 @@ namespace MiKu.NET {
                                 }
                             } else if(railNote.noteId == matchedRail.leader.thisNote.noteId) {
                                 // we check if there's a rail to the left we can expand with this position
-                                Rail rail = RailHelper.AttemptExtendTail(CurrentTime, noteFromNoteArea.transform.position, rails);
+                                Rail rail = RailHelper.AttemptExtendTail(CurrentTime, noteFromNoteArea.transform.position, rails, 
+                                    s_instance.isALTDown ? RailHelper.RailExtensionPolicy.AllowNotesOfSameColor : RailHelper.RailExtensionPolicy.NoInterruptions);
                                 if(rail != null) {
                                     RailNoteWrapper lastNote = rail.GetLastNote();
                                     if(lastNote != null) {
@@ -5734,6 +5741,13 @@ namespace MiKu.NET {
                                 if(s_instance.selectedUsageType == railNote.UsageType) {
                                     if(!Track.s_instance.isSHIFTDown) {
                                         matchedRail.RemoveNote(railNote.noteId);
+                                        if(matchedRail.scheduleForDeletion) { 
+                                            Trace.WriteLine("Deleting the rail: " + matchedRail.railId);
+                                            List<Rail> tempRailList = s_instance.GetCurrentRailListByDifficulty();
+                                            tempRailList.Remove(matchedRail);
+                                            matchedRail.DestroyLeader();
+                                            s_instance.DecreaseTotalDisplayedNotesCount();
+                                        }
                                     } else {
                                         // if shift is clicked we're deleting whole rail instead
                                         s_instance.DecreaseTotalDisplayedNotesCount();
@@ -5883,10 +5897,12 @@ namespace MiKu.NET {
 
                     if(!addedToExistingRail) {
                         Trace.WriteLine("Attempting to find a rail that can be extended with this note");
-                        Rail extensionResult = RailHelper.AttemptExtendTail(CurrentTime, noteFromNoteArea.transform.position, rails);
+                        Rail extensionResult = RailHelper.AttemptExtendTail(CurrentTime, noteFromNoteArea.transform.position, rails,
+                            s_instance.isALTDown ? RailHelper.RailExtensionPolicy.AllowNotesOfSameColor : RailHelper.RailExtensionPolicy.NoInterruptions);
                         if(extensionResult != null)
                             return;
-                        extensionResult = RailHelper.AttemptExtendHead(CurrentTime, noteFromNoteArea.transform.position, rails);
+                        extensionResult = RailHelper.AttemptExtendHead(CurrentTime, noteFromNoteArea.transform.position, rails,
+                            s_instance.isALTDown ? RailHelper.RailExtensionPolicy.AllowNotesOfSameColor : RailHelper.RailExtensionPolicy.NoInterruptions);
                         if(extensionResult != null)
                             return;
                     }

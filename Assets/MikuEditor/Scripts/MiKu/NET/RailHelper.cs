@@ -185,8 +185,15 @@ namespace MiKu.NET {
             return rail;
         }
 
+
+        public enum RailExtensionPolicy {
+            NoInterruptions = 0,
+            AllowNotesOfSameColor = 1,
+            AllowNotesOfAnyColor = 2
+        }
+
         // attempts to find and extend some rail's head and returns the extended rail or null
-        public static Rail AttemptExtendHead(float time, Vector3 position, List<Rail> rails) {
+        public static Rail AttemptExtendHead(float time, Vector3 position, List<Rail> rails, RailExtensionPolicy extensionPolicy = RailExtensionPolicy.NoInterruptions) {
 
             Trace.WriteLine("Attempting to find a rail's head that can be extended with this note");
             // first we need to find the closest rail that has unbroken head to the right of current time
@@ -209,7 +216,7 @@ namespace MiKu.NET {
             }
 
             // now we need to check for hindrances to extension
-            bool hasHindrances = Track.HasRailInterruptionsBetween(foundRail.railId, foundRail.railId, time, foundRail.startTime, foundRail.noteType);
+            bool hasHindrances = Track.HasRailInterruptionsBetween(foundRail.railId, foundRail.railId, time, foundRail.startTime, foundRail.noteType, extensionPolicy);
             if(hasHindrances) {
                 Trace.WriteLine("Potential candidate has something between it and the extension time.");
                 return null;
@@ -255,7 +262,7 @@ namespace MiKu.NET {
 
 
         // attempts to find and extend some rail's head and returns the extended rail or null
-        public static Rail AttemptExtendTail(float time, Vector3 position, List<Rail> rails) {
+        public static Rail AttemptExtendTail(float time, Vector3 position, List<Rail> rails, RailExtensionPolicy extensionPolicy = RailExtensionPolicy.NoInterruptions) {
 
             Trace.WriteLine("Attempting to find a rail's tail that can be extended with this note");
             // first we need to find the closest rail that has unbroken head to the right of current time
@@ -278,7 +285,7 @@ namespace MiKu.NET {
             }
 
             // now we need to check for hindrances to extension
-            bool hasHindrances = Track.HasRailInterruptionsBetween(foundRail.railId, foundRail.railId, foundRail.endTime, time, foundRail.noteType);
+            bool hasHindrances = Track.HasRailInterruptionsBetween(foundRail.railId, foundRail.railId, foundRail.endTime, time, foundRail.noteType, extensionPolicy);
             if(hasHindrances) {
                 Trace.WriteLine("Potential candidate has something between it and the extension time.");
                 return null;
@@ -492,6 +499,8 @@ namespace MiKu.NET {
 
             newRail.notesByTime.First().Value.thisNote.UsageType = EditorNote.NoteUsageType.Breaker;
             newRail.notesByTime.Last().Value.thisNote.UsageType = EditorNote.NoteUsageType.Breaker;
+            if(newRail.leader != newRail.GetLastNote())
+                newRail.breakerTail = newRail.GetLastNote();
 
             return newRail;
         }
@@ -614,6 +623,8 @@ namespace MiKu.NET {
 
         public static Rail ClosestRailButNotAtThisPoint(float time, Vector2 point) {
             List<Rail> railsAtCurrentTime = RailHelper.GetListOfRailsInRange(Track.s_instance.GetCurrentRailListByDifficulty(), time, time, RailHelper.RailRangeBehaviour.Allow);
+            if(railsAtCurrentTime == null)
+                return null;
 
             List<Rail> railsWithJunctionsAtThisTime = new List<Rail>();
             foreach(Rail rail in railsAtCurrentTime) {
@@ -625,8 +636,12 @@ namespace MiKu.NET {
             foreach(Rail rail in railsWithJunctionsAtThisTime) {
                 EditorNote note = rail.GetNoteAtPosition(time);
                 float distance = Vector2.Distance(point, new Vector2(note.Position[0], note.Position[1]));
-                if(distance != 0)
-                    dictOfDistances.Add(Vector2.Distance(point, new Vector2(note.Position[0], note.Position[1])), rail);
+                if(distance !=0) { 
+                    if(dictOfDistances == null)
+                        dictOfDistances.Add(Vector2.Distance(point, new Vector2(note.Position[0], note.Position[1])), rail);
+                    else
+                        dictOfDistances[distance] = rail;
+                }
             }
 
             List<float> distances = dictOfDistances.Keys.ToList();
@@ -670,12 +685,13 @@ namespace MiKu.NET {
                 }
             }
         }
-        public static List<float> CollectRailStartTimes() {
+        public static List<float> CollectRailEdgeTimes() {
             List<float> times = new List<float>();
             List<Rail> rails = Track.s_instance.GetCurrentRailListByDifficulty();
             rails.Sort((rail1, rail2) => rail1.startTime.CompareTo(rail2.startTime));
             foreach(Rail rail in rails) {
                 times.Add(rail.startTime);
+                times.Add(rail.endTime);
             }
             return times;
         }
