@@ -330,10 +330,16 @@ namespace MiKu.NET {
         private GameObject m_LefthandNoteMarker;
 
         [SerializeField]
+        private GameObject m_LefthandLineNoteMarker;
+
+        [SerializeField]
         private GameObject m_LefthandNoteMarkerSegment;
 
         [SerializeField]
         private GameObject m_RighthandNoteMarker;
+
+        [SerializeField]
+        private GameObject m_RighthandLineNoteMarker;
 
         [SerializeField]
         private GameObject m_RighthandNoteMarkerSegment;
@@ -342,10 +348,16 @@ namespace MiKu.NET {
         private GameObject m_SpecialOneHandNoteMarker;
 
         [SerializeField]
+        private GameObject m_SpecialOneHandLineNoteMarker;
+
+        [SerializeField]
         private GameObject m_Special1NoteMarkerSegment;
 
         [SerializeField]
         private GameObject m_SpecialBothHandsNoteMarker;
+
+        [SerializeField]
+        private GameObject m_SpecialBothHandsLineNoteMarker;
 
         [SerializeField]
         private GameObject m_Special2NoteMarkerSegment;
@@ -5057,7 +5069,7 @@ namespace MiKu.NET {
         /// </summary>
         /// <returns>Returns <typeparamref name="GameObject"/></returns>
         public static GameObject GetSelectedNoteMarker() {
-            return GameObject.Instantiate(s_instance.GetNoteMarkerByType(s_instance.selectedNoteType), Vector3.zero, Quaternion.identity);
+            return GameObject.Instantiate(s_instance.GetNoteMarkerByType(s_instance.selectedNoteType, s_instance.selectedUsageType), Vector3.zero, Quaternion.identity);
         }
 
         /// <summary>
@@ -6481,7 +6493,7 @@ namespace MiKu.NET {
         /// <returns>Returns <typeparamref name="GameObject"/></returns>
         public GameObject GetNoteMarkerByType(EditorNote.NoteHandType noteType = EditorNote.NoteHandType.LeftHanded, EditorNote.NoteUsageType usageType = EditorNote.NoteUsageType.Ball, bool isSegment = false) {
             GameObject result = m_LefthandNoteMarker;
-            if(usageType == EditorNote.NoteUsageType.Ball || usageType == EditorNote.NoteUsageType.Line) {
+            if(usageType == EditorNote.NoteUsageType.Ball) {
                 switch(noteType) {
                     case EditorNote.NoteHandType.LeftHanded:
                         result = isSegment ? m_LefthandNoteMarkerSegment : m_LefthandNoteMarker;
@@ -6494,6 +6506,21 @@ namespace MiKu.NET {
                         break;
                     case EditorNote.NoteHandType.BothHandsSpecial:
                         result = isSegment ? m_Special2NoteMarkerSegment : m_SpecialBothHandsNoteMarker;
+                        break;
+                }
+            } else if(usageType == EditorNote.NoteUsageType.Line) {
+                switch(noteType) {
+                    case EditorNote.NoteHandType.LeftHanded:
+                        result = m_LefthandLineNoteMarker;
+                        break;
+                    case EditorNote.NoteHandType.RightHanded:
+                        result = m_RighthandLineNoteMarker;
+                        break;
+                    case EditorNote.NoteHandType.OneHandSpecial:
+                        result = m_SpecialOneHandLineNoteMarker;
+                        break;
+                    case EditorNote.NoteHandType.BothHandsSpecial:
+                        result = m_SpecialBothHandsLineNoteMarker;
                         break;
                 }
             } else {

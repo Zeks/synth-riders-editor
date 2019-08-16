@@ -4658,7 +4658,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 0.000030517578, y: -557.2656}
+  m_AnchoredPosition: {x: 0.000030517578, y: -557.2657}
   m_SizeDelta: {x: 0, y: 1099.08}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &195132920
@@ -6360,8 +6360,8 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 248361475}
   m_HandleRect: {fileID: 248361474}
   m_Direction: 2
-  m_Value: 0
-  m_Size: 1
+  m_Value: 1
+  m_Size: 0.94053763
   m_NumberOfSteps: 0
   m_OnValueChanged:
     m_PersistentCalls:
@@ -33149,7 +33149,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 0, y: 0.000020403566}
+  m_AnchoredPosition: {x: 0, y: 0.00003377655}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0, y: 1}
 --- !u!114 &1161121330
@@ -52826,17 +52826,25 @@ MonoBehaviour:
     type: 3}
   m_LefthandNoteMarker: {fileID: 1068469912921696, guid: ba06c5fc32992e04da6886643552c029,
     type: 3}
+  m_LefthandLineNoteMarker: {fileID: 5200650390246959911, guid: 4f1e769ea5704b341985258e59abc0fe,
+    type: 3}
   m_LefthandNoteMarkerSegment: {fileID: 1605805657123922, guid: c028f2f5089c44d4cae8b31a37f3391a,
     type: 3}
   m_RighthandNoteMarker: {fileID: 1125898234649252, guid: 4394c6138303b8046a19dc6207137464,
+    type: 3}
+  m_RighthandLineNoteMarker: {fileID: 5200650390246959911, guid: a792333a99f5eb84ab8426fdcfb71c33,
     type: 3}
   m_RighthandNoteMarkerSegment: {fileID: 1665454932422552, guid: 72e0045a9f1a06747a9a3e5aa1fa65cc,
     type: 3}
   m_SpecialOneHandNoteMarker: {fileID: 1751803389937402, guid: 2c04a36f4a768436885470ce36a771ae,
     type: 3}
+  m_SpecialOneHandLineNoteMarker: {fileID: 5200650390246959911, guid: 5fb4053fb0d33d74a8972096343ba674,
+    type: 3}
   m_Special1NoteMarkerSegment: {fileID: 1686732446441292, guid: c70b57f2dafca3c4696d354512daa14a,
     type: 3}
   m_SpecialBothHandsNoteMarker: {fileID: 1980406998636066, guid: 3baf64a27379e3e4f9661d87f90f0966,
+    type: 3}
+  m_SpecialBothHandsLineNoteMarker: {fileID: 5200650390246959911, guid: 0cdbe36e0d673c24dba10088ae0d0bf2,
     type: 3}
   m_Special2NoteMarkerSegment: {fileID: 1763640875280510, guid: e310ac07da2b09e4f96fa30c37338878,
     type: 3}

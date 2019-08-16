@@ -673,6 +673,7 @@ namespace MiKu.NET {
         public static List<float> CollectRailStartTimes() {
             List<float> times = new List<float>();
             List<Rail> rails = Track.s_instance.GetCurrentRailListByDifficulty();
+            rails.Sort((rail1, rail2) => rail1.startTime.CompareTo(rail2.startTime));
             foreach(Rail rail in rails) {
                 times.Add(rail.startTime);
             }
