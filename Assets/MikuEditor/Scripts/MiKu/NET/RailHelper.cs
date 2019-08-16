@@ -13,7 +13,10 @@ namespace MiKu.NET {
             Skip = 0,
             Allow = 1,
         }
-
+        public enum RailFetchBehaviour {
+            All = 0,
+            HasPointsAtCurrentTime = 1
+        }
 
         public static void Print2DArray<T>(T[,] matrix) {
             for(int i = 0; i < matrix.GetLength(0); i++) {
@@ -574,22 +577,31 @@ namespace MiKu.NET {
             return copies;
         }
 
-        public static List<Rail> GetListOfRailsInRange(List<Rail> rails, float rangeStart, float rangeEnd, RailRangeBehaviour fetchType) {
+        public static List<Rail> GetListOfRailsInRange(List<Rail> rails, float rangeStart, float rangeEnd, RailRangeBehaviour rangeFetchType, RailFetchBehaviour pointFetchType = RailFetchBehaviour.All) {
             List<Rail> fetchedRails = new List<Rail>();
+            bool pointFetch = rangeStart == rangeEnd;
             foreach(Rail rail in rails) {
                 if(rail.startTime >= rangeStart && rail.endTime <= rangeEnd) {
+                    if(pointFetch && pointFetchType == RailFetchBehaviour.HasPointsAtCurrentTime && !rail.HasNoteAtTime(rangeStart))
+                        continue;
                     fetchedRails.Add(rail);
                     continue;
                 }
-                if(rail.startTime >= rangeStart && rail.startTime <= rangeEnd && rail.endTime > rangeEnd && fetchType == RailRangeBehaviour.Allow) {
+                if(rail.startTime >= rangeStart && rail.startTime <= rangeEnd && rail.endTime > rangeEnd && rangeFetchType == RailRangeBehaviour.Allow) {
+                    if(pointFetch && pointFetchType == RailFetchBehaviour.HasPointsAtCurrentTime && !rail.HasNoteAtTime(rangeStart))
+                        continue;
                     fetchedRails.Add(rail);
                     continue;
                 }
-                if(rail.startTime < rangeStart && rail.endTime >= rangeStart && rail.endTime <= rangeEnd && fetchType == RailRangeBehaviour.Allow) {
+                if(rail.startTime < rangeStart && rail.endTime >= rangeStart && rail.endTime <= rangeEnd && rangeFetchType == RailRangeBehaviour.Allow) {
+                    if(pointFetch && pointFetchType == RailFetchBehaviour.HasPointsAtCurrentTime && !rail.HasNoteAtTime(rangeStart))
+                        continue;
                     fetchedRails.Add(rail);
                     continue;
                 }
-                if(rail.startTime < rangeStart && rail.endTime >= rangeEnd && fetchType == RailRangeBehaviour.Allow) {
+                if(rail.startTime < rangeStart && rail.endTime >= rangeEnd && rangeFetchType == RailRangeBehaviour.Allow) {
+                    if(pointFetch && pointFetchType == RailFetchBehaviour.HasPointsAtCurrentTime && !rail.HasNoteAtTime(rangeStart))
+                        continue;
                     fetchedRails.Add(rail);
                     continue;
                 }
@@ -718,22 +730,28 @@ namespace MiKu.NET {
             // detect a rail at the current time
             // check that it has an edge note here
             // flip its breaker state
-            List<Rail> railsAtCurrentTIme = RailHelper.GetListOfRailsInRange(rails, time, time, RailHelper.RailRangeBehaviour.Allow);
-            if(railsAtCurrentTIme != null) {
-                foreach(Rail rail in railsAtCurrentTIme) {
+            List<Rail> railsAtCurrentTime = RailHelper.GetListOfRailsInRange(rails, time, time, RailHelper.RailRangeBehaviour.Allow, RailHelper.RailFetchBehaviour.HasPointsAtCurrentTime);
+
+            if(railsAtCurrentTime != null) {
+                
+                
+                foreach(Rail rail in railsAtCurrentTime) {
                     // skipping different colored rails
                     bool allowedOppositeColor = isOnMirrorMode && Track.IsOppositeNoteType(rail.noteType, noteType);
-                    if(rail.noteType != noteType && !allowedOppositeColor)
+                    if(railsAtCurrentTime.Count > 1 && rail.noteType != noteType && !allowedOppositeColor)
                         continue;
-
 
                     EditorNote.NoteHandType adjustedNoteType = noteType;
                     if(allowedOppositeColor)
                         adjustedNoteType = Track.GetOppositeColor(noteType);
+                    if(railsAtCurrentTime.Count == 1) {
+                        adjustedNoteType = rail.noteType;
+                    }
 
                     EditorNote railNote = rail.GetNoteAtPosition(time);
                     if(railNote == null)
                         continue;
+
                     // if the rail doesn't end there we just break it
                     if(railNote.noteId != rail.leader.thisNote.noteId && railNote.noteId != rail.GetLastNote().thisNote.noteId) {
                         rail.FlipNoteTypeToBreaker(railNote.noteId);
