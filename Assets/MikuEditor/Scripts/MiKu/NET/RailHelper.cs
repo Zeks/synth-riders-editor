@@ -634,18 +634,23 @@ namespace MiKu.NET {
                     railsWithJunctionsAtThisTime.Add(rail);
             }
 
+            bool foundRailAtExactPoint = false;
+
             Dictionary<float, Rail> dictOfDistances = new Dictionary<float, Rail>();
             foreach(Rail rail in railsWithJunctionsAtThisTime) {
                 EditorNote note = rail.GetNoteAtPosition(time);
                 float distance = Vector2.Distance(point, new Vector2(note.Position[0], note.Position[1]));
-                if(distance !=0) { 
+                if(distance > 0.05) {
                     if(dictOfDistances == null)
                         dictOfDistances.Add(Vector2.Distance(point, new Vector2(note.Position[0], note.Position[1])), rail);
                     else
                         dictOfDistances[distance] = rail;
+                } else {
+                    foundRailAtExactPoint = true;
                 }
             }
-
+            if(foundRailAtExactPoint)
+                return null;
             List<float> distances = dictOfDistances.Keys.ToList();
             distances.Sort();
             if(distances.Count == 0)
@@ -704,7 +709,7 @@ namespace MiKu.NET {
             foreach(Rail rail in rails) {
                 Trace.WriteLine("Rail id:" + rail.railId + " starts at: " + rail.startTime + " ends at: " + rail.endTime);
                 foreach(RailNoteWrapper note in rail.notesByTime.Values) {
-                    Trace.WriteLine("Rail segment point is located at:" + note.thisNote.Position[2] + " note type is: " + note.thisNote.UsageType);
+                    Trace.WriteLine("Rail segment point is located at:" + " x:" + note.thisNote.Position[0] + " y:" + note.thisNote.Position[1] + " z:" + note.thisNote.Position[2]+ " note type is: " + note.thisNote.UsageType);
                 }
             }
         }

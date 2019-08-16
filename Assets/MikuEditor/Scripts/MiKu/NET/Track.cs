@@ -5554,18 +5554,11 @@ namespace MiKu.NET {
                                     s_instance.DecreaseTotalDisplayedNotesCount();
                                     return;
                                 } else {
-                                    if(!Track.s_instance.isSHIFTDown) {
-                                        Trace.WriteLine("Deleting sole note on the rail: " + matchedRail.railId);
-                                        // otherwise we only really need to remove a single note
-                                        EditorNote noteToRemove = matchedRail.GetNoteAtPosition(CurrentTime);
-                                        matchedRail.RemoveNote(noteToRemove.noteId);
-                                        return;
-                                    } else {
-                                        Trace.WriteLine("Deleting whole rail" + matchedRail.railId);
-                                        RailHelper.DestroyRail(matchedRail);
-                                        s_instance.DecreaseTotalDisplayedNotesCount();
-                                        return;
-                                    }
+                                    Trace.WriteLine("Deleting sole note on the rail: " + matchedRail.railId);
+                                    // otherwise we only really need to remove a single note
+                                    EditorNote noteToRemove = matchedRail.GetNoteAtPosition(CurrentTime);
+                                    matchedRail.RemoveNote(noteToRemove.noteId);
+                                    return;
                                 }
                             } else if(railNote.noteId == matchedRail.leader.thisNote.noteId) {
                                 // we check if there's a rail to the left we can expand with this position
@@ -5656,99 +5649,21 @@ namespace MiKu.NET {
                                 matchedRail.MoveNoteAtTimeToPosition(CurrentTime, noteFromNoteArea.transform.position.x, noteFromNoteArea.transform.position.y);
                             } else {
                                 // we've clicked on the current note. this means we either want to delete it or change its subtype
-                                if(s_instance.selectedUsageType == railNote.UsageType) {
-                                    if(!Track.s_instance.isSHIFTDown) {
-                                        matchedRail.RemoveNote(railNote.noteId);
-                                        if(matchedRail.scheduleForDeletion) { 
-                                            Trace.WriteLine("Deleting the rail: " + matchedRail.railId);
-                                            List<Rail> tempRailList = s_instance.GetCurrentRailListByDifficulty();
-                                            tempRailList.Remove(matchedRail);
-                                            matchedRail.DestroyLeader();
-                                            s_instance.DecreaseTotalDisplayedNotesCount();
-                                        }
-                                    } else {
-                                        // if shift is clicked we're deleting whole rail instead
+                                if(!Track.s_instance.isSHIFTDown) {
+                                    matchedRail.RemoveNote(railNote.noteId);
+                                    if(matchedRail.scheduleForDeletion) { 
+                                        Trace.WriteLine("Deleting the rail: " + matchedRail.railId);
+                                        List<Rail> tempRailList = s_instance.GetCurrentRailListByDifficulty();
+                                        tempRailList.Remove(matchedRail);
+                                        matchedRail.DestroyLeader();
                                         s_instance.DecreaseTotalDisplayedNotesCount();
-                                        RailHelper.DestroyRail(matchedRail);
                                     }
-                                    return;
                                 } else {
-                                    // we're in type change branch
-
-                                    // removing a breaker
-                                    bool wasBreaker = railNote.UsageType == EditorNote.NoteUsageType.Breaker;
-                                    bool wasSimpleLine = railNote.UsageType == EditorNote.NoteUsageType.Line;
-                                    if(wasSimpleLine) {
-                                        // we're adding a new breaker. need to split the rail
-                                        bool createdNewRail = matchedRail.FlipNoteTypeToBreaker(railNote.noteId);
-                                        if(createdNewRail)
-                                            s_instance.IncreaseTotalDisplayedNotesCount();
-                                        return;
-                                    }
-                                    // only extend if the rauil would be able to be instantiated then
-                                    if(wasBreaker) {
-                                        // we're removing a breaker. need to check if there's a rail next to this one that we can attach to
-                                        // for that we check if there are NO notes of any type other than the opposite hand until the next rail
-                                        float railEndTime = matchedRail.endTime;
-
-                                        //todo
-                                        // need to differentiate between had and tail breakers here
-                                        // also it looks like the next rail can be picked as wrong color
-                                        bool mergeHappened = false;
-                                        if(railNote.noteId == matchedRail.leader.thisNote.noteId) {
-                                            // flipping the leader note
-                                            Rail previousRail = RailHelper.GetPreviousRail(matchedRail.railId, matchedRail.startTime, s_instance.selectedNoteType, s_instance.selectedUsageType);
-
-
-                                            // need to make sure that merged rail doesn't exceed duration
-                                            if(previousRail != null) {
-                                                float railLengthAfterMerge = (previousRail.endTime - matchedRail.startTime) + matchedRail.duration + previousRail.duration;
-                                                if(railLengthAfterMerge <= Track.MAX_LINE_DURATION) {
-                                                    float previousRailEndTime = previousRail.endTime;
-                                                    // for railEndTime and nextRailStartTIme we check if there are ANY notes not of the opposite type
-                                                    if(!HasRailInterruptionsBetween(matchedRail.railId, previousRail.railId, previousRailEndTime, matchedRail.startTime, matchedRail.noteType)) {
-                                                        // no interrupting notes or rails, can link this rail and the next one
-                                                        previousRail.Merge(matchedRail);
-                                                        s_instance.DecreaseTotalDisplayedNotesCount();
-                                                        return;
-                                                    }
-                                                } else {
-                                                    // notify that we can't merge
-                                                    Miku_DialogManager.ShowDialog(Miku_DialogManager.DialogType.Alert, StringVault.Alert_MergedRailTooLong);
-                                                }
-                                            }
-                                        } else {
-                                            // flipping the tail note
-                                            Rail nextRail = RailHelper.GetNextRail(matchedRail.railId, railEndTime, s_instance.selectedNoteType, s_instance.selectedUsageType);
-                                            // need to make sure that merged rail doesn't exceed duration
-                                            if(nextRail != null) {
-                                                float railLengthAfterMerge = (nextRail.startTime - matchedRail.endTime) + matchedRail.duration + nextRail.duration;
-                                                if(railLengthAfterMerge <= Track.MAX_LINE_DURATION) {
-                                                    float nextRailStartTIme = nextRail.startTime;
-                                                    // for railEndTime and nextRailStartTIme we check if there are ANY notes not of the opposite type
-                                                    if(!HasRailInterruptionsBetween(matchedRail.railId, nextRail.railId, railEndTime, nextRailStartTIme, matchedRail.noteType)) {
-                                                        // no interrupting notes or rails, can link this rail and the next one
-                                                        matchedRail.Merge(nextRail);
-                                                        s_instance.DecreaseTotalDisplayedNotesCount();
-                                                        return;
-                                                    }
-                                                } else {
-                                                    // notify that we can't merge
-                                                    Miku_DialogManager.ShowDialog(Miku_DialogManager.DialogType.Alert, StringVault.Alert_MergedRailTooLong);
-                                                }
-                                            }
-
-                                        }
-                                        if(!mergeHappened) {
-                                            matchedRail.FlipNoteTypeToLineWithoutMerging(railNote.noteId);
-                                            return;
-                                        }
-                                    }
+                                    // if shift is clicked we're deleting whole rail instead
+                                    s_instance.DecreaseTotalDisplayedNotesCount();
+                                    RailHelper.DestroyRail(matchedRail);
                                 }
-                                railNote.UsageType = s_instance.selectedUsageType;
-                                // we've switched the note usage type, the result might be that a rail merge or break is necessary
-                                //public bool HasRailInterruptionsBetween(int railId, float startTime, float endTime, EditorNote.NoteHandType handType) {
-
+                                return;
                             }
 
                             if(matchedRail.scheduleForDeletion) {
