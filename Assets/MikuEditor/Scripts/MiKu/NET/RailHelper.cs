@@ -695,6 +695,18 @@ namespace MiKu.NET {
             }
             return times;
         }
+
+        public static void LogRails(List<Rail> rails, string operation) {
+            rails.Sort((rail1, rail2) => rail1.startTime.CompareTo(rail2.startTime));
+            Trace.WriteLine("Rails before " + operation);
+            foreach(Rail rail in rails) {
+                Trace.WriteLine("Rail id:" + rail.railId + " starts at: " + rail.startTime + " ends at: " + rail.endTime);
+                foreach(RailNoteWrapper note in rail.notesByTime.Values) {
+                    Trace.WriteLine("Rail segment point is located at:" + note.thisNote.Position[2] + " note type is: " + note.thisNote.UsageType);
+                }
+            }
+        }
+
     }
     
 }

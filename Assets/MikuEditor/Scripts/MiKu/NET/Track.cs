@@ -2426,6 +2426,10 @@ namespace MiKu.NET {
                     resizedNotes.Clear();
                     break;
                 case PromtType.BackToMenu:
+                    DeleteNotesGameObjects();
+                    ChartConverter converter = new ChartConverter();
+                    ChartConverter.editorChart = null;
+                    ChartConverter.gameChart = null;
                     Miku_LoaderHelper.LauchPreloader();
                     break;
                 case PromtType.CopyAllNotes:
@@ -2767,7 +2771,6 @@ namespace MiKu.NET {
                 CurrentClipBoard.lenght = CurrentSelection.endTime - CurrentSelection.startTime;
 
                 CurrentClipBoard.rails = RailHelper.GetCopyOfRailsInRange(rails, CurrentSelection.startTime, CurrentSelection.endTime, RailHelper.RailRangeBehaviour.Skip);
-
             } else {
                 RefreshCurrentTime();
 
@@ -2846,7 +2849,6 @@ namespace MiKu.NET {
             RailHelper.RemoveRailsWithinRange(s_instance.GetCurrentRailListByDifficulty(), CurrentTime, CurrentTime + CurrentClipBoard.lenght, RailHelper.RailRangeBehaviour.Allow);
             // this needs to CLONE all the rails in the clipboard before moving them
 
-
             List<Rail> newCLones = new List<Rail>();
             foreach(Rail rail in CurrentClipBoard.rails) {
                 Rail cloneOfAClone = RailHelper.CloneRail(rail, rail.startTime, rail.endTime, RailHelper.RailRangeBehaviour.Allow);
@@ -2858,7 +2860,6 @@ namespace MiKu.NET {
 
             List<Rail> rails = GetCurrentRailListByDifficulty();
             rails.AddRange(newCLones);
-
 
             List<float> note_keys = CurrentClipBoard.notes.Keys.ToList();
             if(note_keys.Count > 0) {

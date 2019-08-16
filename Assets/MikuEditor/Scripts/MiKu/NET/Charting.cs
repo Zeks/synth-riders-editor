@@ -47,7 +47,7 @@ namespace MiKu.NET.Charting {
             newNote.ComboId = this.ComboId;
             newNote.HandType = this.HandType;
             newNote.UsageType = this.UsageType;
-            newNote.Position = this.Position;
+            newNote.Position = this.Position.Clone() as float[];
             newNote.Direction = this.Direction;
             newNote.nullNote = this.nullNote;
             return newNote;
