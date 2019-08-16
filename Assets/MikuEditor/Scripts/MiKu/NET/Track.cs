@@ -5602,31 +5602,35 @@ namespace MiKu.NET {
                                 return;
                             } else {
                                 // middle will break and create a conjoined rail in the middle of an existing one
-                                EditorNote leaderOfConjoinedRail = new EditorNote(noteFromNoteArea.transform.position, Track.CurrentTime);
-                                leaderOfConjoinedRail.UsageType = s_instance.selectedUsageType;
-                                leaderOfConjoinedRail.HandType = s_instance.selectedNoteType;
+                                //EditorNote leaderOfConjoinedRail = new EditorNote(noteFromNoteArea.transform.position, Track.CurrentTime);
+                                //leaderOfConjoinedRail.UsageType = s_instance.selectedUsageType;
+                                //leaderOfConjoinedRail.HandType = s_instance.selectedNoteType;
                                 RailNoteWrapper nextNote = matchedRail.GetNoteAtThisOrFollowingTime(CurrentTime);
+                                if(nextNote.thisNote.TimePoint != CurrentTime) {
+                                    return;
+                                }
                                 if(nextNote == null) {
                                     Trace.WriteLine("Null next note detected, returning");
                                     return;
                                 }
-                                Rail nextRail = matchedRail.ConvertTheTailIntoNewRail(nextNote);
-                                nextRail.AddNote(leaderOfConjoinedRail);
-                                nextRail.FlipNoteTypeToBreaker(leaderOfConjoinedRail.noteId);
-
-                                if(matchedRail.GetNoteAtPosition(CurrentTime) != null) {
-                                    EditorNote middleNote = matchedRail.GetNoteAtPosition(CurrentTime);
-                                    matchedRail.FlipNoteTypeToBreaker(middleNote.noteId);
+                                RailHelper.LogRails(s_instance.GetCurrentRailListByDifficulty(), "Splitting rail being");
+                                Rail nextRail = null;
+                                if(nextNote.thisNote.TimePoint == CurrentTime) {
+                                    // we need to break the rail at the NEXT note
+                                    // then clone THIS one note and extend the newly created rail with it
+                                    nextRail = matchedRail.ConvertTheTailIntoNewRail(nextNote.nextNote);
+                                    nextNote.nextNote = null;
+                                    RailNoteWrapper addedNote =  nextRail.AddNote(nextNote.thisNote.Clone());
+                                    nextRail.FlipNoteTypeToBreaker(addedNote.thisNote.noteId);
+                                    matchedRail.FlipNoteTypeToBreaker(nextNote.thisNote.noteId);
                                 } else {
-                                    // need to create a new note here
-                                    EditorNote tailOfConjoinedRail = new EditorNote(Track.CurrentTime,
-                                        noteFromNoteArea.transform.position,
-                                          s_instance.selectedNoteType, s_instance.selectedUsageType);
-                                    matchedRail.AddNote(tailOfConjoinedRail);
-                                    matchedRail.FlipNoteTypeToBreaker(tailOfConjoinedRail.noteId);
+                                    nextRail = matchedRail.ConvertTheTailIntoNewRail(nextNote);
+                                    nextRail.FlipNoteTypeToBreaker(nextNote.thisNote.noteId);
                                 }
+
                                 matchedRail.RecalcDuration();
                                 RailHelper.ReinstantiateRail(matchedRail);
+                                RailHelper.LogRails(s_instance.GetCurrentRailListByDifficulty(), "Splitting rail end");
                                 s_instance.IncreaseTotalDisplayedNotesCount();
                             }
                         } else {

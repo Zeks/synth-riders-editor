@@ -202,6 +202,7 @@ namespace MiKu.NET {
 
             //if rail has changed the leader we need to adjust the sound effects list to reflect it
             if(leaderStorage != null && leaderStorage != leader) {
+                DestroyNoteObjectAndRemoveItFromTheRail(leaderStorage.thisNote.noteId);
                 List<float> times = Track.CollectOccupiedTimes(false).ToList();
                 if(!times.Contains(leaderStorage.thisNote.TimePoint)) {
                     Track.RemoveTimeFromSFXList(leaderStorage.thisNote.TimePoint);
@@ -281,7 +282,7 @@ namespace MiKu.NET {
             }
         }
 
-        public void AddNote(EditorNote note, bool silent = false) {
+        public RailNoteWrapper AddNote(EditorNote note, bool silent = false) {
             Trace.WriteLine("////NOTE ADD/////" + note.noteId);
             // extending past the railbraker needs to make a new note railbreaker
             RailNoteWrapper wrapper = new RailNoteWrapper(note);
@@ -294,7 +295,7 @@ namespace MiKu.NET {
                 AddSimpleNote(wrapper);
 
             if(!added)
-                return;
+                return null;
 
             //if rail has changed the leader we need to adjust the sound effects list to reflect it
             if(leaderStorage != null && leaderStorage != leader) {
@@ -309,11 +310,12 @@ namespace MiKu.NET {
             notesByTime[note.TimePoint] = wrapper;
 
             if(silent)
-                return;
+                return wrapper;
 
             InstantiateNoteObject(wrapper);
             RecalcDuration();
             RailHelper.ReinstantiateRail(this);
+            return wrapper;
         }
 
         void AddSimpleNote(RailNoteWrapper wrapper) {
@@ -533,14 +535,14 @@ namespace MiKu.NET {
         public RailNoteWrapper GetNoteAtThisOrFollowingTime(float time) {
             List<float> notes = notesByTime.Keys.ToList();
             notes.Sort();
-            float first = notes.FirstOrDefault(x => x > time);
+            float first = notes.FirstOrDefault(x => x >= time);
             if(first == default(float))
                 return null;
 
             return notesByTime[first];
         }
 
-        public Rail ConvertTheTailIntoNewRail(RailNoteWrapper note) {
+        public Rail ConvertTheTailIntoNewRail(RailNoteWrapper note, bool removeInitialNote = true) {
             if(note == null)
                 return null;
 
@@ -553,18 +555,33 @@ namespace MiKu.NET {
             railList.Add(newRail);
 
             while(note != null) {
-
-                notesByID.Remove(note.thisNote.noteId);
-                notesByTime.Remove(note.thisNote.TimePoint);
-                GameObject.DestroyImmediate(noteObjects[note.thisNote.noteId]);
-                noteObjects.Remove(note.thisNote.noteId);
+                if(note == initialNote ) {
+                    if(removeInitialNote) {
+                        notesByID.Remove(note.thisNote.noteId);
+                        notesByTime.Remove(note.thisNote.TimePoint);
+                        GameObject.DestroyImmediate(noteObjects[note.thisNote.noteId]);
+                        noteObjects.Remove(note.thisNote.noteId);
+                    } else {
+                        RailNoteWrapper copy = new RailNoteWrapper(note.thisNote.Clone());
+                        copy.nextNote = note.nextNote;
+                        note.nextNote = null;
+                        note = copy;
+                    }
+                } else {
+                    notesByID.Remove(note.thisNote.noteId);
+                    notesByTime.Remove(note.thisNote.TimePoint);
+                    GameObject.DestroyImmediate(noteObjects[note.thisNote.noteId]);
+                    noteObjects.Remove(note.thisNote.noteId);
+                }
 
                 newRail.AddNote(note.thisNote, true);
                 note = note.nextNote;
             };
 
+            newRail.ReassignBreakersFromNoteTypes();
             newRail.RecalcDuration();
             RailHelper.ReinstantiateRail(newRail);
+            RailHelper.ReinstantiateRailSegmentObjects(newRail);
 
             return newRail;
         }
@@ -727,6 +744,16 @@ namespace MiKu.NET {
             return notesByID.Count;
         }
 
+        public void ReassignBreakersFromNoteTypes() {
+            List<float> times = notesByTime.Keys.ToList();
+            if(times.Count > 1 && notesByTime[times.First()] != null && notesByTime[times.First()].thisNote != null && notesByTime[times.First()].thisNote.UsageType == EditorNote.NoteUsageType.Breaker) {
+                breakerHead = notesByTime[times.First()];
+            }
+
+            if(notesByTime[times.Last()] != null && notesByTime[times.Last()].thisNote != null && notesByTime[times.Last()].thisNote.UsageType == EditorNote.NoteUsageType.Breaker) {
+                breakerTail = notesByTime[times.Last()];
+            }
+        }
 
         //float CanReplaceNextNote()
         public static int railCounter = 0;
