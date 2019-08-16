@@ -1424,88 +1424,7 @@ namespace MiKu.NET {
                     // check that it has an edge note here
                     // flip its breaker state
                     List<Rail> railsAtCurrentTIme = RailHelper.GetListOfRailsInRange(s_instance.GetCurrentRailListByDifficulty(), CurrentTime, CurrentTime, RailHelper.RailRangeBehaviour.Allow);
-                    if(railsAtCurrentTIme != null) {
-                        foreach(Rail rail in railsAtCurrentTIme) {
-                            // skipping different colored rails
-                            if(rail.noteType != s_instance.selectedNoteType)
-                                continue;
-
-                            EditorNote railNote = rail.GetNoteAtPosition(CurrentTime);
-                            if(railNote == null)
-                                continue;
-                            // if the rail doesn't end there we just break it
-                            if(railNote.noteId != rail.leader.thisNote.noteId && railNote.noteId != rail.GetLastNote().thisNote.noteId) {
-                                rail.FlipNoteTypeToBreaker(railNote.noteId);
-                                continue;
-                            }
-
-
-                            // we're at the edge note and will need to flip it. 
-                            // just onne last check if it's the sole not of the rail
-                            if(railNote.UsageType == EditorNote.NoteUsageType.Line)
-                                rail.FlipNoteTypeToBreaker(railNote.noteId);
-                            else {
-                                // we're removing a breaker. need to check if there's a rail next to this one that we can attach to
-                                // for that we check if there are NO notes of any type other than the opposite hand until the next rail
-                                float railEndTime = rail.endTime;
-
-                                //todo
-                                // need to differentiate between had and tail breakers here
-                                // also it looks like the next rail can be picked as wrong color
-                                bool mergeHappened = false;
-                                if(railNote.noteId == rail.leader.thisNote.noteId) {
-                                    // flipping the leader note
-                                    Rail previousRail = RailHelper.GetPreviousRail(rail.railId, rail.startTime, s_instance.selectedNoteType, s_instance.selectedUsageType);
-
-
-                                    // need to make sure that merged rail doesn't exceed duration
-                                    if(previousRail != null) {
-                                        float railLengthAfterMerge = (previousRail.endTime - rail.startTime) + rail.duration + previousRail.duration;
-                                        if(railLengthAfterMerge <= Track.MAX_LINE_DURATION) {
-                                            float previousRailEndTime = previousRail.endTime;
-                                            // for railEndTime and nextRailStartTIme we check if there are ANY notes not of the opposite type
-                                            if(!HasRailInterruptionsBetween(rail.railId, previousRail.railId, previousRailEndTime, rail.startTime, rail.noteType)) {
-                                                // no interrupting notes or rails, can link this rail and the next one
-                                                previousRail.Merge(rail);
-                                                s_instance.DecreaseTotalDisplayedNotesCount();
-                                                return;
-                                            }
-                                        } else {
-                                            // notify that we can't merge
-                                            Miku_DialogManager.ShowDialog(Miku_DialogManager.DialogType.Alert, StringVault.Alert_MergedRailTooLong);
-                                        }
-                                    }
-                                } else {
-                                    // flipping the tail note
-                                    Rail nextRail = RailHelper.GetNextRail(rail.railId, railEndTime, s_instance.selectedNoteType, s_instance.selectedUsageType);
-                                    // need to make sure that merged rail doesn't exceed duration
-                                    if(nextRail != null) {
-                                        float railLengthAfterMerge = (nextRail.startTime - rail.endTime) + rail.duration + nextRail.duration;
-                                        if(railLengthAfterMerge <= Track.MAX_LINE_DURATION) {
-                                            float nextRailStartTIme = nextRail.startTime;
-                                            // for railEndTime and nextRailStartTIme we check if there are ANY notes not of the opposite type
-                                            if(!HasRailInterruptionsBetween(rail.railId, nextRail.railId, railEndTime, nextRailStartTIme, rail.noteType)) {
-                                                // no interrupting notes or rails, can link this rail and the next one
-                                                rail.Merge(nextRail);
-                                                s_instance.DecreaseTotalDisplayedNotesCount();
-                                                return;
-                                            }
-                                        } else {
-                                            // notify that we can't merge
-                                            Miku_DialogManager.ShowDialog(Miku_DialogManager.DialogType.Alert, StringVault.Alert_MergedRailTooLong);
-                                        }
-                                    }
-
-                                }
-                                if(!mergeHappened) {
-                                    rail.FlipNoteTypeToLineWithoutMerging(railNote.noteId);
-                                    return;
-                                }
-                            }
-
-
-                        }
-                    }
+                    RailHelper.BreakTheRailAtCurrentTime(CurrentTime, railsAtCurrentTIme, s_instance.selectedNoteType, s_instance.selectedUsageType, Track.IsOnMirrorMode);
                 }
             }
             // Copy and Paste actions
@@ -5080,7 +4999,7 @@ namespace MiKu.NET {
         /// <returns>Returns <typeparamref name="GameObject"/></returns>
         public static GameObject GetMirroredNoteMarker() {
             EditorNote.NoteHandType targedMirrored = s_instance.selectedNoteType == EditorNote.NoteHandType.LeftHanded ? EditorNote.NoteHandType.RightHanded : EditorNote.NoteHandType.LeftHanded;
-            return GameObject.Instantiate(s_instance.GetNoteMarkerByType(targedMirrored), Vector3.zero, Quaternion.identity);
+            return GameObject.Instantiate(s_instance.GetNoteMarkerByType(targedMirrored, s_instance.selectedUsageType), Vector3.zero, Quaternion.identity);
         }
 
         public static EditorNote.NoteHandType GetMirroreNoteMarkerType(EditorNote.NoteHandType tocheck) {
@@ -5284,6 +5203,15 @@ namespace MiKu.NET {
                 return true;
             return false;
         }
+
+        public static EditorNote.NoteHandType GetOppositeColor(EditorNote.NoteHandType noteType) {
+            if(noteType == EditorNote.NoteHandType.LeftHanded)
+                return EditorNote.NoteHandType.RightHanded;
+            if(noteType == EditorNote.NoteHandType.RightHanded)
+                return EditorNote.NoteHandType.LeftHanded;
+            return noteType;
+        }
+
         public static bool HasRailInterruptionsBetween(int railId, int secondRailId, 
             float startTime, float endTime, 
             EditorNote.NoteHandType handType, RailHelper.RailExtensionPolicy extensionPolicy = RailHelper.RailExtensionPolicy.NoInterruptions) {
