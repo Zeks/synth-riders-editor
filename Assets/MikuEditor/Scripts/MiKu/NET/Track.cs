@@ -1052,28 +1052,6 @@ namespace MiKu.NET {
                 keyHoldTime = 0.0f;
             }
 
-            if(Input.GetKeyDown(KeyCode.B)) {
-                if(isSHIFTDown && !isALTDown && !isCTRLDown) {
-                    RailHelper.ShiftHorizontalPositionOFCurrentRail(CurrentTime, 1, s_instance.selectedNoteType);
-                }
-            }
-            if(Input.GetKeyDown(KeyCode.C)) {
-                if(isSHIFTDown && !isALTDown && !isCTRLDown) {
-                    RailHelper.ShiftHorizontalPositionOFCurrentRail(CurrentTime, -1, s_instance.selectedNoteType);
-                }
-            }
-
-            if(Input.GetKeyDown(KeyCode.F)) {
-                if(isSHIFTDown && !isALTDown && !isCTRLDown) {
-                    RailHelper.ShiftVerticalPositionOFCurrentRail(CurrentTime, 1, s_instance.selectedNoteType);
-                }
-            }
-            if(Input.GetKeyDown(KeyCode.V)) {
-                if(isSHIFTDown && !isALTDown && !isCTRLDown) { 
-                    RailHelper.ShiftVerticalPositionOFCurrentRail(CurrentTime, -1, s_instance.selectedNoteType);
-                }
-            }
-
             //if(Input.GetAxis("Vertical") != 0 && !isBusy && keyHoldTime > nextKeyHold && !PromtWindowOpen) {
             //    nextKeyHold = keyHoldTime + keyHoldDelta;
 
@@ -5312,6 +5290,17 @@ namespace MiKu.NET {
             Dictionary<float, List<EditorNote>> workingTrack = s_instance.GetCurrentTrackDifficulty();
             if(IsBallNoteType(Track.s_instance.selectedUsageType)) {
                 Trace.WriteLine("Is in note branch");
+
+
+                if(s_instance.isSHIFTDown) {
+                    Rail rail = RailHelper.ClosestRailButNotAtThisPoint(CurrentTime, new Vector2(noteFromNoteArea.transform.position.x, noteFromNoteArea.transform.position.y));
+                    if(rail != null) {
+                        rail.SwitchHandTo(s_instance.selectedNoteType);
+                        RailHelper.ReinstantiateRail(rail);
+                        RailHelper.ReinstantiateRailSegmentObjects(rail);
+                        return;
+                    }
+                }
 
                 // need to check that we aren't in the incorrect rails section
                 // for that we first filter which rails appear at this time point

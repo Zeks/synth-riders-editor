@@ -621,13 +621,15 @@ namespace MiKu.NET {
             Track.s_instance.ResetCurrentRailList();
         }
 
-        public static Rail ClosestRailButNotAtThisPoint(float time, Vector2 point) {
+        public static Rail ClosestRailButNotAtThisPoint(float time, Vector2 point, EditorNote.NoteHandType handType = EditorNote.NoteHandType.NoHand) {
             List<Rail> railsAtCurrentTime = RailHelper.GetListOfRailsInRange(Track.s_instance.GetCurrentRailListByDifficulty(), time, time, RailHelper.RailRangeBehaviour.Allow);
             if(railsAtCurrentTime == null)
                 return null;
 
             List<Rail> railsWithJunctionsAtThisTime = new List<Rail>();
             foreach(Rail rail in railsAtCurrentTime) {
+                if(handType != rail.noteType && handType!= EditorNote.NoteHandType.NoHand)
+                    continue;
                 if(rail.HasNoteAtTime(time))
                     railsWithJunctionsAtThisTime.Add(rail);
             }
