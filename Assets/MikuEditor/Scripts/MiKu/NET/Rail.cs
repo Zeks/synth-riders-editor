@@ -728,6 +728,7 @@ namespace MiKu.NET {
         }
 
         public void SwitchHandTo(EditorNote.NoteHandType type) {
+            this.noteType = type;
             foreach(RailNoteWrapper note in notesByTime.Values) {
                 note.thisNote.HandType = type;
             }

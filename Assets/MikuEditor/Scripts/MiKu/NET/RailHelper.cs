@@ -704,13 +704,24 @@ namespace MiKu.NET {
                 }
             }
         }
-        public static List<float> CollectRailEdgeTimes() {
+
+        public enum RailTimeFindPolicy {
+            Everything = 0,
+            EdgesOnly = 1
+        }
+        public static List<float> CollectRailTimes(RailTimeFindPolicy railTimeFindPolicy = RailTimeFindPolicy.Everything) {
             List<float> times = new List<float>();
             List<Rail> rails = Track.s_instance.GetCurrentRailListByDifficulty();
             rails.Sort((rail1, rail2) => rail1.startTime.CompareTo(rail2.startTime));
             foreach(Rail rail in rails) {
-                times.Add(rail.startTime);
-                times.Add(rail.endTime);
+                if(railTimeFindPolicy == RailTimeFindPolicy.EdgesOnly) {
+                    times.Add(rail.startTime);
+                    times.Add(rail.endTime);
+                } else {
+                    foreach(RailNoteWrapper note in rail.notesByTime.Values) {
+                        times.Add(note.thisNote.TimePoint);
+                    }
+                }
             }
             return times;
         }

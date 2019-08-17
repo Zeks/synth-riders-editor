@@ -812,8 +812,8 @@ namespace MiKu.NET {
         // Use this for initialization
         void Awake() {
             if(newLaunch) {
-                File.Delete("../editor-build/editor.log");
-                Trace.Listeners.Add(new TextWriterTraceListener("../editor-build/editor.log"));
+                File.Delete("editor.log");
+                Trace.Listeners.Add(new TextWriterTraceListener("editor.log"));
             }
             newLaunch = false;
             Trace.AutoFlush = true;
@@ -950,13 +950,22 @@ namespace MiKu.NET {
             return setOfTImes;
         }
 
+        public enum TimeFindPolicy {
+            Everything = 0,
+            JustRails = 1,
+            RailsAndJunctions = 2
+        }
 
-        public static float FindNextTime(float time, bool forRailsOnly = false) {
+        public static float FindNextTime(float time, TimeFindPolicy timeFindPolicy = TimeFindPolicy.Everything) {
             List<float> times = null;
-            if(!forRailsOnly)
+            if(timeFindPolicy == TimeFindPolicy.Everything)
                 times = CollectOccupiedTimes().ToList();
-            else
-                times = RailHelper.CollectRailEdgeTimes();
+            else {
+                if(timeFindPolicy == TimeFindPolicy.JustRails)
+                    times = RailHelper.CollectRailTimes(RailHelper.RailTimeFindPolicy.EdgesOnly);
+                else
+                    times = RailHelper.CollectRailTimes(RailHelper.RailTimeFindPolicy.Everything);
+            }
 
             if(times == null)
                 return time;
@@ -969,12 +978,16 @@ namespace MiKu.NET {
             return foundTimes.First();
         }
 
-        public static float FindPreviousTime(float time, bool forRailsOnly = false) {
+        public static float FindPreviousTime(float time, TimeFindPolicy timeFindPolicy = TimeFindPolicy.Everything) {
             List<float> times = null;
-            if(!forRailsOnly)
+            if(timeFindPolicy == TimeFindPolicy.Everything)
                 times = CollectOccupiedTimes().ToList();
-            else
-                times = RailHelper.CollectRailEdgeTimes();
+            else {
+                if(timeFindPolicy == TimeFindPolicy.JustRails)
+                    times = RailHelper.CollectRailTimes(RailHelper.RailTimeFindPolicy.EdgesOnly);
+                else
+                    times = RailHelper.CollectRailTimes(RailHelper.RailTimeFindPolicy.Everything);
+            }
             if(times == null)
                 return time;
 
@@ -1334,7 +1347,16 @@ namespace MiKu.NET {
                 }
                 if(isALTDown) {
                     // jump to next note time
-                    float time = Track.FindNextTime(CurrentTime, s_instance.selectedUsageType == EditorNote.NoteUsageType.Ball ? false : true);
+                    TimeFindPolicy timeFindPolicy = TimeFindPolicy.Everything;
+                    if(s_instance.selectedUsageType == EditorNote.NoteUsageType.Line) { 
+                        if(isCTRLDown) 
+                            timeFindPolicy = TimeFindPolicy.JustRails;
+
+                        else
+                            timeFindPolicy = TimeFindPolicy.RailsAndJunctions;
+                    }
+
+                    float time = Track.FindNextTime(CurrentTime, timeFindPolicy);
                     if(time != -1) {
                         float moveTarget = MStoUnit(time);
                         CurrentTime = time;
@@ -1353,7 +1375,16 @@ namespace MiKu.NET {
                 }
                 if(isALTDown) {
                     // jump to previous note time
-                    float time = Track.FindPreviousTime(CurrentTime, s_instance.selectedUsageType == EditorNote.NoteUsageType.Ball ? false : true);
+                    TimeFindPolicy timeFindPolicy = TimeFindPolicy.Everything;
+                    if(s_instance.selectedUsageType == EditorNote.NoteUsageType.Line) {
+                        if(isCTRLDown)
+                            timeFindPolicy = TimeFindPolicy.JustRails;
+
+                        else
+                            timeFindPolicy = TimeFindPolicy.RailsAndJunctions;
+                    }
+
+                    float time = Track.FindPreviousTime(CurrentTime, timeFindPolicy);
                     if(time != -1) {
                         float moveTarget = MStoUnit(time);
                         CurrentTime = time;
@@ -5648,7 +5679,7 @@ namespace MiKu.NET {
                             Vector2 foundNotePosition = new Vector2(railNote.Position[0], railNote.Position[1]);
                             Vector2 clickedPosition = new Vector2(noteFromNoteArea.transform.position.x, noteFromNoteArea.transform.position.y);
                             float distance = Vector2.Distance(foundNotePosition, clickedPosition);
-                            if(distance > 0.05f && railNote.UsageType != EditorNote.NoteUsageType.Breaker) {
+                            if(distance > 0.05f) {
                                 // we've clicked away from current note. this means we need to move it
                                 matchedRail.MoveNoteAtTimeToPosition(CurrentTime, noteFromNoteArea.transform.position.x, noteFromNoteArea.transform.position.y);
                             } else {
