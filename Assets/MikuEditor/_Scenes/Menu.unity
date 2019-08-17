@@ -4745,22 +4745,6 @@ PrefabInstance:
       propertyPath: m_IsActive
       value: 1
       objectReference: {fileID: 0}
-    - target: {fileID: 224254862225929378, guid: acc9173f624cfe04facc24dc2ab625e8,
-        type: 3}
-      propertyPath: m_SizeDelta.x
-      value: 16
-      objectReference: {fileID: 0}
-    - target: {fileID: 224254862225929378, guid: acc9173f624cfe04facc24dc2ab625e8,
-        type: 3}
-      propertyPath: m_SizeDelta.y
-      value: 16
-      objectReference: {fileID: 0}
-    - target: {fileID: 114187610485492796, guid: acc9173f624cfe04facc24dc2ab625e8,
-        type: 3}
-      propertyPath: m_Sprite
-      value: 
-      objectReference: {fileID: 21300000, guid: 8240ac13e22232d4290b8c4d3aa486a8,
-        type: 3}
     - target: {fileID: 114234084634781448, guid: acc9173f624cfe04facc24dc2ab625e8,
         type: 3}
       propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.size
@@ -4801,6 +4785,22 @@ PrefabInstance:
       propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_Arguments.m_BoolArgument
       value: 1
       objectReference: {fileID: 0}
+    - target: {fileID: 224254862225929378, guid: acc9173f624cfe04facc24dc2ab625e8,
+        type: 3}
+      propertyPath: m_SizeDelta.x
+      value: 16
+      objectReference: {fileID: 0}
+    - target: {fileID: 224254862225929378, guid: acc9173f624cfe04facc24dc2ab625e8,
+        type: 3}
+      propertyPath: m_SizeDelta.y
+      value: 16
+      objectReference: {fileID: 0}
+    - target: {fileID: 114187610485492796, guid: acc9173f624cfe04facc24dc2ab625e8,
+        type: 3}
+      propertyPath: m_Sprite
+      value: 
+      objectReference: {fileID: 21300000, guid: 8240ac13e22232d4290b8c4d3aa486a8,
+        type: 3}
     - target: {fileID: 224079221572379676, guid: acc9173f624cfe04facc24dc2ab625e8,
         type: 3}
       propertyPath: m_LocalPosition.x
@@ -9654,7 +9654,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_TermsHolder: {fileID: 1383288674}
   m_termsAnimator: {fileID: 1383288676}
-  editorVersion: 1.8.1-2
+  editorVersion: 1.8.1-4
   editorName: SynthRiders Editor v{0}
 --- !u!1 &402065531
 GameObject:
@@ -11132,7 +11132,7 @@ MonoBehaviour:
     m_HorizontalOverflow: 0
     m_VerticalOverflow: 0
     m_LineSpacing: 1
-  m_Text: 1.8.1-2
+  m_Text: 1.8.1-4
 --- !u!222 &492468736
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -17922,22 +17922,6 @@ PrefabInstance:
       propertyPath: m_IsActive
       value: 1
       objectReference: {fileID: 0}
-    - target: {fileID: 224254862225929378, guid: acc9173f624cfe04facc24dc2ab625e8,
-        type: 3}
-      propertyPath: m_SizeDelta.x
-      value: 16
-      objectReference: {fileID: 0}
-    - target: {fileID: 224254862225929378, guid: acc9173f624cfe04facc24dc2ab625e8,
-        type: 3}
-      propertyPath: m_SizeDelta.y
-      value: 16
-      objectReference: {fileID: 0}
-    - target: {fileID: 114187610485492796, guid: acc9173f624cfe04facc24dc2ab625e8,
-        type: 3}
-      propertyPath: m_Sprite
-      value: 
-      objectReference: {fileID: 21300000, guid: 8240ac13e22232d4290b8c4d3aa486a8,
-        type: 3}
     - target: {fileID: 114234084634781448, guid: acc9173f624cfe04facc24dc2ab625e8,
         type: 3}
       propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.size
@@ -17973,6 +17957,22 @@ PrefabInstance:
       propertyPath: m_Interactable
       value: 1
       objectReference: {fileID: 0}
+    - target: {fileID: 224254862225929378, guid: acc9173f624cfe04facc24dc2ab625e8,
+        type: 3}
+      propertyPath: m_SizeDelta.x
+      value: 16
+      objectReference: {fileID: 0}
+    - target: {fileID: 224254862225929378, guid: acc9173f624cfe04facc24dc2ab625e8,
+        type: 3}
+      propertyPath: m_SizeDelta.y
+      value: 16
+      objectReference: {fileID: 0}
+    - target: {fileID: 114187610485492796, guid: acc9173f624cfe04facc24dc2ab625e8,
+        type: 3}
+      propertyPath: m_Sprite
+      value: 
+      objectReference: {fileID: 21300000, guid: 8240ac13e22232d4290b8c4d3aa486a8,
+        type: 3}
     - target: {fileID: 224079221572379676, guid: acc9173f624cfe04facc24dc2ab625e8,
         type: 3}
       propertyPath: m_LocalPosition.x
@@ -18086,22 +18086,6 @@ PrefabInstance:
       propertyPath: m_IsActive
       value: 1
       objectReference: {fileID: 0}
-    - target: {fileID: 224254862225929378, guid: acc9173f624cfe04facc24dc2ab625e8,
-        type: 3}
-      propertyPath: m_SizeDelta.x
-      value: 16
-      objectReference: {fileID: 0}
-    - target: {fileID: 224254862225929378, guid: acc9173f624cfe04facc24dc2ab625e8,
-        type: 3}
-      propertyPath: m_SizeDelta.y
-      value: 16
-      objectReference: {fileID: 0}
-    - target: {fileID: 114187610485492796, guid: acc9173f624cfe04facc24dc2ab625e8,
-        type: 3}
-      propertyPath: m_Sprite
-      value: 
-      objectReference: {fileID: 21300000, guid: 8240ac13e22232d4290b8c4d3aa486a8,
-        type: 3}
     - target: {fileID: 114234084634781448, guid: acc9173f624cfe04facc24dc2ab625e8,
         type: 3}
       propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.size
@@ -18137,6 +18121,22 @@ PrefabInstance:
       propertyPath: m_Interactable
       value: 1
       objectReference: {fileID: 0}
+    - target: {fileID: 224254862225929378, guid: acc9173f624cfe04facc24dc2ab625e8,
+        type: 3}
+      propertyPath: m_SizeDelta.x
+      value: 16
+      objectReference: {fileID: 0}
+    - target: {fileID: 224254862225929378, guid: acc9173f624cfe04facc24dc2ab625e8,
+        type: 3}
+      propertyPath: m_SizeDelta.y
+      value: 16
+      objectReference: {fileID: 0}
+    - target: {fileID: 114187610485492796, guid: acc9173f624cfe04facc24dc2ab625e8,
+        type: 3}
+      propertyPath: m_Sprite
+      value: 
+      objectReference: {fileID: 21300000, guid: 8240ac13e22232d4290b8c4d3aa486a8,
+        type: 3}
     - target: {fileID: 224079221572379676, guid: acc9173f624cfe04facc24dc2ab625e8,
         type: 3}
       propertyPath: m_LocalPosition.x

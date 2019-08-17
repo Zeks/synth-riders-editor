@@ -461,9 +461,6 @@ namespace MiKu.NET {
         [SerializeField]
         private TextMeshProUGUI m_StepMeasureDisplay;
 
-        /* [SerializeField]
-        private Text m_DifficultyDisplay; */
-
         [SerializeField]
         private TMP_Dropdown m_BookmarkJumpDrop;
 
@@ -478,6 +475,12 @@ namespace MiKu.NET {
 
         [SerializeField]
         private InputField m_CustomDiffSpeedInput;
+
+        [SerializeField]
+        private TMP_Dropdown m_DifficultyDisplay;
+
+        [SerializeField]
+        private GridManager gridManager;
 
         [Space(20)]
         [SerializeField]
@@ -756,7 +759,8 @@ namespace MiKu.NET {
         private const string MIDDLE_BUTTON_SEL_KEY = "com.synth.editor.MiddleButtonSel";
         private const string AUTOSAVE_KEY = "com.synth.editor.AutoSave";
         private const string SCROLLSOUND_KEY = "com.synth.editor.ScrollSound";
-
+        private const string GRIDSIZE_KEY = "com.synth.editor.GridSize";
+    
         // 
         private WaitForSeconds pointEightWait;
 
@@ -1403,6 +1407,8 @@ namespace MiKu.NET {
 
                 if(isCTRLDown) {
                     m_SFXVolumeSlider.value += 0.1f;
+                } else if(isALTDown) {
+                    gridManager.ChangeGridSize();
                 } else {
                     m_VolumeSlider.value += 0.1f;
                 }
@@ -1419,6 +1425,8 @@ namespace MiKu.NET {
 
                 if(isCTRLDown) {
                     m_SFXVolumeSlider.value -= 0.1f;
+                } else if(isALTDown) {
+                    gridManager.ChangeGridSize(false);
                 } else {
                     m_VolumeSlider.value -= 0.1f;
                 }
@@ -1876,7 +1884,26 @@ namespace MiKu.NET {
                 UpdateDisplayStartOffset(StartOffset);
                 SetNoteMarkerType();
                 DrawTrackLines();
-                SetCurrentTrackDifficulty(TrackDifficulty.Easy);
+                if(CurrentChart.Track.Easy.Count > 0) {
+                    SetCurrentTrackDifficulty(TrackDifficulty.Easy);
+                    m_DifficultyDisplay.SetValueWithoutNotify(0);
+                } else if(CurrentChart.Track.Normal.Count > 0) {
+                    SetCurrentTrackDifficulty(TrackDifficulty.Normal);
+                    m_DifficultyDisplay.SetValueWithoutNotify(1);
+                } else if(CurrentChart.Track.Hard.Count > 0) {
+                    SetCurrentTrackDifficulty(TrackDifficulty.Hard);
+                    m_DifficultyDisplay.SetValueWithoutNotify(2);
+                } else if(CurrentChart.Track.Expert.Count > 0) {
+                    SetCurrentTrackDifficulty(TrackDifficulty.Expert);
+                    m_DifficultyDisplay.SetValueWithoutNotify(3);
+                } else if(CurrentChart.Track.Master.Count > 0) {
+                    SetCurrentTrackDifficulty(TrackDifficulty.Master);
+                    m_DifficultyDisplay.SetValueWithoutNotify(4);
+                } else if(CurrentChart.Track.Custom.Count > 0) {
+                    SetCurrentTrackDifficulty(TrackDifficulty.Custom);
+                    m_DifficultyDisplay.SetValueWithoutNotify(5);
+                }
+                
                 SetStatWindowData();
                 IsInitilazed = true;
 
@@ -2167,7 +2194,9 @@ namespace MiKu.NET {
         /// </summary>
         /// <param name="isIncrease">if true increase <see cname="MBPM" /> otherwise decrease it</param>
         public void ChangeStepMeasure(bool isIncrease) {
-            MBPMIncreaseFactor = (isIncrease) ? MBPMIncreaseFactor * 2 : MBPMIncreaseFactor / 2;
+            // MBPMIncreaseFactor = (isIncrease) ? MBPMIncreaseFactor * 2 : MBPMIncreaseFactor / 2;
+            MBPMIncreaseFactor = (isIncrease) ? ((MBPMIncreaseFactor >= 8) ? MBPMIncreaseFactor * 2 : MBPMIncreaseFactor + 1) :
+                ((MBPMIncreaseFactor >= 16) ? MBPMIncreaseFactor / 2 : MBPMIncreaseFactor - 1);
             MBPMIncreaseFactor = Mathf.Clamp(MBPMIncreaseFactor, 1, 64);
             MBPM = 1 / MBPMIncreaseFactor;
             m_StepMeasureDisplay.SetText(string.Format("1/{0}", MBPMIncreaseFactor));
@@ -7682,6 +7711,8 @@ namespace MiKu.NET {
             MiddleButtonSelectorType = PlayerPrefs.GetInt(MIDDLE_BUTTON_SEL_KEY, 0);
             canAutoSave = (PlayerPrefs.GetInt(AUTOSAVE_KEY, 1) > 0) ? true : false;
             doScrollSound = (PlayerPrefs.GetInt(SCROLLSOUND_KEY, 1) > 0) ? true : false;
+            gridManager.SeparationSize = (PlayerPrefs.GetFloat(GRIDSIZE_KEY, 0.1365f));
+            gridManager.DrawGridLines();
         }
 
         private void SaveEditorUserPrefs() {
@@ -7695,6 +7726,7 @@ namespace MiKu.NET {
             PlayerPrefs.SetInt(MIDDLE_BUTTON_SEL_KEY, MiddleButtonSelectorType);
             PlayerPrefs.SetInt(AUTOSAVE_KEY, (canAutoSave) ? 1 : 0);
             PlayerPrefs.SetInt(SCROLLSOUND_KEY, (doScrollSound) ? 1 : 0);
+            PlayerPrefs.SetFloat(GRIDSIZE_KEY, gridManager.SeparationSize);
         }
 
         /// <summary>
