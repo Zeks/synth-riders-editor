@@ -118,6 +118,13 @@ namespace MiKu.NET {
             Master,
             Custom,
         }
+        public enum ScrollMode {
+            Default,
+            Objects,
+            Rails,
+            RailEnds,
+            Peaks,
+        }
 
         public enum PromtType {
             // No action
@@ -480,6 +487,9 @@ namespace MiKu.NET {
         private TMP_Dropdown m_DifficultyDisplay;
 
         [SerializeField]
+        private TMP_Dropdown m_ScrollSelector;
+
+        [SerializeField]
         private GridManager gridManager;
 
         [Space(20)]
@@ -618,6 +628,8 @@ namespace MiKu.NET {
         // Previous time 
         private float _previousTime = 0;
 
+        private List<float> peakTimes;
+
         // Current Play time
         private float _currentPlayTime = 0;
 
@@ -639,7 +651,10 @@ namespace MiKu.NET {
 
         // Current difficulty selected for edition
         private TrackDifficulty currentDifficulty = TrackDifficulty.Easy;
-
+        
+        // Current scroll mode selected
+        private ScrollMode currentScrollMode = ScrollMode.Default;
+        
         // Flag to know when there is a heavy burden and not manipulate the data
         private bool isBusy = false;
 
@@ -897,6 +912,8 @@ namespace MiKu.NET {
                 SwitchRenderCamera(0);
                 ToggleWorkingStateAlertOff();
 
+                peakTimes = new List<float>();
+
                 //CurrentLongNote = new LongNote();            
                 CurrentSelection = new SelectionArea();
                 //
@@ -977,7 +994,7 @@ namespace MiKu.NET {
             times.Sort();
             var foundTimes = times.SkipWhile(testedTIme => testedTIme <= time);
             if(foundTimes.Count() == 0)
-                return -1;
+                return time;
 
             return foundTimes.First();
         }
@@ -999,11 +1016,137 @@ namespace MiKu.NET {
             times.Reverse();
             var foundTimes = times.SkipWhile(testedTIme => testedTIme >= time);
             if(foundTimes.Count() == 0)
-                return -1;
+                return time;
 
             return foundTimes.First();
         }
 
+
+
+        private float NextTimeForPolicy(float time, TimeFindPolicy timeFindPolicy) {
+            return Track.FindNextTime(time, timeFindPolicy);
+        }
+        private float PreviousTimeForPolicy(float time, TimeFindPolicy timeFindPolicy) {
+            return Track.FindPreviousTime(time, timeFindPolicy);
+        }
+
+        private float NextPeak(float time) {
+            float result = time;
+            peakTimes.Sort();
+            var temp = peakTimes.SkipWhile(t => t <= time);
+            if(temp.ToList().Count != 0) {
+                result = temp.First();
+            }
+            return result;
+        }
+        private float PreviousPeak(float time) {
+            float result = time;
+            peakTimes.Sort();
+            peakTimes.Reverse();
+            var temp = peakTimes.SkipWhile(t => t >= time);
+            if(temp.ToList().Count != 0) {
+                result = temp.First();
+            }
+            return result;
+        }
+
+        private void PerformScrollStepForwards(float time, ScrollMode scrollMode) {
+            bool finishedMove = false;
+            float nextTime = 0;
+            switch(scrollMode) {
+                case ScrollMode.Default:
+                    MoveCamera(true, GetNextStepPoint());
+                    finishedMove = true;
+                    break;
+                case ScrollMode.Objects:
+                    nextTime = NextTimeForPolicy(CurrentTime, TimeFindPolicy.Everything);
+                    break;
+                case ScrollMode.Rails:
+                    nextTime = NextTimeForPolicy(CurrentTime, TimeFindPolicy.RailsAndJunctions);
+                    break;
+                case ScrollMode.RailEnds:
+                    nextTime = NextTimeForPolicy(CurrentTime, TimeFindPolicy.JustRails);
+                    break;
+                case ScrollMode.Peaks:
+                    nextTime = NextPeak(CurrentTime);
+                    break;
+            }
+            if(!finishedMove) {
+                float moveTarget = MStoUnit(nextTime);
+                CurrentTime = nextTime;
+                MoveCamera(true, moveTarget);
+            }
+            DrawTrackXSLines();
+            gridManager.ResetLinesMaterial();
+            gridManager.HighlightLinesForPointList(FetchObjectPositionsAtCurrentTime(CurrentTime));
+        }
+        private void PerformScrollStepBackwards(float time, ScrollMode scrollMode) {
+            bool finishedMove = false;
+            float previousTime = 0;
+            switch(scrollMode) {
+                case ScrollMode.Default:
+                    MoveCamera(true, GetPrevStepPoint());
+                    finishedMove = true;
+                    break;
+                case ScrollMode.Objects:
+                    previousTime = PreviousTimeForPolicy(CurrentTime, TimeFindPolicy.Everything);
+                    break;
+                case ScrollMode.Rails:
+                    previousTime = PreviousTimeForPolicy(CurrentTime, TimeFindPolicy.RailsAndJunctions);
+                    break;
+                case ScrollMode.RailEnds:
+                    previousTime = PreviousTimeForPolicy(CurrentTime, TimeFindPolicy.JustRails);
+                    break;
+                case ScrollMode.Peaks:
+                    previousTime = PreviousPeak(CurrentTime);
+                    break;
+            }
+            if(!finishedMove) {
+                float moveTarget = MStoUnit(previousTime);
+                CurrentTime = previousTime;
+                MoveCamera(true, moveTarget);
+            }
+            DrawTrackXSLines();
+            gridManager.ResetLinesMaterial();
+            gridManager.HighlightLinesForPointList(FetchObjectPositionsAtCurrentTime(CurrentTime));
+        }
+
+        private int GetNextScrollModeId(ScrollMode mode) {
+            switch(mode) {
+                case ScrollMode.Default:
+                    return 1;
+                case ScrollMode.Objects:
+                    return 2;
+                case ScrollMode.Rails:
+                    return 3;
+                case ScrollMode.RailEnds:
+                    return 4;
+                case ScrollMode.Peaks:
+                    return 0;
+            }
+            return 0;
+        }
+        private int GetPreviousScrollModeId(ScrollMode mode) {
+            switch(mode) {
+                case ScrollMode.Default:
+                    return 4;
+                case ScrollMode.Objects:
+                    return 0;
+                case ScrollMode.Rails:
+                    return 1;
+                case ScrollMode.RailEnds:
+                    return 2;
+                case ScrollMode.Peaks:
+                    return 3;
+            }
+            return 0;
+        }
+        private void ToggleNextScrollMode() {
+            m_ScrollSelector.value = GetNextScrollModeId(currentScrollMode);
+        }
+        private void TogglePreviousScrollMode() {
+            m_ScrollSelector.value = GetPreviousScrollModeId(currentScrollMode);
+        }
         // Update is called once per frame
         void Update() {
             if(isBusy || !IsInitilazed) { return; }
@@ -1344,62 +1487,39 @@ namespace MiKu.NET {
             if(Input.GetAxis("Mouse ScrollWheel") > 0f && !IsPlaying && !PromtWindowOpen) // forward
             {
                 if(!isCTRLDown && !isALTDown) {
-                    MoveCamera(true, GetNextStepPoint());
-                    DrawTrackXSLines();
+                    PerformScrollStepForwards(CurrentTime, currentScrollMode);
                 } else if(isCTRLDown) {
                     ChangeStepMeasure(true);
                 }
                 if(isALTDown) {
-                    // jump to next note time
-                    TimeFindPolicy timeFindPolicy = TimeFindPolicy.Everything;
-                    if(s_instance.selectedUsageType == EditorNote.NoteUsageType.Line) { 
-                        if(isCTRLDown) 
-                            timeFindPolicy = TimeFindPolicy.JustRails;
+                    if(s_instance.selectedUsageType == EditorNote.NoteUsageType.Line) {
+                        if(isCTRLDown)
+                            PerformScrollStepForwards(CurrentTime, ScrollMode.RailEnds);
 
                         else
-                            timeFindPolicy = TimeFindPolicy.RailsAndJunctions;
-                    }
-
-                    float time = Track.FindNextTime(CurrentTime, timeFindPolicy);
-                    if(time != -1) {
-                        float moveTarget = MStoUnit(time);
-                        CurrentTime = time;
-                        MoveCamera(true, moveTarget);
-                        DrawTrackXSLines();
-
+                            PerformScrollStepForwards(CurrentTime, ScrollMode.Rails);
+                    } else {
+                        PerformScrollStepForwards(CurrentTime, ScrollMode.Objects);
                     }
                 }
-                gridManager.ResetLinesMaterial();
-                gridManager.HighlightLinesForPointList(FetchObjectPositionsAtCurrentTime(CurrentTime));
             } else if(Input.GetAxis("Mouse ScrollWheel") < 0f && !IsPlaying && !PromtWindowOpen) // backwards
               {
                 if(!isCTRLDown && !isALTDown) {
-                    MoveCamera(true, GetPrevStepPoint());
-                    DrawTrackXSLines();
+                    PerformScrollStepBackwards(CurrentTime, currentScrollMode);
                 } else if(isCTRLDown) {
                     ChangeStepMeasure(false);
                 }
                 if(isALTDown) {
-                    // jump to previous note time
-                    TimeFindPolicy timeFindPolicy = TimeFindPolicy.Everything;
                     if(s_instance.selectedUsageType == EditorNote.NoteUsageType.Line) {
                         if(isCTRLDown)
-                            timeFindPolicy = TimeFindPolicy.JustRails;
+                            PerformScrollStepBackwards(CurrentTime, ScrollMode.RailEnds);
 
                         else
-                            timeFindPolicy = TimeFindPolicy.RailsAndJunctions;
-                    }
-
-                    float time = Track.FindPreviousTime(CurrentTime, timeFindPolicy);
-                    if(time != -1) {
-                        float moveTarget = MStoUnit(time);
-                        CurrentTime = time;
-                        MoveCamera(true, moveTarget);
-                        DrawTrackXSLines();
+                            PerformScrollStepBackwards(CurrentTime, ScrollMode.Rails);
+                    } else {
+                        PerformScrollStepBackwards(CurrentTime, ScrollMode.Objects);
                     }
                 }
-                gridManager.ResetLinesMaterial();
-                gridManager.HighlightLinesForPointList(FetchObjectPositionsAtCurrentTime(CurrentTime));
             }
 
             // Volume control
@@ -1451,6 +1571,13 @@ namespace MiKu.NET {
                     List<Rail> railsAtCurrentTIme = RailHelper.GetListOfRailsInRange(s_instance.GetCurrentRailListByDifficulty(), CurrentTime, CurrentTime, RailHelper.RailRangeBehaviour.Allow);
                     RailHelper.BreakTheRailAtCurrentTime(CurrentTime, railsAtCurrentTIme, s_instance.selectedNoteType, s_instance.selectedUsageType, Track.IsOnMirrorMode);
                 }
+            }
+
+            if(Input.GetKeyDown(KeyCode.O)) {
+                TogglePreviousScrollMode();
+            }
+            if(Input.GetKeyDown(KeyCode.P)) {
+                ToggleNextScrollMode();
             }
             // Copy and Paste actions
             if(Input.GetKeyDown(KeyCode.C)) {
@@ -1996,6 +2123,8 @@ namespace MiKu.NET {
                     targetTransform.x = plotTempInstance.position.x;
                     targetTransform.y = plotTempInstance.position.y;
                     targetTransform.z = MStoUnit((spcInfo.time * MS)); //+StartOffset);
+                    if(spcInfo.isPeak)
+                        peakTimes.Add(spcInfo.time * MS);
                     plotTempInstance.position = targetTransform;
                     plotTempInstance.parent = m_SpectrumHolder;
 
@@ -6401,6 +6530,32 @@ namespace MiKu.NET {
             }
         }
         /// <summary>
+        /// Change the current scroll mode
+        /// </summary>
+        /// <param name="difficulty">The new mode"</param>
+        public void SetCurrentScrollMode(int mode) {
+            switch(mode) {
+                case 0:
+                    currentScrollMode = ScrollMode.Default;
+                    break;
+                case 1:
+                    currentScrollMode = ScrollMode.Objects;
+                    break;
+                case 2:
+                    currentScrollMode = ScrollMode.Rails;
+                    break;
+                case 3:
+                    currentScrollMode = ScrollMode.RailEnds;
+                    break; 
+                case 4:
+                    currentScrollMode = ScrollMode.Peaks;
+                    break;
+                default:
+                    currentScrollMode = ScrollMode.Default;
+                    break;
+            }
+        }
+        /// <summary>
         /// Set the note usage type to be used
         /// </summary>
         /// <param name="noteUsageType">The usage type of note to use. Default is 0 that is equal to <see cref="EditorNote.NoteUsageType.None" /></param>
@@ -7021,6 +7176,7 @@ namespace MiKu.NET {
             hitSFXSource.Clear();
             isBusy = false;
         }
+
 
         /// <summary>
         /// Change the current Track Difficulty by TrackDifficulty
