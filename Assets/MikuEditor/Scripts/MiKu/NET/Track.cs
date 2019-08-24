@@ -634,6 +634,7 @@ namespace MiKu.NET {
         private float _previousTime = 0;
 
         private List<float> peakTimes;
+        private List<float> barTimes;
 
         // Current Play time
         private float _currentPlayTime = 0;
@@ -918,6 +919,7 @@ namespace MiKu.NET {
                 ToggleWorkingStateAlertOff();
 
                 peakTimes = new List<float>();
+                barTimes = new List<float>();
 
                 //CurrentLongNote = new LongNote();            
                 CurrentSelection = new SelectionArea();
@@ -2117,6 +2119,40 @@ namespace MiKu.NET {
             }
         }
 
+        public void AddPlaceholderToChart(float time) {
+            var workingTrack = s_instance.GetCurrentTrackDifficulty();
+            if(!workingTrack.ContainsKey(time)) {
+                workingTrack.Add(time, new List<EditorNote>());
+                AddTimeToSFXList(time);
+            }
+
+            EditorNote noteForChart = new EditorNote(new Vector3(0, 0, MStoUnit(time)), Track.CurrentTime);
+            noteForChart.HandType = EditorNote.NoteHandType.RightHanded;
+
+            workingTrack[time].Add(noteForChart);
+            s_instance.IncreaseTotalDisplayedNotesCount();
+            s_instance.AddNoteGameObjectToScene(noteForChart);
+        }
+
+        public enum PlacerClickSnapMode {
+            MajorBar = 0,
+            MinorBar = 1,
+        }
+
+        public float SnapToPeak(float time, PlacerClickSnapMode mode = PlacerClickSnapMode.MinorBar) {
+            float result = 0;
+            if(mode == PlacerClickSnapMode.MinorBar) {
+                barTimes.Sort();
+                var temp = barTimes.SkipWhile(t => t < time);
+                result = temp.First();
+            } else {
+                peakTimes.Sort();
+                var temp = peakTimes.SkipWhile(t => t < time);
+                result = temp.First();
+            }
+            return result;
+        }
+
         void EndSpectralAnalyzer() {
             if(treadWithError) {
                 LogMessage("Specturm could not be created", true);
@@ -2140,6 +2176,8 @@ namespace MiKu.NET {
                     targetTransform.z = MStoUnit((spcInfo.time * MS)); //+StartOffset);
                     if(spcInfo.isPeak)
                         peakTimes.Add(spcInfo.time * MS);
+                    else
+                        barTimes.Add(spcInfo.time * MS);
                     plotTempInstance.position = targetTransform;
                     plotTempInstance.parent = m_SpectrumHolder;
 
