@@ -838,6 +838,20 @@ namespace MiKu.NET {
             }
         }
 
+
+        public static List<Vector2> FetchRailPositionsAtTime(float time, List<Rail> rails) {
+            List<Vector2> list = new List<Vector2>();
+            foreach(Rail rail in rails) {
+                EditorNote note = rail.GetNoteAtPosition(time);
+                if(note != null) {
+                    list.Add(new Vector2(note.Position[0], note.Position[1]));
+                }
+            }
+            return list;
+        }
+
     }
+
+
     
 }
