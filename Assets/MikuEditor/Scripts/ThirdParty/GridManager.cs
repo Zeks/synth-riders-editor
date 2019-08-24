@@ -17,7 +17,16 @@ public class GridManager : MonoBehaviour
     [SerializeField]
     private Color lineColor = Color.white;
 
+    [SerializeField]
+    private Material gridLineNormal;
+
+    [SerializeField]
+    private Material gridLineHighligted;
+
+
     private List<GameObject> GridLines;
+    private Dictionary<int, GameObject> lineReferenceX;
+    private Dictionary<int, GameObject> lineReferenceY;
     private GameObject GridLinesParent;
 
     private const int MAX_SIZE_X = 16;
@@ -142,6 +151,9 @@ public class GridManager : MonoBehaviour
         }
     }
     public void DrawGridLines() {
+        lineReferenceX = new Dictionary<int, GameObject>();
+        lineReferenceY = new Dictionary<int, GameObject>();
+
         SeparationSize = Mathf.Clamp(SeparationSize, MIN_SEPARATION, MAX_SEPARATION);
         CalucalteGridSize();
 
@@ -162,6 +174,7 @@ public class GridManager : MonoBehaviour
             targetRenderer.SetPosition(0, new Vector3(0 + x * SeparationSize, 0, 0));
             targetRenderer.SetPosition(1, new Vector3(0 + x * SeparationSize, (sizeY * SeparationSize) * -1, 0));
             GridLines.Add(lineObj);
+            lineReferenceX.Add(x, lineObj);
         }
 
         for(int y = 0; y <= sizeY; ++y) {
@@ -172,6 +185,7 @@ public class GridManager : MonoBehaviour
             targetRenderer.SetPosition(0, new Vector3(0, (y * SeparationSize) * -1, 0));
             targetRenderer.SetPosition(1, new Vector3(sizeX * SeparationSize, (y * SeparationSize) * -1, 0));
             GridLines.Add(lineObj);
+            lineReferenceY.Add(y, lineObj);
         }
 
         GridLines[0].GetComponent<LineRenderer>().sharedMaterial.SetColor("_Color", lineColor);
@@ -181,6 +195,44 @@ public class GridManager : MonoBehaviour
         InstantiateLinesParent();
         GridLines.Clear();
     }
+
+    public void ResetLinesMaterial() {
+        foreach(GameObject lineObject in GridLines) {
+            LineRenderer rend = lineObject.GetComponent<LineRenderer>();
+            rend.sharedMaterial = gridLineNormal;
+        }
+    }
+
+    void HiglightLine(GameObject lineObject) {
+        LineRenderer rend = lineObject.GetComponent<LineRenderer>();
+        rend.sharedMaterial = gridLineHighligted;
+    }
+
+    public void HighlightLinesForPointList(List<Vector2> pointList) {
+        foreach(Vector2 point in pointList) {
+            HighlightLinesForPoint(point);
+        }
+    }
+
+    public void HighlightLinesForPoint(Vector2 position) {
+        int xCount = Mathf.RoundToInt(position.x / separationSize);
+        int yCount = Mathf.RoundToInt(position.y / separationSize);
+
+        int centerX = 1 + (lineReferenceX.Count-1)/2;
+        int centerY = (lineReferenceY.Count-1)/2;
+
+        xCount+=centerX - 1;
+        yCount=centerY - yCount;
+        //yCount+=centerY;
+
+        if(lineReferenceX.ContainsKey(xCount)) {
+            HiglightLine(lineReferenceX[xCount]);
+        }
+        if(lineReferenceY.ContainsKey(yCount)) {
+            HiglightLine(lineReferenceY[yCount]);
+        }
+    }
+
 
     public void ChangeGridSize(bool increment = true) {
         if(increment) {

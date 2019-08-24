@@ -1369,6 +1369,8 @@ namespace MiKu.NET {
 
                     }
                 }
+                gridManager.ResetLinesMaterial();
+                gridManager.HighlightLinesForPointList(FetchObjectPositionsAtCurrentTime(CurrentTime));
             } else if(Input.GetAxis("Mouse ScrollWheel") < 0f && !IsPlaying && !PromtWindowOpen) // backwards
               {
                 if(!isCTRLDown && !isALTDown) {
@@ -1396,6 +1398,8 @@ namespace MiKu.NET {
                         DrawTrackXSLines();
                     }
                 }
+                gridManager.ResetLinesMaterial();
+                gridManager.HighlightLinesForPointList(FetchObjectPositionsAtCurrentTime(CurrentTime));
             }
 
             // Volume control
@@ -1409,6 +1413,8 @@ namespace MiKu.NET {
                     m_SFXVolumeSlider.value += 0.1f;
                 } else if(isALTDown) {
                     gridManager.ChangeGridSize();
+                    gridManager.ResetLinesMaterial();
+                    gridManager.HighlightLinesForPointList(FetchObjectPositionsAtCurrentTime(CurrentTime));
                 } else {
                     m_VolumeSlider.value += 0.1f;
                 }
@@ -1427,6 +1433,8 @@ namespace MiKu.NET {
                     m_SFXVolumeSlider.value -= 0.1f;
                 } else if(isALTDown) {
                     gridManager.ChangeGridSize(false);
+                    gridManager.ResetLinesMaterial();
+                    gridManager.HighlightLinesForPointList(FetchObjectPositionsAtCurrentTime(CurrentTime));
                 } else {
                     m_VolumeSlider.value -= 0.1f;
                 }
@@ -5329,523 +5337,541 @@ namespace MiKu.NET {
         }
 
 
+        public List<Vector2> FetchObjectPositionsAtCurrentTime(float time) {
+            List<Vector2> list = new List<Vector2>();
+            Dictionary<float, List<EditorNote>> workingTrack = s_instance.GetCurrentTrackDifficulty();
+            List<Vector2> railPoints = RailHelper.FetchRailPositionsAtTime(time, s_instance.GetCurrentRailListByDifficulty());
+            list.AddRange(railPoints);
+            if(workingTrack.ContainsKey(time)) {
+                List<EditorNote> noteList = workingTrack[time];
+                foreach(EditorNote note in noteList) {
+                    list.Add(new Vector2(note.Position[0], note.Position[1]));
+                }
+            }
+            return list;
+        }
+
+
         /// <summary>
         /// Add note to chart
         /// </summary>
         public static void AddNoteToChart(GameObject noteFromNoteArea) {
-            Trace.WriteLine("AddNoteToChart called");
-            if(PromtWindowOpen || s_instance.isBusy) return;
+            try {
+                Trace.WriteLine("AddNoteToChart called");
+                if(PromtWindowOpen || s_instance.isBusy) return;
 
-            if(CurrentTime < MIN_NOTE_START * MS) {
-                Miku_DialogManager.ShowDialog(
-                    Miku_DialogManager.DialogType.Alert,
-                    string.Format(
-                        StringVault.Info_NoteTooClose,
-                        MIN_NOTE_START
-                    )
-                );
+                if(CurrentTime < MIN_NOTE_START * MS) {
+                    Miku_DialogManager.ShowDialog(
+                        Miku_DialogManager.DialogType.Alert,
+                        string.Format(
+                            StringVault.Info_NoteTooClose,
+                            MIN_NOTE_START
+                        )
+                    );
 
-                return;
-            }
-            Dictionary<float, List<EditorNote>> workingTrack = s_instance.GetCurrentTrackDifficulty();
-            if(IsBallNoteType(Track.s_instance.selectedUsageType)) {
-                Trace.WriteLine("Is in note branch");
-
-
-                if(s_instance.isSHIFTDown) {
-                    Rail rail = RailHelper.ClosestRailButNotAtThisPoint(CurrentTime, new Vector2(noteFromNoteArea.transform.position.x, noteFromNoteArea.transform.position.y));
-                    if(rail != null) {
-                        rail.SwitchHandTo(s_instance.selectedNoteType);
-                        RailHelper.ReinstantiateRail(rail);
-                        RailHelper.ReinstantiateRailSegmentObjects(rail);
-                        return;
-                    }
-                }
-
-                // need to check that we aren't in the incorrect rails section
-                // for that we first filter which rails appear at this time point
-                List<Rail> rails = s_instance.GetCurrentRailListByDifficulty();
-                List<Rail> railsAtCurrentTIme = RailHelper.GetListOfRailsInRange(rails, CurrentTime, CurrentTime, RailHelper.RailRangeBehaviour.Allow);
-                bool isIncorrectPlacement = false;
-                if(railsAtCurrentTIme != null) {
-                    foreach(Rail rail in railsAtCurrentTIme) {
-                        // this is fine
-                        if(rail.noteType == s_instance.selectedNoteType || IsOppositeNoteType(rail.noteType, s_instance.selectedNoteType))
-                            continue;
-                        // if we're here this means we need to check if the time point is beggining or ending time of that rail.
-                        if(CurrentTime == rail.startTime || CurrentTime == rail.endTime)
-                            continue;
-                        // if we're here the note definitely can't be placed here.
-                        isIncorrectPlacement = true;
-                    }
-                }
-
-                // first we check if theres is any note in that time period
-                // We need to check the track difficulty selected
-                if(workingTrack != null) {
-                    // ball section, rail notes need to be handled differently
-                    float timeRangeDuplicatesStart = CurrentTime - MIN_TIME_OVERLAY_CHECK;
-                    float timeRangeDuplicatesEnd = CurrentTime + MIN_TIME_OVERLAY_CHECK;
-                    List<float> keys_tofilter = workingTrack.Keys.ToList();
-                    keys_tofilter = keys_tofilter.Where(time => time >= timeRangeDuplicatesStart
-                            && time <= timeRangeDuplicatesEnd).ToList();
-                    bool hasNotesWithinDeltaTime = keys_tofilter.Count != 0;
-
-                    if(s_instance.isALTDown) {
-                        // if alt is down we don't care about any limits 
-                        // if there is no note at this time point we place one 
-                        // if there is a note fo this color, we move it here
-                        EditorNote potentialMovedNote = GetSimpleNoteAtTime(CurrentTime, s_instance.selectedNoteType);
-                        if(potentialMovedNote == null) {
-                            //nothing to move, we just instantiate a new one
-                            EditorNote newNote = new EditorNote(noteFromNoteArea.transform.position, Track.CurrentTime);
-                            newNote.HandType = s_instance.selectedNoteType;
-
-                            // Check if the note placed if of special type 
-                            if(IsOfSpecialType(newNote)) {
-                                // If whe are no creating a special, Then we init the new special section
-                                if(!s_instance.specialSectionStarted) {
-                                    s_instance.specialSectionStarted = true;
-                                    s_instance.currentSpecialSectionID++;
-                                    Miku_DialogManager.ShowDialog(Miku_DialogManager.DialogType.Info, StringVault.Info_SpecialModeStarted);
-                                    s_instance.ToggleWorkingStateAlertOn(StringVault.Info_UserOnSpecialSection);
-                                }
-
-                                // Assing the Special ID to the note
-                                newNote.ComboId = s_instance.currentSpecialSectionID;
-
-                                Track.LogMessage("Current Special ID: " + s_instance.currentSpecialSectionID);
-                            }
-                            if(!workingTrack.ContainsKey(CurrentTime)) {
-                                workingTrack.Add(CurrentTime, new List<EditorNote>());
-                                AddTimeToSFXList(CurrentTime);
-                            }
-                            // Finally we added the note to the dictonary
-                            // ref of the note for easy of access to properties                        
-                            if(workingTrack.ContainsKey(CurrentTime)) {
-                                // print("Trying currentTime "+CurrentTime);
-                                workingTrack[CurrentTime].Add(newNote);
-                                s_instance.IncreaseTotalDisplayedNotesCount();
-                                s_instance.AddNoteGameObjectToScene(newNote);
-                            } else {
-                                Track.LogMessage("Time does not exist");
-                            }
-                            return;
-                        } else {
-                            // we move the note to the clicked position
-                            // first we remove the note's gameobject to remove it from the track
-                            DestroyImmediate(potentialMovedNote.GameObject);
-                            //next we move it
-                            float xDiff = Math.Abs(noteFromNoteArea.transform.position.x - potentialMovedNote.Position[0]);
-                            float yDiff = Math.Abs(noteFromNoteArea.transform.position.y - potentialMovedNote.Position[1]);
-                            if(noteFromNoteArea.transform.position.x < potentialMovedNote.Position[0])
-                                xDiff*=-1;
-                            if(noteFromNoteArea.transform.position.y < potentialMovedNote.Position[1])
-                                yDiff*=-1;
-                            potentialMovedNote.Position[0]+=xDiff;
-                            potentialMovedNote.Position[1]+=yDiff;
-                            s_instance.AddNoteGameObjectToScene(potentialMovedNote);
-                        }
-                        return;
-                    }
-
-
-                    // if there are no notes to overlap, instantiate time in the dictionary
-                    if(!hasNotesWithinDeltaTime && !isIncorrectPlacement) {
-                        Trace.WriteLine("Adding new time to track: " + CurrentTime);
-                        workingTrack.Add(CurrentTime, new List<EditorNote>());
-                        AddTimeToSFXList(CurrentTime);
-                    } else {
-                        // find and remove notes that overlaps and return if one was removed
-                        // needs a rail handler inside because removed rail note requires whole rail recalc
-                        if(RemoveOverlappingNote(workingTrack, keys_tofilter, noteFromNoteArea)) {
-                            Trace.WriteLine("Note removed. Returning");
-                            return;
-                        }
-                        // check if max notes of current type are reached for the time delta and return if true
-                        {
-                            if(ReachedMaxNotesOfCurrentType(workingTrack, keys_tofilter, noteFromNoteArea)) {
-                                Trace.WriteLine("Reached maximum note density for type. Returning");
-                                return;
-                            }
-
-                            if(isIncorrectPlacement) {
-                                Miku_DialogManager.ShowDialog(Miku_DialogManager.DialogType.Alert, string.Format(StringVault.Alert_MaxNumberOfTypeNotes, s_instance.selectedNoteType.ToString()));
-                                return;
-                            }
-                            AdjustCurrentTimeToFoundBallNotes(workingTrack, keys_tofilter);
-                        }
-                    }
-                }
-            }
-            if(IsRailNoteType(Track.s_instance.selectedUsageType)) {
-                Trace.WriteLine("Is in rail branch");
-
-                // we need to find the closest rail to this poibt by distance but not at this exact point
-                // clicking on the exact point is meant to delete whole rail
-                if(s_instance.isSHIFTDown) {
-                    Rail rail = RailHelper.ClosestRailButNotAtThisPoint(CurrentTime, new Vector2(noteFromNoteArea.transform.position.x, noteFromNoteArea.transform.position.y));
-                    if(rail != null) {
-                        rail.SwitchHandTo(s_instance.selectedNoteType);
-                        RailHelper.ReinstantiateRail(rail);
-                        RailHelper.ReinstantiateRailSegmentObjects(rail);
-                        return;
-                    }
-                }
-
-                if(s_instance.isALTDown) {
-                    Rail rail = RailHelper.ClosestRailButNotAtThisPoint(CurrentTime, new Vector2(noteFromNoteArea.transform.position.x, noteFromNoteArea.transform.position.y));
-                    if(rail != null) {
-                        EditorNote note = rail.GetNoteAtPosition(CurrentTime);
-                        float xDiff = Math.Abs(noteFromNoteArea.transform.position.x - note.Position[0]);
-                        float yDiff = Math.Abs(noteFromNoteArea.transform.position.y - note.Position[1]);
-                        if(noteFromNoteArea.transform.position.x < note.Position[0])
-                            xDiff*=-1;
-                        if(noteFromNoteArea.transform.position.y < note.Position[1])
-                            yDiff*=-1;
-
-                        rail.ShiftEveryNoteBy(new Vector2(xDiff, yDiff));
-                        RailHelper.ReinstantiateRail(rail);
-                        RailHelper.ReinstantiateRailSegmentObjects(rail);
-                        return;
-                    }
-                }
-
-
-                if(!RailHelper.CanPlaceSelectedRailTypeHere(CurrentTime, new Vector2(noteFromNoteArea.transform.position.x, noteFromNoteArea.transform.position.y), s_instance.selectedNoteType)) {
-                    // display a warning and exit
-                    Miku_DialogManager.ShowDialog(Miku_DialogManager.DialogType.Alert, StringVault.Alert_CantPlaceRail);
                     return;
                 }
+                Dictionary<float, List<EditorNote>> workingTrack = s_instance.GetCurrentTrackDifficulty();
+                if(IsBallNoteType(Track.s_instance.selectedUsageType)) {
+                    Trace.WriteLine("Is in note branch");
 
 
-                // check to see if there's an opposing rail note here
-                // if there is adjust the time to match
-                // if there is not just move the current rail note and reinstantiate the rail
-                float timeRangeDuplicatesStart = CurrentTime - MIN_TIME_OVERLAY_CHECK;
-                float timeRangeDuplicatesEnd = CurrentTime + MIN_TIME_OVERLAY_CHECK;
-                List<Rail> rails = s_instance.GetCurrentRailListByDifficulty();
-                rails.Sort((x, y) => x.startTime.CompareTo(y.startTime));
-
-
-
-                rails = rails.Where(filteredRail => filteredRail.noteType == s_instance.selectedNoteType).ToList();
-
-                // we're looking for up to two rails overlapping this time point
-                // two - because the junction point of two rails will contain a head and a breaker at the same time
-                Trace.WriteLine("Attempting to find rail for this time point");
-                List<Rail> matches = new List<Rail>();
-                foreach(Rail testedRail in rails.OrEmptyIfNull()) {
-                    if(testedRail.scheduleForDeletion)
-                        continue;
-
-                    // we're not interested in wrong colored rails
-                    if(testedRail.noteType != s_instance.selectedNoteType)
-                        continue;
-
-                    if(testedRail.startTime > timeRangeDuplicatesEnd) {
-                        Trace.WriteLine("DISCARDING Rail: " + testedRail.railId + " starts at: " + testedRail.startTime + " which is too late");
-                        continue;
-                    }
-
-                    if(testedRail.endTime < timeRangeDuplicatesStart) {
-                        Trace.WriteLine("DISCARDING Rail: " + testedRail.railId + " ends at: " + testedRail.endTime + " which is too early");
-                        continue;
-                    }
-
-                    if(testedRail.TimeInInterval(CurrentTime)) {
-                        Trace.WriteLine("ADDING Rail: " + testedRail.railId + " contains the current time.");
-                        matches.Add(testedRail);
-                    }
-
-                    if(matches.Count == 2) {
-                        Trace.WriteLine("Collected all possible rail matches (2)");
-                        break;
-                    }
-                }
-
-                // we need to check within found rails if we can replace the current note and do that
-                {
-                    Rail matchedRail = null;
-                    Rail otherRail = null;
-                    Trace.WriteLine("Attempting to find a note we could modify in " + matches.Count + "matched rails");
-
-                    foreach(Rail potentialMatch in matches.OrEmptyIfNull()) {
-                        if(matches.Count == 2) {
-                            // we have found two candidates and this one is NOT where we were on the previous step
-                            if(PreviousTime < CurrentTime && potentialMatch.startTime > CurrentTime) {
-                                otherRail = potentialMatch;
-                                continue;
-                            }
-
-                            // we have found two candidates and this one is NOT where we were on the previous step
-                            if(PreviousTime > CurrentTime && potentialMatch.startTime < CurrentTime) {
-                                otherRail = potentialMatch;
-                                continue;
-                            }
-                        }
-                        if(!potentialMatch.scheduleForDeletion && potentialMatch.HasNoteAtTime(CurrentTime)
-                            && Track.s_instance.selectedNoteType == potentialMatch.noteType) {
-                            Trace.WriteLine("Rail: " + potentialMatch.railId + " has a note that can be moved.");
-                            matchedRail = potentialMatch;
-                            break;
-                        }
-                    }
-
-                    // we're being explicitly told that a new rail should be created at this point
-                    if(s_instance.isCTRLDown) {
-                        // potential problems:
-                        // 1) need to break an existing rail
-                        // 2) need to make sure extend doesn't happen
-                        // 3) need to set the breaker on both sides of conjoined rails
-                        // 4) must NOT operate on any existing note unless...
-                        // 5) ...ctrl click on a leader note fo the rail removes all of it 
-
-                        // extension should be prioritized over creation here
-                        // therefore we need to find a rail we can extend
-                        if(matchedRail != null) {
-                            // we need to check if we're at a head note, tail note or middle note
-                            EditorNote railNote = matchedRail.GetNoteAtPosition(CurrentTime);
-                            if(matches.Count == 2) {
-                                // if matches == 2, we've reached the max saturation and are in the remove branch
-                                // if matches == 2 and size == 2 then we need to REMOVE the whole gap rail
-                                if(matchedRail.Size() == 2) {
-                                    RailHelper.DestroyRail(matchedRail);
-                                    s_instance.DecreaseTotalDisplayedNotesCount();
-                                    return;
-                                } else {
-                                    Trace.WriteLine("Deleting sole note on the rail: " + matchedRail.railId);
-                                    // otherwise we only really need to remove a single note
-                                    EditorNote noteToRemove = matchedRail.GetNoteAtPosition(CurrentTime);
-                                    matchedRail.RemoveNote(noteToRemove.noteId);
-                                    return;
-                                }
-                            } else if(railNote.noteId == matchedRail.leader.thisNote.noteId) {
-                                // we check if there's a rail to the left we can expand with this position
-                                Rail rail = RailHelper.AttemptExtendTail(CurrentTime, noteFromNoteArea.transform.position, rails, 
-                                    s_instance.isALTDown ? RailHelper.RailExtensionPolicy.AllowNotesOfSameColor : RailHelper.RailExtensionPolicy.NoInterruptions);
-                                if(rail != null) {
-                                    RailNoteWrapper lastNote = rail.GetLastNote();
-                                    if(lastNote != null) {
-                                        if(rail.Size() > 1) {
-                                            rail.FlipNoteTypeToBreaker(lastNote.thisNote.noteId);
-                                            rail.FlipNoteTypeToBreaker(rail.leader.thisNote.noteId);
-                                            if(matchedRail != null) {
-                                                bool createdNewRail = matchedRail.FlipNoteTypeToBreaker(matchedRail.leader.thisNote.noteId);
-                                                if(createdNewRail)
-                                                    s_instance.IncreaseTotalDisplayedNotesCount();
-                                            }
-
-                                        }
-                                        return;
-                                    }
-                                }
-                            } else if(railNote.noteId == matchedRail.GetLastNote().thisNote.noteId) {
-                                // tail will create a leader note of a conjoined rail with tail breaker on the original rail and head breaker on the new one 
-                                // flip the note of the matched rail to breaker
-                                matchedRail.FlipNoteTypeToBreaker(railNote.noteId);
-
-                                // create a new rail, will need to optimise code to remove redundancy with later parts
-                                Rail conjoinedRail = CreateNewRailAndAddNoteToIt(noteFromNoteArea);
-                                if(conjoinedRail == null) {
-                                    Trace.WriteLine("Null new rail detected, returning");
-                                    return;
-                                }
-                                if(conjoinedRail.Size() > 1) {
-                                    conjoinedRail.FlipNoteTypeToBreaker(conjoinedRail.leader.thisNote.noteId);
-                                    conjoinedRail.FlipNoteTypeToBreaker(conjoinedRail.GetLastNote().thisNote.noteId);
-                                }
-                                if(matchedRail != null)
-                                    matchedRail.FlipNoteTypeToBreaker(matchedRail.GetLastNote().thisNote.noteId);
-
-                                s_instance.IncreaseTotalDisplayedNotesCount();
-                                return;
-                            } else {
-                                // middle will break and create a conjoined rail in the middle of an existing one
-                                //EditorNote leaderOfConjoinedRail = new EditorNote(noteFromNoteArea.transform.position, Track.CurrentTime);
-                                //leaderOfConjoinedRail.UsageType = s_instance.selectedUsageType;
-                                //leaderOfConjoinedRail.HandType = s_instance.selectedNoteType;
-                                RailNoteWrapper nextNote = matchedRail.GetNoteAtThisOrFollowingTime(CurrentTime);
-                                if(nextNote.thisNote.TimePoint != CurrentTime) {
-                                    return;
-                                }
-                                if(nextNote == null) {
-                                    Trace.WriteLine("Null next note detected, returning");
-                                    return;
-                                }
-                                RailHelper.LogRails(s_instance.GetCurrentRailListByDifficulty(), "Splitting rail being");
-                                Rail nextRail = null;
-                                if(nextNote.thisNote.TimePoint == CurrentTime) {
-                                    // we need to break the rail at the NEXT note
-                                    // then clone THIS one note and extend the newly created rail with it
-                                    nextRail = matchedRail.ConvertTheTailIntoNewRail(nextNote.nextNote);
-                                    nextNote.nextNote = null;
-                                    RailNoteWrapper addedNote =  nextRail.AddNote(nextNote.thisNote.Clone());
-                                    nextRail.FlipNoteTypeToBreaker(addedNote.thisNote.noteId);
-                                    matchedRail.FlipNoteTypeToBreaker(nextNote.thisNote.noteId);
-                                } else {
-                                    nextRail = matchedRail.ConvertTheTailIntoNewRail(nextNote);
-                                    nextRail.FlipNoteTypeToBreaker(nextNote.thisNote.noteId);
-                                }
-
-                                matchedRail.RecalcDuration();
-                                RailHelper.ReinstantiateRail(matchedRail);
-                                RailHelper.LogRails(s_instance.GetCurrentRailListByDifficulty(), "Splitting rail end");
-                                s_instance.IncreaseTotalDisplayedNotesCount();
-                            }
-                        } else {
-                            // this just simply places a new unbroken leader note but without joining it to anything
-                            CreateNewRailAndAddNoteToIt(noteFromNoteArea);
-                            s_instance.IncreaseTotalDisplayedNotesCount();
-                        }
-                        return;
-                    }
-
-                    // if we found a match we move the rail note to a new position and recalc the rail
-                    if(matchedRail != null) {
-                        EditorNote railNote = matchedRail.GetNoteAtPosition(CurrentTime);
-                        if(railNote != null) {
-                            Vector2 foundNotePosition = new Vector2(railNote.Position[0], railNote.Position[1]);
-                            Vector2 clickedPosition = new Vector2(noteFromNoteArea.transform.position.x, noteFromNoteArea.transform.position.y);
-                            float distance = Vector2.Distance(foundNotePosition, clickedPosition);
-                            if(distance > 0.05f) {
-                                // we've clicked away from current note. this means we need to move it
-                                matchedRail.MoveNoteAtTimeToPosition(CurrentTime, noteFromNoteArea.transform.position.x, noteFromNoteArea.transform.position.y);
-                            } else {
-                                // we've clicked on the current note. this means we either want to delete it or change its subtype
-                                if(!Track.s_instance.isSHIFTDown) {
-                                    matchedRail.RemoveNote(railNote.noteId);
-                                    if(matchedRail.scheduleForDeletion) { 
-                                        Trace.WriteLine("Deleting the rail: " + matchedRail.railId);
-                                        List<Rail> tempRailList = s_instance.GetCurrentRailListByDifficulty();
-                                        tempRailList.Remove(matchedRail);
-                                        matchedRail.DestroyLeader();
-                                        s_instance.DecreaseTotalDisplayedNotesCount();
-                                    }
-                                } else {
-                                    // if shift is clicked we're deleting whole rail instead
-                                    s_instance.DecreaseTotalDisplayedNotesCount();
-                                    RailHelper.DestroyRail(matchedRail);
-                                }
-                                return;
-                            }
-
-                            if(matchedRail.scheduleForDeletion) {
-
-                                Trace.WriteLine("Deleting the rail: " + matchedRail.railId);
-                                List<Rail> tempRailList = s_instance.GetCurrentRailListByDifficulty();
-                                tempRailList.Remove(matchedRail);
-                                matchedRail.DestroyLeader();
-                                s_instance.DecreaseTotalDisplayedNotesCount();
-                            }
-                            Trace.WriteLine("Moved the note. Returning");
-                        }
-                        return;
-                    }
-                    // if we're placing the special combo rail over a common one, display promt and exit
-                    // same for the opposite case
-                    Trace.WriteLine("Making sure we're not placing a note of the incompatible type over existing rail");
-                    bool simpleRail = false;
-                    foreach(Rail potentialMatch in matches.OrEmptyIfNull()) {
-                        if(!potentialMatch.scheduleForDeletion && IsSimpleNoteType(Track.s_instance.selectedNoteType) && IsSimpleNoteType(potentialMatch.noteType)) {
-                            Trace.WriteLine("Working on a SIMPLE rail");
-                            simpleRail = true;
-                            break;
-                        }
-                    }
-                    if(simpleRail)
-                        Trace.WriteLine("Working on a SIMPLE rail");
-
-                    if(!simpleRail && matches != null && matches.Count > 0) {
-                        if(matches.Count == 1 && matches[0].noteType != s_instance.selectedNoteType) {
-                            Trace.WriteLine("Displaying INCOMPATIBLE warning");
-                            Miku_DialogManager.ShowDialog(Miku_DialogManager.DialogType.Alert, StringVault.Alert_CantPlaceRailOfDifferntSubtype);
+                    if(s_instance.isSHIFTDown) {
+                        Rail rail = RailHelper.ClosestRailButNotAtThisPoint(CurrentTime, new Vector2(noteFromNoteArea.transform.position.x, noteFromNoteArea.transform.position.y));
+                        if(rail != null) {
+                            rail.SwitchHandTo(s_instance.selectedNoteType);
+                            RailHelper.ReinstantiateRail(rail);
+                            RailHelper.ReinstantiateRailSegmentObjects(rail);
                             return;
                         }
                     }
 
-                    Trace.WriteLine("Creating a note to add to some rail");
-                    EditorNote noteForRail = new EditorNote(noteFromNoteArea.transform.position, Track.CurrentTime);
-                    noteForRail.UsageType = s_instance.selectedUsageType;
-                    noteForRail.HandType = s_instance.selectedNoteType;
+                    // need to check that we aren't in the incorrect rails section
+                    // for that we first filter which rails appear at this time point
+                    List<Rail> rails = s_instance.GetCurrentRailListByDifficulty();
+                    List<Rail> railsAtCurrentTIme = RailHelper.GetListOfRailsInRange(rails, CurrentTime, CurrentTime, RailHelper.RailRangeBehaviour.Allow);
+                    bool isIncorrectPlacement = false;
+                    if(railsAtCurrentTIme != null) {
+                        foreach(Rail rail in railsAtCurrentTIme) {
+                            // this is fine
+                            if(rail.noteType == s_instance.selectedNoteType || IsOppositeNoteType(rail.noteType, s_instance.selectedNoteType))
+                                continue;
+                            // if we're here this means we need to check if the time point is beggining or ending time of that rail.
+                            if(CurrentTime == rail.startTime || CurrentTime == rail.endTime)
+                                continue;
+                            // if we're here the note definitely can't be placed here.
+                            isIncorrectPlacement = true;
+                        }
+                    }
 
-                    noteForRail.Log();
+                    // first we check if theres is any note in that time period
+                    // We need to check the track difficulty selected
+                    if(workingTrack != null) {
+                        // ball section, rail notes need to be handled differently
+                        float timeRangeDuplicatesStart = CurrentTime - MIN_TIME_OVERLAY_CHECK;
+                        float timeRangeDuplicatesEnd = CurrentTime + MIN_TIME_OVERLAY_CHECK;
+                        List<float> keys_tofilter = workingTrack.Keys.ToList();
+                        keys_tofilter = keys_tofilter.Where(time => time >= timeRangeDuplicatesStart
+                                && time <= timeRangeDuplicatesEnd).ToList();
+                        bool hasNotesWithinDeltaTime = keys_tofilter.Count != 0;
 
-                    // trying to add the note to an already existing rail
-                    bool addedToExistingRail = false;
+                        if(s_instance.isALTDown) {
+                            // if alt is down we don't care about any limits 
+                            // if there is no note at this time point we place one 
+                            // if there is a note fo this color, we move it here
+                            EditorNote potentialMovedNote = GetSimpleNoteAtTime(CurrentTime, s_instance.selectedNoteType);
+                            if(potentialMovedNote == null) {
+                                //nothing to move, we just instantiate a new one
+                                EditorNote newNote = new EditorNote(noteFromNoteArea.transform.position, Track.CurrentTime);
+                                newNote.HandType = s_instance.selectedNoteType;
 
-                    // first we need to sort the rails on time and find the ones containing the current note
-                    // this should net us exactly one rail
-                    Trace.WriteLine("Attempting to find a rail that this note can be added to in the middle");
-                    List<Rail> activeRailsOfSameType = rails.Where(filteredRail => filteredRail.TimeInInterval(CurrentTime) && filteredRail.noteType == s_instance.selectedNoteType).ToList();
+                                // Check if the note placed if of special type 
+                                if(IsOfSpecialType(newNote)) {
+                                    // If whe are no creating a special, Then we init the new special section
+                                    if(!s_instance.specialSectionStarted) {
+                                        s_instance.specialSectionStarted = true;
+                                        s_instance.currentSpecialSectionID++;
+                                        Miku_DialogManager.ShowDialog(Miku_DialogManager.DialogType.Info, StringVault.Info_SpecialModeStarted);
+                                        s_instance.ToggleWorkingStateAlertOn(StringVault.Info_UserOnSpecialSection);
+                                    }
 
-                    foreach(Rail testedRail in activeRailsOfSameType.OrEmptyIfNull()) {
+                                    // Assing the Special ID to the note
+                                    newNote.ComboId = s_instance.currentSpecialSectionID;
+
+                                    Track.LogMessage("Current Special ID: " + s_instance.currentSpecialSectionID);
+                                }
+                                if(!workingTrack.ContainsKey(CurrentTime)) {
+                                    workingTrack.Add(CurrentTime, new List<EditorNote>());
+                                    AddTimeToSFXList(CurrentTime);
+                                }
+                                // Finally we added the note to the dictonary
+                                // ref of the note for easy of access to properties                        
+                                if(workingTrack.ContainsKey(CurrentTime)) {
+                                    // print("Trying currentTime "+CurrentTime);
+                                    workingTrack[CurrentTime].Add(newNote);
+                                    s_instance.IncreaseTotalDisplayedNotesCount();
+                                    s_instance.AddNoteGameObjectToScene(newNote);
+                                } else {
+                                    Track.LogMessage("Time does not exist");
+                                }
+                                return;
+                            } else {
+                                // we move the note to the clicked position
+                                // first we remove the note's gameobject to remove it from the track
+                                DestroyImmediate(potentialMovedNote.GameObject);
+                                //next we move it
+                                float xDiff = Math.Abs(noteFromNoteArea.transform.position.x - potentialMovedNote.Position[0]);
+                                float yDiff = Math.Abs(noteFromNoteArea.transform.position.y - potentialMovedNote.Position[1]);
+                                if(noteFromNoteArea.transform.position.x < potentialMovedNote.Position[0])
+                                    xDiff*=-1;
+                                if(noteFromNoteArea.transform.position.y < potentialMovedNote.Position[1])
+                                    yDiff*=-1;
+                                potentialMovedNote.Position[0]+=xDiff;
+                                potentialMovedNote.Position[1]+=yDiff;
+                                s_instance.AddNoteGameObjectToScene(potentialMovedNote);
+                            }
+                            return;
+                        }
+
+
+                        // if there are no notes to overlap, instantiate time in the dictionary
+                        if(!hasNotesWithinDeltaTime && !isIncorrectPlacement) {
+                            Trace.WriteLine("Adding new time to track: " + CurrentTime);
+                            workingTrack.Add(CurrentTime, new List<EditorNote>());
+                            AddTimeToSFXList(CurrentTime);
+                        } else {
+                            // find and remove notes that overlaps and return if one was removed
+                            // needs a rail handler inside because removed rail note requires whole rail recalc
+                            if(RemoveOverlappingNote(workingTrack, keys_tofilter, noteFromNoteArea)) {
+                                Trace.WriteLine("Note removed. Returning");
+                                return;
+                            }
+                            // check if max notes of current type are reached for the time delta and return if true
+                            {
+                                if(ReachedMaxNotesOfCurrentType(workingTrack, keys_tofilter, noteFromNoteArea)) {
+                                    Trace.WriteLine("Reached maximum note density for type. Returning");
+                                    return;
+                                }
+
+                                if(isIncorrectPlacement) {
+                                    Miku_DialogManager.ShowDialog(Miku_DialogManager.DialogType.Alert, string.Format(StringVault.Alert_MaxNumberOfTypeNotes, s_instance.selectedNoteType.ToString()));
+                                    return;
+                                }
+                                AdjustCurrentTimeToFoundBallNotes(workingTrack, keys_tofilter);
+                            }
+                        }
+                    }
+                }
+                if(IsRailNoteType(Track.s_instance.selectedUsageType)) {
+                    Trace.WriteLine("Is in rail branch");
+
+                    // we need to find the closest rail to this poibt by distance but not at this exact point
+                    // clicking on the exact point is meant to delete whole rail
+                    if(s_instance.isSHIFTDown) {
+                        Rail rail = RailHelper.ClosestRailButNotAtThisPoint(CurrentTime, new Vector2(noteFromNoteArea.transform.position.x, noteFromNoteArea.transform.position.y));
+                        if(rail != null) {
+                            rail.SwitchHandTo(s_instance.selectedNoteType);
+                            RailHelper.ReinstantiateRail(rail);
+                            RailHelper.ReinstantiateRailSegmentObjects(rail);
+                            return;
+                        }
+                    }
+
+                    if(s_instance.isALTDown) {
+                        Rail rail = RailHelper.ClosestRailButNotAtThisPoint(CurrentTime, new Vector2(noteFromNoteArea.transform.position.x, noteFromNoteArea.transform.position.y));
+                        if(rail != null) {
+                            EditorNote note = rail.GetNoteAtPosition(CurrentTime);
+                            float xDiff = Math.Abs(noteFromNoteArea.transform.position.x - note.Position[0]);
+                            float yDiff = Math.Abs(noteFromNoteArea.transform.position.y - note.Position[1]);
+                            if(noteFromNoteArea.transform.position.x < note.Position[0])
+                                xDiff*=-1;
+                            if(noteFromNoteArea.transform.position.y < note.Position[1])
+                                yDiff*=-1;
+
+                            rail.ShiftEveryNoteBy(new Vector2(xDiff, yDiff));
+                            RailHelper.ReinstantiateRail(rail);
+                            RailHelper.ReinstantiateRailSegmentObjects(rail);
+                            return;
+                        }
+                    }
+
+
+                    if(!RailHelper.CanPlaceSelectedRailTypeHere(CurrentTime, new Vector2(noteFromNoteArea.transform.position.x, noteFromNoteArea.transform.position.y), s_instance.selectedNoteType)) {
+                        // display a warning and exit
+                        Miku_DialogManager.ShowDialog(Miku_DialogManager.DialogType.Alert, StringVault.Alert_CantPlaceRail);
+                        return;
+                    }
+
+
+                    // check to see if there's an opposing rail note here
+                    // if there is adjust the time to match
+                    // if there is not just move the current rail note and reinstantiate the rail
+                    float timeRangeDuplicatesStart = CurrentTime - MIN_TIME_OVERLAY_CHECK;
+                    float timeRangeDuplicatesEnd = CurrentTime + MIN_TIME_OVERLAY_CHECK;
+                    List<Rail> rails = s_instance.GetCurrentRailListByDifficulty();
+                    rails.Sort((x, y) => x.startTime.CompareTo(y.startTime));
+
+
+
+                    rails = rails.Where(filteredRail => filteredRail.noteType == s_instance.selectedNoteType).ToList();
+
+                    // we're looking for up to two rails overlapping this time point
+                    // two - because the junction point of two rails will contain a head and a breaker at the same time
+                    Trace.WriteLine("Attempting to find rail for this time point");
+                    List<Rail> matches = new List<Rail>();
+                    foreach(Rail testedRail in rails.OrEmptyIfNull()) {
                         if(testedRail.scheduleForDeletion)
                             continue;
 
-                        Trace.WriteLine("Adding note inside the rail:");
-                        testedRail.Log();
-                        testedRail.AddNote(noteForRail);
-                        addedToExistingRail = true;
-                        Trace.WriteLine("Returning");
+                        // we're not interested in wrong colored rails
+                        if(testedRail.noteType != s_instance.selectedNoteType)
+                            continue;
+
+                        if(testedRail.startTime > timeRangeDuplicatesEnd) {
+                            Trace.WriteLine("DISCARDING Rail: " + testedRail.railId + " starts at: " + testedRail.startTime + " which is too late");
+                            continue;
+                        }
+
+                        if(testedRail.endTime < timeRangeDuplicatesStart) {
+                            Trace.WriteLine("DISCARDING Rail: " + testedRail.railId + " ends at: " + testedRail.endTime + " which is too early");
+                            continue;
+                        }
+
+                        if(testedRail.TimeInInterval(CurrentTime)) {
+                            Trace.WriteLine("ADDING Rail: " + testedRail.railId + " contains the current time.");
+                            matches.Add(testedRail);
+                        }
+
+                        if(matches.Count == 2) {
+                            Trace.WriteLine("Collected all possible rail matches (2)");
+                            break;
+                        }
+                    }
+
+                    // we need to check within found rails if we can replace the current note and do that
+                    {
+                        Rail matchedRail = null;
+                        Rail otherRail = null;
+                        Trace.WriteLine("Attempting to find a note we could modify in " + matches.Count + "matched rails");
+
+                        foreach(Rail potentialMatch in matches.OrEmptyIfNull()) {
+                            if(matches.Count == 2) {
+                                // we have found two candidates and this one is NOT where we were on the previous step
+                                if(PreviousTime < CurrentTime && potentialMatch.startTime > CurrentTime) {
+                                    otherRail = potentialMatch;
+                                    continue;
+                                }
+
+                                // we have found two candidates and this one is NOT where we were on the previous step
+                                if(PreviousTime > CurrentTime && potentialMatch.startTime < CurrentTime) {
+                                    otherRail = potentialMatch;
+                                    continue;
+                                }
+                            }
+                            if(!potentialMatch.scheduleForDeletion && potentialMatch.HasNoteAtTime(CurrentTime)
+                                && Track.s_instance.selectedNoteType == potentialMatch.noteType) {
+                                Trace.WriteLine("Rail: " + potentialMatch.railId + " has a note that can be moved.");
+                                matchedRail = potentialMatch;
+                                break;
+                            }
+                        }
+
+                        // we're being explicitly told that a new rail should be created at this point
+                        if(s_instance.isCTRLDown) {
+                            // potential problems:
+                            // 1) need to break an existing rail
+                            // 2) need to make sure extend doesn't happen
+                            // 3) need to set the breaker on both sides of conjoined rails
+                            // 4) must NOT operate on any existing note unless...
+                            // 5) ...ctrl click on a leader note fo the rail removes all of it 
+
+                            // extension should be prioritized over creation here
+                            // therefore we need to find a rail we can extend
+                            if(matchedRail != null) {
+                                // we need to check if we're at a head note, tail note or middle note
+                                EditorNote railNote = matchedRail.GetNoteAtPosition(CurrentTime);
+                                if(matches.Count == 2) {
+                                    // if matches == 2, we've reached the max saturation and are in the remove branch
+                                    // if matches == 2 and size == 2 then we need to REMOVE the whole gap rail
+                                    if(matchedRail.Size() == 2) {
+                                        RailHelper.DestroyRail(matchedRail);
+                                        s_instance.DecreaseTotalDisplayedNotesCount();
+                                        return;
+                                    } else {
+                                        Trace.WriteLine("Deleting sole note on the rail: " + matchedRail.railId);
+                                        // otherwise we only really need to remove a single note
+                                        EditorNote noteToRemove = matchedRail.GetNoteAtPosition(CurrentTime);
+                                        matchedRail.RemoveNote(noteToRemove.noteId);
+                                        return;
+                                    }
+                                } else if(railNote.noteId == matchedRail.leader.thisNote.noteId) {
+                                    // we check if there's a rail to the left we can expand with this position
+                                    Rail rail = RailHelper.AttemptExtendTail(CurrentTime, noteFromNoteArea.transform.position, rails,
+                                        s_instance.isALTDown ? RailHelper.RailExtensionPolicy.AllowNotesOfSameColor : RailHelper.RailExtensionPolicy.NoInterruptions);
+                                    if(rail != null) {
+                                        RailNoteWrapper lastNote = rail.GetLastNote();
+                                        if(lastNote != null) {
+                                            if(rail.Size() > 1) {
+                                                rail.FlipNoteTypeToBreaker(lastNote.thisNote.noteId);
+                                                rail.FlipNoteTypeToBreaker(rail.leader.thisNote.noteId);
+                                                if(matchedRail != null) {
+                                                    bool createdNewRail = matchedRail.FlipNoteTypeToBreaker(matchedRail.leader.thisNote.noteId);
+                                                    if(createdNewRail)
+                                                        s_instance.IncreaseTotalDisplayedNotesCount();
+                                                }
+
+                                            }
+                                            return;
+                                        }
+                                    }
+                                } else if(railNote.noteId == matchedRail.GetLastNote().thisNote.noteId) {
+                                    // tail will create a leader note of a conjoined rail with tail breaker on the original rail and head breaker on the new one 
+                                    // flip the note of the matched rail to breaker
+                                    matchedRail.FlipNoteTypeToBreaker(railNote.noteId);
+
+                                    // create a new rail, will need to optimise code to remove redundancy with later parts
+                                    Rail conjoinedRail = CreateNewRailAndAddNoteToIt(noteFromNoteArea);
+                                    if(conjoinedRail == null) {
+                                        Trace.WriteLine("Null new rail detected, returning");
+                                        return;
+                                    }
+                                    if(conjoinedRail.Size() > 1) {
+                                        conjoinedRail.FlipNoteTypeToBreaker(conjoinedRail.leader.thisNote.noteId);
+                                        conjoinedRail.FlipNoteTypeToBreaker(conjoinedRail.GetLastNote().thisNote.noteId);
+                                    }
+                                    if(matchedRail != null)
+                                        matchedRail.FlipNoteTypeToBreaker(matchedRail.GetLastNote().thisNote.noteId);
+
+                                    s_instance.IncreaseTotalDisplayedNotesCount();
+                                    return;
+                                } else {
+                                    // middle will break and create a conjoined rail in the middle of an existing one
+                                    //EditorNote leaderOfConjoinedRail = new EditorNote(noteFromNoteArea.transform.position, Track.CurrentTime);
+                                    //leaderOfConjoinedRail.UsageType = s_instance.selectedUsageType;
+                                    //leaderOfConjoinedRail.HandType = s_instance.selectedNoteType;
+                                    RailNoteWrapper nextNote = matchedRail.GetNoteAtThisOrFollowingTime(CurrentTime);
+                                    if(nextNote.thisNote.TimePoint != CurrentTime) {
+                                        return;
+                                    }
+                                    if(nextNote == null) {
+                                        Trace.WriteLine("Null next note detected, returning");
+                                        return;
+                                    }
+                                    RailHelper.LogRails(s_instance.GetCurrentRailListByDifficulty(), "Splitting rail being");
+                                    Rail nextRail = null;
+                                    if(nextNote.thisNote.TimePoint == CurrentTime) {
+                                        // we need to break the rail at the NEXT note
+                                        // then clone THIS one note and extend the newly created rail with it
+                                        nextRail = matchedRail.ConvertTheTailIntoNewRail(nextNote.nextNote);
+                                        nextNote.nextNote = null;
+                                        RailNoteWrapper addedNote = nextRail.AddNote(nextNote.thisNote.Clone());
+                                        nextRail.FlipNoteTypeToBreaker(addedNote.thisNote.noteId);
+                                        matchedRail.FlipNoteTypeToBreaker(nextNote.thisNote.noteId);
+                                    } else {
+                                        nextRail = matchedRail.ConvertTheTailIntoNewRail(nextNote);
+                                        nextRail.FlipNoteTypeToBreaker(nextNote.thisNote.noteId);
+                                    }
+
+                                    matchedRail.RecalcDuration();
+                                    RailHelper.ReinstantiateRail(matchedRail);
+                                    RailHelper.LogRails(s_instance.GetCurrentRailListByDifficulty(), "Splitting rail end");
+                                    s_instance.IncreaseTotalDisplayedNotesCount();
+                                }
+                            } else {
+                                // this just simply places a new unbroken leader note but without joining it to anything
+                                CreateNewRailAndAddNoteToIt(noteFromNoteArea);
+                                s_instance.IncreaseTotalDisplayedNotesCount();
+                            }
+                            return;
+                        }
+
+                        // if we found a match we move the rail note to a new position and recalc the rail
+                        if(matchedRail != null) {
+                            EditorNote railNote = matchedRail.GetNoteAtPosition(CurrentTime);
+                            if(railNote != null) {
+                                Vector2 foundNotePosition = new Vector2(railNote.Position[0], railNote.Position[1]);
+                                Vector2 clickedPosition = new Vector2(noteFromNoteArea.transform.position.x, noteFromNoteArea.transform.position.y);
+                                float distance = Vector2.Distance(foundNotePosition, clickedPosition);
+                                if(distance > 0.05f) {
+                                    // we've clicked away from current note. this means we need to move it
+                                    matchedRail.MoveNoteAtTimeToPosition(CurrentTime, noteFromNoteArea.transform.position.x, noteFromNoteArea.transform.position.y);
+                                } else {
+                                    // we've clicked on the current note. this means we either want to delete it or change its subtype
+                                    if(!Track.s_instance.isSHIFTDown) {
+                                        matchedRail.RemoveNote(railNote.noteId);
+                                        if(matchedRail.scheduleForDeletion) {
+                                            Trace.WriteLine("Deleting the rail: " + matchedRail.railId);
+                                            List<Rail> tempRailList = s_instance.GetCurrentRailListByDifficulty();
+                                            tempRailList.Remove(matchedRail);
+                                            matchedRail.DestroyLeader();
+                                            s_instance.DecreaseTotalDisplayedNotesCount();
+                                        }
+                                    } else {
+                                        // if shift is clicked we're deleting whole rail instead
+                                        s_instance.DecreaseTotalDisplayedNotesCount();
+                                        RailHelper.DestroyRail(matchedRail);
+                                    }
+                                    return;
+                                }
+
+                                if(matchedRail.scheduleForDeletion) {
+
+                                    Trace.WriteLine("Deleting the rail: " + matchedRail.railId);
+                                    List<Rail> tempRailList = s_instance.GetCurrentRailListByDifficulty();
+                                    tempRailList.Remove(matchedRail);
+                                    matchedRail.DestroyLeader();
+                                    s_instance.DecreaseTotalDisplayedNotesCount();
+                                }
+                                Trace.WriteLine("Moved the note. Returning");
+                            }
+                            return;
+                        }
+                        // if we're placing the special combo rail over a common one, display promt and exit
+                        // same for the opposite case
+                        Trace.WriteLine("Making sure we're not placing a note of the incompatible type over existing rail");
+                        bool simpleRail = false;
+                        foreach(Rail potentialMatch in matches.OrEmptyIfNull()) {
+                            if(!potentialMatch.scheduleForDeletion && IsSimpleNoteType(Track.s_instance.selectedNoteType) && IsSimpleNoteType(potentialMatch.noteType)) {
+                                Trace.WriteLine("Working on a SIMPLE rail");
+                                simpleRail = true;
+                                break;
+                            }
+                        }
+                        if(simpleRail)
+                            Trace.WriteLine("Working on a SIMPLE rail");
+
+                        if(!simpleRail && matches != null && matches.Count > 0) {
+                            if(matches.Count == 1 && matches[0].noteType != s_instance.selectedNoteType) {
+                                Trace.WriteLine("Displaying INCOMPATIBLE warning");
+                                Miku_DialogManager.ShowDialog(Miku_DialogManager.DialogType.Alert, StringVault.Alert_CantPlaceRailOfDifferntSubtype);
+                                return;
+                            }
+                        }
+
+                        Trace.WriteLine("Creating a note to add to some rail");
+                        EditorNote noteForRail = new EditorNote(noteFromNoteArea.transform.position, Track.CurrentTime);
+                        noteForRail.UsageType = s_instance.selectedUsageType;
+                        noteForRail.HandType = s_instance.selectedNoteType;
+
+                        noteForRail.Log();
+
+                        // trying to add the note to an already existing rail
+                        bool addedToExistingRail = false;
+
+                        // first we need to sort the rails on time and find the ones containing the current note
+                        // this should net us exactly one rail
+                        Trace.WriteLine("Attempting to find a rail that this note can be added to in the middle");
+                        List<Rail> activeRailsOfSameType = rails.Where(filteredRail => filteredRail.TimeInInterval(CurrentTime) && filteredRail.noteType == s_instance.selectedNoteType).ToList();
+
+                        foreach(Rail testedRail in activeRailsOfSameType.OrEmptyIfNull()) {
+                            if(testedRail.scheduleForDeletion)
+                                continue;
+
+                            Trace.WriteLine("Adding note inside the rail:");
+                            testedRail.Log();
+                            testedRail.AddNote(noteForRail);
+                            addedToExistingRail = true;
+                            Trace.WriteLine("Returning");
+                            return;
+                        }
+
+
+                        if(!addedToExistingRail) {
+                            Trace.WriteLine("Attempting to find a rail that can be extended with this note");
+                            Rail extensionResult = RailHelper.AttemptExtendTail(CurrentTime, noteFromNoteArea.transform.position, rails,
+                                s_instance.isALTDown ? RailHelper.RailExtensionPolicy.AllowNotesOfSameColor : RailHelper.RailExtensionPolicy.NoInterruptions);
+                            if(extensionResult != null)
+                                return;
+                            extensionResult = RailHelper.AttemptExtendHead(CurrentTime, noteFromNoteArea.transform.position, rails,
+                                s_instance.isALTDown ? RailHelper.RailExtensionPolicy.AllowNotesOfSameColor : RailHelper.RailExtensionPolicy.NoInterruptions);
+                            if(extensionResult != null)
+                                return;
+                        }
+
+                        Trace.WriteLine("!<><><><><><><><><><>RAIL CREATION<><><><><><><><><><><><><><><>!");
+                        Trace.WriteLine("Haven't found a rail to extend. Creating a new one");
+                        RailHelper.CreateNewRailAndAddNoteToIt(noteForRail);
                         return;
+                        // if we're here, we definitely need to add a completely new rail
                     }
 
+                }
 
-                    if(!addedToExistingRail) {
-                        Trace.WriteLine("Attempting to find a rail that can be extended with this note");
-                        Rail extensionResult = RailHelper.AttemptExtendTail(CurrentTime, noteFromNoteArea.transform.position, rails,
-                            s_instance.isALTDown ? RailHelper.RailExtensionPolicy.AllowNotesOfSameColor : RailHelper.RailExtensionPolicy.NoInterruptions);
-                        if(extensionResult != null)
-                            return;
-                        extensionResult = RailHelper.AttemptExtendHead(CurrentTime, noteFromNoteArea.transform.position, rails,
-                            s_instance.isALTDown ? RailHelper.RailExtensionPolicy.AllowNotesOfSameColor : RailHelper.RailExtensionPolicy.NoInterruptions);
-                        if(extensionResult != null)
-                            return;
+
+                // workingTrack[CurrentTime].Count
+                EditorNote noteForChart = new EditorNote(noteFromNoteArea.transform.position, Track.CurrentTime);
+                noteForChart.HandType = s_instance.selectedNoteType;
+
+                // Check if the note placed if of special type 
+                if(IsOfSpecialType(noteForChart)) {
+                    // If whe are no creating a special, Then we init the new special section
+                    if(!s_instance.specialSectionStarted) {
+                        s_instance.specialSectionStarted = true;
+                        s_instance.currentSpecialSectionID++;
+                        Miku_DialogManager.ShowDialog(Miku_DialogManager.DialogType.Info, StringVault.Info_SpecialModeStarted);
+                        s_instance.ToggleWorkingStateAlertOn(StringVault.Info_UserOnSpecialSection);
                     }
 
-                    Trace.WriteLine("!<><><><><><><><><><>RAIL CREATION<><><><><><><><><><><><><><><>!");
-                    Trace.WriteLine("Haven't found a rail to extend. Creating a new one");
-                    RailHelper.CreateNewRailAndAddNoteToIt(noteForRail);
-                    return;
-                    // if we're here, we definitely need to add a completely new rail
+                    // Assing the Special ID to the note
+                    noteForChart.ComboId = s_instance.currentSpecialSectionID;
+
+                    Track.LogMessage("Current Special ID: " + s_instance.currentSpecialSectionID);
                 }
 
-            }
-
-
-            // workingTrack[CurrentTime].Count
-            EditorNote noteForChart = new EditorNote(noteFromNoteArea.transform.position, Track.CurrentTime);
-            noteForChart.HandType = s_instance.selectedNoteType;
-
-            // Check if the note placed if of special type 
-            if(IsOfSpecialType(noteForChart)) {
-                // If whe are no creating a special, Then we init the new special section
-                if(!s_instance.specialSectionStarted) {
-                    s_instance.specialSectionStarted = true;
-                    s_instance.currentSpecialSectionID++;
-                    Miku_DialogManager.ShowDialog(Miku_DialogManager.DialogType.Info, StringVault.Info_SpecialModeStarted);
-                    s_instance.ToggleWorkingStateAlertOn(StringVault.Info_UserOnSpecialSection);
+                // Finally we added the note to the dictonary
+                // ref of the note for easy of access to properties                        
+                if(workingTrack.ContainsKey(CurrentTime)) {
+                    // print("Trying currentTime "+CurrentTime);
+                    workingTrack[CurrentTime].Add(noteForChart);
+                    s_instance.IncreaseTotalDisplayedNotesCount();
+                    s_instance.AddNoteGameObjectToScene(noteForChart);
+                } else {
+                    Track.LogMessage("Time does not exist");
                 }
-
-                // Assing the Special ID to the note
-                noteForChart.ComboId = s_instance.currentSpecialSectionID;
-
-                Track.LogMessage("Current Special ID: " + s_instance.currentSpecialSectionID);
+            } finally {
+                s_instance.gridManager.ResetLinesMaterial();
+                s_instance.gridManager.HighlightLinesForPointList(s_instance.FetchObjectPositionsAtCurrentTime(CurrentTime));
             }
-
-            // Finally we added the note to the dictonary
-            // ref of the note for easy of access to properties                        
-            if(workingTrack.ContainsKey(CurrentTime)) {
-                // print("Trying currentTime "+CurrentTime);
-                workingTrack[CurrentTime].Add(noteForChart);
-                s_instance.IncreaseTotalDisplayedNotesCount();
-                s_instance.AddNoteGameObjectToScene(noteForChart);
-            } else {
-                Track.LogMessage("Time does not exist");
-            }
-
-
         }
 
 
@@ -5865,7 +5891,6 @@ namespace MiKu.NET {
 
                 AddNoteToChart(nextNote);
             }
-
             s_instance.selectedNoteType = defaultType;
         }
         /// <summary>
