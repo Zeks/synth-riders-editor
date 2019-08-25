@@ -39,7 +39,7 @@ public static class BeatSynthConverter
             synthSong.AudioData = null;
             synthSong.AudioFrecuency = 0;
             synthSong.AudioChannels = 2;
-            synthSong.EditorVersion = "1.8";
+            synthSong.EditorVersion = "1.9";
             synthSong.IsAdminOnly = false;
 
             for (int i = 0; i < info._difficultyBeatmapSets[0]._difficultyBeatmaps.Count && i < 5; i++)

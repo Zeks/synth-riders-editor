@@ -2261,7 +2261,7 @@ namespace MiKu.NET {
             else
                 return;
 
-            EditorNote noteForChart = new EditorNote(new Vector3(0, 0, MStoUnit(time)), Track.CurrentTime);
+            EditorNote noteForChart = new EditorNote(new Vector3(0, 0, MStoUnit(time)), time);
             noteForChart.HandType = EditorNote.NoteHandType.RightHanded;
 
             workingTrack[time].Add(noteForChart);
