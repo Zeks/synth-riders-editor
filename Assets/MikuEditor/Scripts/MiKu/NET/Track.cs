@@ -749,7 +749,7 @@ namespace MiKu.NET {
         
         // Current scroll mode selected
         private ScrollMode currentScrollMode = ScrollMode.Steps;
-        
+
         // Flag to know when there is a heavy burden and not manipulate the data
         private bool isBusy = false;
 
@@ -1181,7 +1181,7 @@ namespace MiKu.NET {
             float nextTime = 0;
             switch(scrollMode) {
                 case ScrollMode.Steps:
-                    StepMode = CurrentStepMode.Primary;
+                    //StepMode = CurrentStepMode.Primary;
                     MoveCamera(true, GetNextStepPoint(GetBPMForCurrentStepMode()));
                     finishedMove = true;
                     break;
@@ -1212,7 +1212,7 @@ namespace MiKu.NET {
             float previousTime = 0;
             switch(scrollMode) {
                 case ScrollMode.Steps:
-                    StepMode = CurrentStepMode.Primary;
+                    //StepMode = CurrentStepMode.Primary;
                     MoveCamera(true, GetPrevStepPoint(GetBPMForCurrentStepMode()));
                     finishedMove = true;
                     break;
@@ -1452,6 +1452,10 @@ namespace MiKu.NET {
                 StepMode = GetNextStepMode(StepMode);
                 InternalBPM bpm = GetBPMForStepMode(StepMode);
                 DrawTrackXSLines(bpm, true);
+            }
+
+            if(Input.GetKeyDown(KeyCode.L)) {
+                PerformScrollStepBackwards(CurrentTime, ScrollMode.Objects);
             }
 
             if(Input.GetMouseButtonDown(2)) {
@@ -2257,16 +2261,19 @@ namespace MiKu.NET {
             if(!workingTrack.ContainsKey(time)) {
                 workingTrack.Add(time, new List<EditorNote>());
                 AddTimeToSFXList(time);
-            }
-            else
+            } else
                 return;
 
-            EditorNote noteForChart = new EditorNote(new Vector3(0, 0, MStoUnit(time)), time);
-            noteForChart.HandType = EditorNote.NoteHandType.RightHanded;
 
+            EditorNote noteForChart = new EditorNote(new Vector3(0, 0, MStoUnit(time)), time);
+            noteForChart.HandType = selectedNoteType;
+
+            if(noteForChart.TimePoint != time)
+                noteForChart.HandType = selectedNoteType;
             workingTrack[time].Add(noteForChart);
             s_instance.IncreaseTotalDisplayedNotesCount();
             s_instance.AddNoteGameObjectToScene(noteForChart);
+
         }
 
         public void RemovePlaceholderFromChart(float time) {
@@ -4156,14 +4163,15 @@ namespace MiKu.NET {
             IsPlaying = false;
 
             if(!backToPreviousPoint) {
-                float _CK = (K * GetBPMForCurrentStepMode().Value);
-                if((_currentPlayTime % _CK) / _CK >= 0.5f) {
-                    _currentTime = GetCloseStepMeasure(_currentPlayTime);
-                } else {
-                    _currentTime = GetCloseStepMeasure(_currentPlayTime, false);
-                }
+                //float _CK = (K * GetBPMForCurrentStepMode().Value);
+                //if((_currentPlayTime % _CK) / _CK >= 0.5f) {
+                //    _currentTime = GetCloseStepMeasure(_currentPlayTime);
+                //} else {
+                //    _currentTime = GetCloseStepMeasure(_currentPlayTime, false);
+                //}
+                _currentTime = _currentPlayTime;
             }
-
+            
             _currentPlayTime = 0;
 
             MoveCamera(true, MStoUnit(_currentTime));

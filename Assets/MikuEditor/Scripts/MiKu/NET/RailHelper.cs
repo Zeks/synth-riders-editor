@@ -572,7 +572,7 @@ namespace MiKu.NET {
                     copies.Add(copy);
             }
             if(copies.Count == 0)
-                return null;
+                return copies;
 
             return copies;
         }

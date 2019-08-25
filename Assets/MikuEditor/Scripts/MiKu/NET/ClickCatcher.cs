@@ -9,6 +9,9 @@ namespace MiKu.NET {
         private void PlaceWithSnapToStep(float time, PointerEventData.InputButton button) {
             float convertedTime = 0;
             convertedTime = Track.s_instance.SnapToStep(time);
+            if(convertedTime == 0)
+                return;
+
             if(button == PointerEventData.InputButton.Left)
                 Track.s_instance.AddPlaceholderToChart(convertedTime);
             else
