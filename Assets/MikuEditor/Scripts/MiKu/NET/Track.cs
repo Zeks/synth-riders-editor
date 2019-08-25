@@ -3076,14 +3076,20 @@ namespace MiKu.NET {
             List<EditorSlide> slides = GetCurrentMovementListByDifficulty();
             List<float> lights = GetCurrentLightsByDifficulty();
             List<Rail> rails = GetCurrentRailListByDifficulty();
-
-            CurrentClipBoard.notes.Clear();
-            CurrentClipBoard.effects.Clear();
-            CurrentClipBoard.jumps.Clear();
-            CurrentClipBoard.crouchs.Clear();
-            CurrentClipBoard.slides.Clear();
-            CurrentClipBoard.lights.Clear();
-            CurrentClipBoard.rails.Clear();
+            if(CurrentClipBoard.notes != null)
+                CurrentClipBoard.notes.Clear();
+            if(CurrentClipBoard.effects != null)
+                CurrentClipBoard.effects.Clear();
+            if(CurrentClipBoard.jumps != null)
+                CurrentClipBoard.jumps.Clear();
+            if(CurrentClipBoard.crouchs != null)
+                CurrentClipBoard.crouchs.Clear();
+            if(CurrentClipBoard.slides != null)
+                CurrentClipBoard.slides.Clear();
+            if(CurrentClipBoard.lights != null)
+                CurrentClipBoard.lights.Clear();
+            if(CurrentClipBoard.rails != null)
+                CurrentClipBoard.rails.Clear();
 
             List<float> keys_tofilter = workingTrack.Keys.ToList();
             if(CurrentSelection.endTime > CurrentSelection.startTime) {
@@ -3188,7 +3194,7 @@ namespace MiKu.NET {
             // this needs to CLONE all the rails in the clipboard before moving them
 
             List<Rail> newCLones = new List<Rail>();
-            foreach(Rail rail in CurrentClipBoard.rails) {
+            foreach(Rail rail in CurrentClipBoard.rails.OrEmptyIfNull()) {
                 Rail cloneOfAClone = RailHelper.CloneRail(rail, rail.startTime, rail.endTime, RailHelper.RailRangeBehaviour.Allow);
                 cloneOfAClone.MoveEveryPointOnTheTimeline(shiftLength, true);
                 newCLones.Add(cloneOfAClone);
