@@ -18,6 +18,8 @@ namespace MiKu.NET {
         private void PlaceWithSnapToBars(float time, PointerEventData.InputButton button) { 
             float convertedTime = 0;
             convertedTime = Track.s_instance.SnapToPeak(time, Track.PlacerClickSnapMode.MajorBar);
+            if(convertedTime == 0)
+                return;
 
             if(button == PointerEventData.InputButton.Left)
                 Track.s_instance.AddPlaceholderToChart(convertedTime);

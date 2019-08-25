@@ -107,14 +107,34 @@ namespace MiKu.NET {
         public bool isPlaying;
         public List<float> beats;
     }
-
+    public enum CurrentStepMode {
+        Primary = 0,
+        Secondary = 1,
+        Precise = 2,
+    }
     public class InternalBPM {
         private float _value = 1f;
         private float _increaseFactor = 1f;
-        public static InternalBPM PreciseBPM() {
+        private CurrentStepMode _stepMode = CurrentStepMode.Primary;
+        public static InternalBPM DefaultPrimaryBPM() {
+            InternalBPM bpm = new InternalBPM();
+            bpm.Value = 1f;
+            bpm.IncreaseFactor= 1f;
+            bpm.StepMode = CurrentStepMode.Primary;
+            return bpm;
+        }
+        public static InternalBPM DefaultSecondaryBPM() {
+            InternalBPM bpm = new InternalBPM();
+            bpm.Value = 1f;
+            bpm.IncreaseFactor= 1f;
+            bpm.StepMode = CurrentStepMode.Secondary;
+            return bpm;
+        }
+        public static InternalBPM DefaultPreciseBPM() {
             InternalBPM bpm = new InternalBPM();
             bpm.Value = 1f/64f;
             bpm.IncreaseFactor= 64f;
+            bpm.StepMode = CurrentStepMode.Precise;
             return bpm;
         }
         public float Value
@@ -141,7 +161,21 @@ namespace MiKu.NET {
                 _increaseFactor = value;
             }
         }
+        public CurrentStepMode StepMode
+        {
+            get
+            {
+                return _stepMode;
+            }
+
+            set
+            {
+                _stepMode = value;
+            }
+        }
     }
+
+
 
     [RequireComponent(typeof(AudioSource))]
     public class Track : MonoBehaviour {
@@ -154,18 +188,13 @@ namespace MiKu.NET {
             Custom,
         }
         public enum ScrollMode {
-            Default,
+            Steps,
             Objects,
             Rails,
             RailEnds,
             Peaks,
         }
 
-        public enum CurrentStepMode {
-            Primary = 0,
-            Secondary = 1,
-            Precise = 2,
-        }
 
         public enum PromtType {
             // No action
@@ -677,9 +706,9 @@ namespace MiKu.NET {
             }
         }
 
-        private InternalBPM bpmPrimary;
-        private InternalBPM bpmSecondary;
-        private InternalBPM bpmPrecise = InternalBPM.PreciseBPM();
+        private InternalBPM bpmPrimary = InternalBPM.DefaultPrimaryBPM();
+        private InternalBPM bpmSecondary = InternalBPM.DefaultSecondaryBPM();
+        private InternalBPM bpmPrecise = InternalBPM.DefaultPreciseBPM();
 
         //private float MBPM = 1f / 1f;
         //private float MBPMSecondary = 1f / 1f;
@@ -719,7 +748,7 @@ namespace MiKu.NET {
         private TrackDifficulty currentDifficulty = TrackDifficulty.Easy;
         
         // Current scroll mode selected
-        private ScrollMode currentScrollMode = ScrollMode.Default;
+        private ScrollMode currentScrollMode = ScrollMode.Steps;
         
         // Flag to know when there is a heavy burden and not manipulate the data
         private bool isBusy = false;
@@ -921,10 +950,15 @@ namespace MiKu.NET {
 
         // Use this for initialization
         void Awake() {
+            s_instance = this;
             if(newLaunch) {
                 File.Delete("editor.log");
                 Trace.Listeners.Add(new TextWriterTraceListener("editor.log"));
             }
+            //bpmPrecise = InternalBPM.PreciseBPM();
+            //bpmPrimary= InternalBPM.InstantiateBPM(CurrentStepMode.Primary);
+            //bpmSecondary = InternalBPM.InstantiateBPM(CurrentStepMode.Secondary);
+
             newLaunch = false;
             Trace.AutoFlush = true;
             // Initilization of the Game Object to use for the line drawing
@@ -967,8 +1001,8 @@ namespace MiKu.NET {
             }
 
             currentLockeMode = Cursor.lockState;
+            
 
-            s_instance = this;
         }
 
         void OnApplicationFocus(bool hasFocus) {
@@ -1146,7 +1180,7 @@ namespace MiKu.NET {
             bool finishedMove = false;
             float nextTime = 0;
             switch(scrollMode) {
-                case ScrollMode.Default:
+                case ScrollMode.Steps:
                     StepMode = CurrentStepMode.Primary;
                     MoveCamera(true, GetNextStepPoint(GetBPMForCurrentStepMode()));
                     finishedMove = true;
@@ -1177,7 +1211,7 @@ namespace MiKu.NET {
             bool finishedMove = false;
             float previousTime = 0;
             switch(scrollMode) {
-                case ScrollMode.Default:
+                case ScrollMode.Steps:
                     StepMode = CurrentStepMode.Primary;
                     MoveCamera(true, GetPrevStepPoint(GetBPMForCurrentStepMode()));
                     finishedMove = true;
@@ -1207,7 +1241,7 @@ namespace MiKu.NET {
 
         private int GetNextScrollModeId(ScrollMode mode) {
             switch(mode) {
-                case ScrollMode.Default:
+                case ScrollMode.Steps:
                     return 1;
                 case ScrollMode.Objects:
                     return 2;
@@ -1222,7 +1256,7 @@ namespace MiKu.NET {
         }
         private int GetPreviousScrollModeId(ScrollMode mode) {
             switch(mode) {
-                case ScrollMode.Default:
+                case ScrollMode.Steps:
                     return 4;
                 case ScrollMode.Objects:
                     return 0;
@@ -1587,8 +1621,9 @@ namespace MiKu.NET {
             if(Input.GetAxis("Mouse ScrollWheel") > 0f && !IsPlaying && !PromtWindowOpen) // forward
             {
                 bool cameraMoved = false;
-                if(!isCTRLDown && !isALTDown) {
+                if(!isCTRLDown && !isALTDown || currentScrollMode != ScrollMode.Steps) {
                     PerformScrollStepForwards(CurrentTime, currentScrollMode);
+                    return;
                 } else if(isCTRLDown && !isALTDown) {
                     ChangeStepMeasure(true, bpmPrimary);
                 }
@@ -1613,8 +1648,9 @@ namespace MiKu.NET {
             } else if(Input.GetAxis("Mouse ScrollWheel") < 0f && !IsPlaying && !PromtWindowOpen) // backwards
               {
                 bool cameraMoved = false;
-                if(!isCTRLDown && !isALTDown) {
+                if(!isCTRLDown && !isALTDown || currentScrollMode != ScrollMode.Steps) {
                     PerformScrollStepBackwards(CurrentTime, currentScrollMode);
+                    return;
                 } else if(isCTRLDown && !isALTDown) {
                     ChangeStepMeasure(true, bpmPrimary);
                 }
@@ -2261,7 +2297,10 @@ namespace MiKu.NET {
                 peakTimes.Sort();
                 peakTimes.Reverse();
                 var temp = peakTimes.SkipWhile(t => t > time);
-                result = temp.First();
+                if(temp.Count() > 0)
+                    result = temp.First();
+                else
+                    result = 0;
             }
             return result;
         }
@@ -2506,21 +2545,41 @@ namespace MiKu.NET {
             UpdateTrackDuration();
             UpdateDisplayStartOffset(StartOffset);
         }
+        /// <summary>
+        /// Change the how large if the step that we are advancing on the measure
+        /// </summary>
+        /// <param name="isIncrease">if true increase <see cname="MBPM" /> otherwise decrease it</param>
+        public void IncreaseStepMeasure(int mode) {
+            if(mode == 0)
+                ChangeStepMeasure(true, bpmPrimary);
+            else if(mode == 1)
+                ChangeStepMeasure(true, bpmSecondary);
+            else
+                ChangeStepMeasure(true, bpmPrecise);
+        }
+        public void DecreaseStepMeasure(int mode) {
+            if(mode == 0)
+                ChangeStepMeasure(false, bpmPrimary);
+            else if(mode == 1)
+                ChangeStepMeasure(false, bpmSecondary);
+            else
+                ChangeStepMeasure(false, bpmPrecise);
+        }
 
         /// <summary>
         /// Change the how large if the step that we are advancing on the measure
         /// </summary>
         /// <param name="isIncrease">if true increase <see cname="MBPM" /> otherwise decrease it</param>
         public void ChangeStepMeasure(bool isIncrease, InternalBPM bpm) {
-            // MBPMIncreaseFactor = (isIncrease) ? MBPMIncreaseFactor * 2 : MBPMIncreaseFactor / 2;
-            float increaseFactor = bpm.IncreaseFactor;
-            float bpmValue = bpm.Value;
-            increaseFactor = (isIncrease) ? ((increaseFactor >= 8) ? increaseFactor * 2 : increaseFactor + 1) :
-                ((increaseFactor >= 16) ? increaseFactor / 2 : increaseFactor - 1);
-            increaseFactor = Mathf.Clamp(increaseFactor, 1, 64);
-            bpmValue = 1 / increaseFactor;
-            m_StepMeasureDisplay.SetText(string.Format("1/{0}", increaseFactor));
-            StepMode = CurrentStepMode.Primary;
+            bpm.IncreaseFactor = (isIncrease) ? ((bpm.IncreaseFactor >= 8) ? bpm.IncreaseFactor * 2 : bpm.IncreaseFactor + 1) :
+                ((bpm.IncreaseFactor >= 16) ? bpm.IncreaseFactor / 2 : bpm.IncreaseFactor - 1);
+            bpm.IncreaseFactor = Mathf.Clamp(bpm.IncreaseFactor, 1, 64);
+            bpm.Value = 1 / bpm.IncreaseFactor;
+            if(bpm.StepMode == CurrentStepMode.Primary)
+                m_StepMeasureDisplay.SetText(string.Format("1/{0}", bpm.IncreaseFactor));
+            if(bpm.StepMode == CurrentStepMode.Secondary)
+                m_SecondaryStepMeasureDisplay.SetText(string.Format("1/{0}", bpm.IncreaseFactor));
+            StepMode = bpm.StepMode;
             DrawTrackXSLines(bpm);
         }
 
@@ -6728,7 +6787,7 @@ namespace MiKu.NET {
         public void SetCurrentScrollMode(int mode) {
             switch(mode) {
                 case 0:
-                    currentScrollMode = ScrollMode.Default;
+                    currentScrollMode = ScrollMode.Steps;
                     break;
                 case 1:
                     currentScrollMode = ScrollMode.Objects;
@@ -6743,7 +6802,7 @@ namespace MiKu.NET {
                     currentScrollMode = ScrollMode.Peaks;
                     break;
                 default:
-                    currentScrollMode = ScrollMode.Default;
+                    currentScrollMode = ScrollMode.Steps;
                     break;
             }
         }
