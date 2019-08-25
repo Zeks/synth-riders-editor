@@ -5,6 +5,26 @@ using UnityEngine.UI;
 namespace MiKu.NET {
 
     public class ClickCatcher : MonoBehaviour, IPointerClickHandler {
+        
+        private void PlaceWithSnapToStep(float time, PointerEventData.InputButton button) {
+            float convertedTime = 0;
+            convertedTime = Track.s_instance.SnapToStep(time);
+            if(button == PointerEventData.InputButton.Left)
+                Track.s_instance.AddPlaceholderToChart(convertedTime);
+            else
+                Track.s_instance.RemovePlaceholderFromChart(convertedTime);
+        }
+
+        private void PlaceWithSnapToBars(float time, PointerEventData.InputButton button) { 
+            float convertedTime = 0;
+            convertedTime = Track.s_instance.SnapToPeak(time, Track.PlacerClickSnapMode.MajorBar);
+
+            if(button == PointerEventData.InputButton.Left)
+                Track.s_instance.AddPlaceholderToChart(convertedTime);
+            else
+                Track.s_instance.RemovePlaceholderFromChart(convertedTime);
+        }
+
         public void OnPointerClick(PointerEventData eventData) {
             Vector2 clickPosition;
             var transform = GetComponent<RectTransform>();
@@ -12,23 +32,21 @@ namespace MiKu.NET {
                 return;
 
 
-            float originY = 0.5643f*transform.sizeDelta.y;
+            float originY = 0.56777f*transform.sizeDelta.y;
 
             float yCoord = (float)transform.sizeDelta.y/2f - clickPosition.y;
 
             float delta = originY - yCoord;
             float deltaPercent = delta/transform.sizeDelta.y;
-            float deltaRealWorld = 1383f*deltaPercent;
+            float deltaRealWorld = 1482*deltaPercent;
 
             float time = Track.CurrentTime + deltaRealWorld;
-            float convertedTime = 0;
-            if(eventData.button == PointerEventData.InputButton.Left)
-                convertedTime = Track.s_instance.SnapToPeak(time, Track.PlacerClickSnapMode.MinorBar);
+            if(Track.s_instance.isALTDown)
+                PlaceWithSnapToBars(time, eventData.button);
             else
-                convertedTime = Track.s_instance.SnapToPeak(time, Track.PlacerClickSnapMode.MajorBar);
-            Track.s_instance.AddPlaceholderToChart(convertedTime);
+                PlaceWithSnapToStep(time, eventData.button);
 
-            print("clicked position on the gameobject  is :" + clickPosition.x);
+            //print("clicked position on the gameobject  is :" + clickPosition.x);
         }
 
 
