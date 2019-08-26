@@ -195,6 +195,16 @@ namespace MiKu.NET {
             Peaks,
         }
 
+        public enum PlayStopMode {
+            StepBack,
+            Stay,
+        }
+
+        public enum StepSnapStrategy {
+            Closest,
+            Backwards,
+            Forwards
+        }
 
         public enum PromtType {
             // No action
@@ -709,6 +719,8 @@ namespace MiKu.NET {
         private InternalBPM bpmPrimary = InternalBPM.DefaultPrimaryBPM();
         private InternalBPM bpmSecondary = InternalBPM.DefaultSecondaryBPM();
         private InternalBPM bpmPrecise = InternalBPM.DefaultPreciseBPM();
+        private PlayStopMode playStopMode = PlayStopMode.StepBack;
+
 
         //private float MBPM = 1f / 1f;
         //private float MBPMSecondary = 1f / 1f;
@@ -1885,6 +1897,11 @@ namespace MiKu.NET {
                 HighlightNotes();
             }
 
+            if(Input.GetKeyDown(KeyCode.N) && isPlaying) {
+                AddPlaceholderToChart(SnapToStep(_currentPlayTime,StepSnapStrategy.Closest));
+            }
+
+
             if(isSHIFTDown) {
                 CurrentSelection.endTime = CurrentTime;
                 UpdateSelectionMarker();
@@ -1928,7 +1945,10 @@ namespace MiKu.NET {
 
         void FixedUpdate() {
             if(IsPlaying) {
-                if(_currentPlayTime >= TrackDuration * MS) { Stop(); } else { MoveCamera(); }
+                if(_currentPlayTime >= TrackDuration * MS) { Stop(); } else {
+                    MoveCamera();
+                    DrawTrackXSLines(GetBPMForCurrentStepMode());
+                }
             }
         }
 
@@ -2312,17 +2332,47 @@ namespace MiKu.NET {
             return result;
         }
 
-        public float SnapToStep(float time) {
+        public float SnapToStep(float time, StepSnapStrategy strategy = StepSnapStrategy.Backwards) {
+
             float result = 0;
 
             float previousFullBeat = time  - (time % K);
+            bool atExactTime = time % K == 0;
+
+            if(atExactTime)
+                return time;
+
+            float previousSnap = time;
+            float nextSnap = time;
             result = previousFullBeat;
             float previousStepTime = result;
             while(result < time) {
                 previousStepTime=result;
                 result += K/GetBPMForCurrentStepMode().IncreaseFactor;
             }
-            result = previousStepTime;
+            previousSnap = previousStepTime;
+            
+            result = previousFullBeat;
+            float tempTime = previousFullBeat;
+            while(tempTime < time) {
+                tempTime += K/GetBPMForCurrentStepMode().IncreaseFactor;
+            }
+            nextSnap = tempTime;
+
+            float adjustedTime = time - 40;
+            float diffLeft = adjustedTime - previousSnap;
+            float diffRight = nextSnap - adjustedTime;
+
+            if(strategy == StepSnapStrategy.Backwards) {
+                result = previousSnap;
+            } else if(strategy == StepSnapStrategy.Forwards) {
+                result = nextSnap;
+            } else {
+                if(diffRight >= diffLeft)
+                    result = previousSnap;
+                if(diffRight < diffLeft)
+                    result = nextSnap;
+            }
 
             return result;
         }
@@ -3791,14 +3841,15 @@ namespace MiKu.NET {
         /// <summary>
         /// <param name="forceClear">If true, the lines will be forcefull redrawed</param>
         void DrawTrackXSLines(InternalBPM bpm, bool forceClear = false) {
+            float usedTime = isPlaying ? _currentPlayTime : _currentTime;
             if(bpm.Value < 1) {
                 float newXSSection = 0;
                 float _CK = (K * bpm.Value);
                 // double xsKConst = (MS*MINUTE)/(double)BPM;
-                if((_currentTime % K) > 0) {
-                    newXSSection = _currentTime - (_currentTime % K);
+                if((usedTime % K) > 0) {
+                    newXSSection = usedTime - (usedTime % K);
                 } else {
-                    newXSSection = _currentTime; //+ ( K - (_currentTime%K ) );            
+                    newXSSection = usedTime; //+ ( K - (_currentTime%K ) );            
                 }
 
                 //print(string.Format("{2} : {0} - {1}", currentXSLinesSection, newXSSection, _currentTime));
@@ -4143,6 +4194,14 @@ namespace MiKu.NET {
             if(IsPlaying) { audioSource.Play(); }
         }
 
+
+        public void ChangeStopMode(int mode) {
+            if(mode == 0)
+                playStopMode = PlayStopMode.StepBack;
+            else
+                playStopMode = PlayStopMode.Stay;
+        }
+
         /// <summary>
         /// Stop the play
         /// </summary>
@@ -4163,13 +4222,16 @@ namespace MiKu.NET {
             IsPlaying = false;
 
             if(!backToPreviousPoint) {
-                //float _CK = (K * GetBPMForCurrentStepMode().Value);
-                //if((_currentPlayTime % _CK) / _CK >= 0.5f) {
-                //    _currentTime = GetCloseStepMeasure(_currentPlayTime);
-                //} else {
-                //    _currentTime = GetCloseStepMeasure(_currentPlayTime, false);
-                //}
-                _currentTime = _currentPlayTime;
+                if(playStopMode == PlayStopMode.StepBack) {
+                    float _CK = (K * GetBPMForCurrentStepMode().Value);
+                    if((_currentPlayTime % _CK) / _CK >= 0.5f) {
+                        _currentTime = GetCloseStepMeasure(_currentPlayTime);
+                    } else {
+                        _currentTime = GetCloseStepMeasure(_currentPlayTime, false);
+                    }
+                }
+                else
+                    _currentTime = _currentPlayTime;
             }
             
             _currentPlayTime = 0;
