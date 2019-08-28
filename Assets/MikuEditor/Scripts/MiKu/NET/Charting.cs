@@ -138,6 +138,7 @@ namespace MiKu.NET.Charting {
             name = noteId.ToString();
 
             timePoint = time;
+            Console.WriteLine("Creating note at: " + time);
             ComboId = idCmb;
             HandType = t;
             UsageType = EditorNote.NoteUsageType.Ball;
@@ -148,7 +149,7 @@ namespace MiKu.NET.Charting {
         public EditorNote(float time, UnityEngine.Vector3 pos, NoteHandType handType, NoteUsageType usageType) {
             noteId = noteCounter++;
             name = noteId.ToString();
-
+            Console.WriteLine("Creating note at: " + time);
             timePoint = time;
             HandType = handType;
             UsageType = usageType;

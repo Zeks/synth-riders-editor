@@ -516,6 +516,8 @@ namespace MiKu.NET {
             keys.Reverse();
             Trace.WriteLine("Will look among: " + keys);
             TimeWrapper first = keys.FirstOrDefault(x => x < time);
+            if(first == null)
+                return null;
             Trace.WriteLine("Found time: " + first);
             if(EqualityComparer<TimeWrapper>.Default.Equals(first, default(float))) {
                 Trace.WriteLine("Returning null");

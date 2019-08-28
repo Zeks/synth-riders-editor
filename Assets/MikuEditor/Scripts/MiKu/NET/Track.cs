@@ -23,18 +23,22 @@ namespace MiKu.NET {
 
     public sealed class FloatEqualityComparer : IEqualityComparer<float> {
         int GetPreciseInt(float f) {
-            return (int)(f);
+            return (int)Math.Round(f*100, 0, MidpointRounding.AwayFromZero);
         }
+        //public bool Equals(float f1, float f2) {
+        //    return Math.Abs(f1 - f2) < 0.01;
+        //}
 
         public bool Equals(float f1, float f2) {
             return GetPreciseInt(f1) == GetPreciseInt(f2);
         }
         public int GetHashCode(float f) {
-            return GetPreciseInt(f).GetHashCode();
+            var hashCode = GetPreciseInt(f).GetHashCode();
+            return hashCode;
         }
     }
 
-    public sealed class TimeWrapper{
+    public sealed class TimeWrapper : IComparable, IEqualityComparer<TimeWrapper> {
         public TimeWrapper(float value) { FloatValue = value; }
         public TimeWrapper() { }
         public static TimeWrapper Create(float value) { return new TimeWrapper(value); }
@@ -51,22 +55,33 @@ namespace MiKu.NET {
                 _value = value;
             }
         }
+
+        public float RoundedValue
+        {
+            get
+            {
+                return (int)Math.Round(_value, 0, MidpointRounding.AwayFromZero);
+            }
+
+        }
+
+        
         float _value = 0;
 
 
         public static int GetPreciseInt(TimeWrapper f) {
-            return (int)(f.FloatValue);
+            return (int)(f.RoundedValue);
         }
 
         public int CompareTo(object obj) {
             TimeWrapper objectAsTimeWrapper = obj as TimeWrapper;
-            if(Equals(this, obj))
+            if(this == objectAsTimeWrapper)
                 return 0;
             if(this < objectAsTimeWrapper)
                 return -1;
             if(this > objectAsTimeWrapper)
                 return 1;
-            return 0;
+            return -1;
         }
 
         public override bool Equals(object obj) {
@@ -76,61 +91,66 @@ namespace MiKu.NET {
                 return false;
             }
 
-            return Equals(this.FloatValue, objectAsTimeWrapper.FloatValue);
+            return this == objectAsTimeWrapper;
         }
+
+        public bool Equals(TimeWrapper f1, TimeWrapper f2) {
+            return GetPreciseInt(f1) == GetPreciseInt(f2);
+        }
+
         public int GetHashCode(TimeWrapper f) {
             return GetPreciseInt(f).GetHashCode();
         }
         public override int GetHashCode() {
             return GetPreciseInt(this).GetHashCode();
         }
-        public static bool Equals(TimeWrapper f1, TimeWrapper f2) {
+        public static bool EqualsTo(TimeWrapper f1, TimeWrapper f2) {
             return GetPreciseInt(f1) == GetPreciseInt(f2);
         }
-        public static bool operator==(TimeWrapper a, TimeWrapper b) {
-            if(a == null && b == null)
+        public static bool operator ==(TimeWrapper a, TimeWrapper b) {
+            if(System.Object.ReferenceEquals(a, null) && System.Object.ReferenceEquals(b, null))
                 return true;
-            if(a == null || b == null)
+            if(System.Object.ReferenceEquals(a, null) || System.Object.ReferenceEquals(b, null))
                 return false;
-            return Equals(a.FloatValue, b.FloatValue);
+            return EqualsTo(a.FloatValue, b.FloatValue);
         }
         public static bool operator!=(TimeWrapper a, TimeWrapper b) {
             return !(a==b);
         }
         public static bool operator <=(TimeWrapper a, TimeWrapper b) {
-            if(a == null || b == null)
+            if(System.Object.ReferenceEquals(a, null) || System.Object.ReferenceEquals(b, null))
                 return false;
             if(a == b)
                 return true;
             return a.FloatValue < b.FloatValue;
         }
         public static bool operator >=(TimeWrapper a, TimeWrapper b) {
-            if(a == null || b == null)
+            if(System.Object.ReferenceEquals(a, null) || System.Object.ReferenceEquals(b, null))
                 return false;
             if(a == b)
                 return true;
             return a.FloatValue > b.FloatValue;
         }
         public static TimeWrapper operator +(TimeWrapper a, TimeWrapper b) {
-            if(a == null || b == null)
+            if(System.Object.ReferenceEquals(a, null) || System.Object.ReferenceEquals(b, null))
                 return null;
             return a.FloatValue+b.FloatValue;
         }
         public static TimeWrapper operator -(TimeWrapper a, TimeWrapper b) {
-            if(a == null || b == null)
+            if(System.Object.ReferenceEquals(a, null) || System.Object.ReferenceEquals(b, null))
                 return null;
             return a.FloatValue-b.FloatValue;
         }
         public static bool operator <(TimeWrapper a, TimeWrapper b) {
-            if(a == null || b == null)
+            if(System.Object.ReferenceEquals(a, null) || System.Object.ReferenceEquals(b, null))
                 return false;
             return a.FloatValue < b.FloatValue;
         }
 
         public static bool operator >(TimeWrapper a, TimeWrapper b) {
-            if(a == null || b == null)
+            if(System.Object.ReferenceEquals(a, null) || System.Object.ReferenceEquals(b, null))
                 return false;
-            return a.FloatValue < b.FloatValue;
+            return a.FloatValue > b.FloatValue;
         }
         public static implicit operator TimeWrapper(float value) { return Create(value); }
 
@@ -4136,7 +4156,7 @@ namespace MiKu.NET {
                 floatCurrentTimeValue = nextPoint; //_currentTime + ( _CK - (_currentTime%_CK ) );
             }
 
-            floatCurrentTimeValue = Mathf.Min(floatCurrentTimeValue, (TM - 1) * K);
+            _currentTime.FloatValue = Mathf.Min(floatCurrentTimeValue, (TM - 1) * K);
             lastUsedCK = _CK;
             return MStoUnit(floatCurrentTimeValue);
         }
@@ -4170,7 +4190,7 @@ namespace MiKu.NET {
 
                 floatCurrentTimeValue = nextPoint; //_currentTime - ( _currentTime%_CK ); 
             }
-            floatCurrentTimeValue = Mathf.Max(floatCurrentTimeValue, 0);
+            _currentTime.FloatValue = Mathf.Max(floatCurrentTimeValue, 0);
             lastUsedCK = _CK;
             return MStoUnit(floatCurrentTimeValue);
         }
