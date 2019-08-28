@@ -9,13 +9,16 @@ using Shogoki.Utils;
 
 namespace MiKu.NET {
     public static class RailHelper {
+        public static FloatEqualityComparer floatComparator = new FloatEqualityComparer();
         public enum RailRangeBehaviour {
             Skip = 0,
             Allow = 1,
         }
         public enum RailFetchBehaviour {
             All = 0,
-            HasPointsAtCurrentTime = 1
+            HasPointsAtCurrentTime = 1,
+            HasEdgesAtCurrentTime = 2,
+            StartsAtCurrentTime = 3,
         }
 
         public static void Print2DArray<T>(T[,] matrix) {
@@ -47,10 +50,10 @@ namespace MiKu.NET {
             if(rail.duration < Track.MIN_LINE_DURATION ||
                 rail.duration > Track.MAX_LINE_DURATION) {
 
-                if(rail.leader != null) {
+                if(rail.Leader != null) {
 
-                    rail.DestroyNoteObjectAndRemoveItFromTheRail(rail.leader.thisNote.noteId);
-                    rail.InstantiateNoteObject(rail.leader);
+                    rail.DestroyNoteObjectAndRemoveItFromTheRail(rail.Leader.thisNote.noteId);
+                    rail.InstantiateNoteObject(rail.Leader);
                 }
                 Trace.WriteLine("Rail duration is at: " + rail.duration + " Min duration is:" + Track.MIN_LINE_DURATION + "Max Duration is: "  + Track.MAX_LINE_DURATION);
                 return;
@@ -62,7 +65,7 @@ namespace MiKu.NET {
             }
 
 
-            EditorNote leaderNote = rail.leader.thisNote;
+            EditorNote leaderNote = rail.Leader.thisNote;
             leaderNote.Segments = new float[rail.notesByID.Count, 3];
 
             Trace.WriteLine("Will instantiate the rail: " + rail.railId +  " for note:" + leaderNote.noteId + " x:" + leaderNote.Position[0] + " y:" + leaderNote.Position[1] + " z:" + leaderNote.Position[2]);
@@ -92,9 +95,9 @@ namespace MiKu.NET {
 
 
             // need to reset leader's object to reset its component then reinstantiate it
-            rail.DestroyNoteObjectAndRemoveItFromTheRail(rail.leader.thisNote.noteId);
-            rail.InstantiateNoteObject(rail.leader);
-            GameObject leaderObject = rail.leader.thisNoteObject;
+            rail.DestroyNoteObjectAndRemoveItFromTheRail(rail.Leader.thisNote.noteId);
+            rail.InstantiateNoteObject(rail.Leader);
+            GameObject leaderObject = rail.Leader.thisNoteObject;
 
             Game_LineWaveCustom waveCustom = leaderObject.GetComponentInChildren<Game_LineWaveCustom>();
             if(waveCustom != null) {
@@ -110,11 +113,11 @@ namespace MiKu.NET {
 
         public static void CleanupRailObjects(Rail rail) {
             List<int> ids = rail.noteObjects.Keys.ToList();
-            foreach(int id in ids)
+            foreach(int id in ids.OrEmptyIfNull())
                 GameObject.DestroyImmediate(rail.noteObjects[id]);
             ids = rail.notesByID.Keys.ToList();
             rail.noteObjects.Clear();
-            foreach(int id in ids) {
+            foreach(int id in ids.OrEmptyIfNull()) {
                 rail.notesByID[id].thisNoteObject = null;
             }
         }
@@ -135,7 +138,7 @@ namespace MiKu.NET {
                 rails = rails.Where(rail => rail.noteType == handType).ToList();
 
             rails.Sort((rail1, rail2) => rail1.startTime.CompareTo(rail2.startTime));
-            foreach(Rail rail in rails) {
+            foreach(Rail rail in rails.OrEmptyIfNull()) {
                 if(rail.scheduleForDeletion)
                     continue;
                 if(thisRailId != rail.railId && rail.startTime >= time)
@@ -156,7 +159,7 @@ namespace MiKu.NET {
                 rails = rails.Where(rail => rail.noteType == handType).ToList();
 
             rails.Sort((rail1, rail2) => rail2.startTime.CompareTo(rail1.startTime));
-            foreach(Rail rail in rails) {
+            foreach(Rail rail in rails.OrEmptyIfNull()) {
                 if(rail.scheduleForDeletion)
                     continue;
                 if(thisRailId != rail.railId && rail.startTime <= time)
@@ -203,7 +206,7 @@ namespace MiKu.NET {
             rails.Sort((x, y) => x.startTime.CompareTo(y.startTime));
             bool found = false;
             Rail foundRail = null;
-            foreach(Rail testedRail in rails) {
+            foreach(Rail testedRail in rails.OrEmptyIfNull()) {
                 if(testedRail.startTime > time && testedRail.breakerHead == null && testedRail.scheduleForDeletion != true) {
                     found = true;
                     foundRail = testedRail;
@@ -253,7 +256,7 @@ namespace MiKu.NET {
 
             beginOfConjoinedRailTime = time;
             endOfConjoinedRailTime = foundRail.startTime;
-            EditorNote refNote = foundRail.leader.thisNote;
+            EditorNote refNote = foundRail.Leader.thisNote;
             beginOfConjoinedRailPos = position;
             endOfConjoinedRailPos = new Vector3(refNote.Position[0], refNote.Position[1], refNote.Position[2]); ;
             Rail result = CreateNewRailFromBeginEnd(beginOfConjoinedRailTime, endOfConjoinedRailTime,
@@ -272,7 +275,7 @@ namespace MiKu.NET {
             rails.Sort((x, y) => y.startTime.CompareTo(x.startTime));
             bool found = false;
             Rail foundRail = null;
-            foreach(Rail testedRail in rails) {
+            foreach(Rail testedRail in rails.OrEmptyIfNull()) {
                 if(testedRail.endTime < time && testedRail.breakerTail == null && testedRail.scheduleForDeletion != true) {
                     found = true;
                     foundRail = testedRail;
@@ -353,7 +356,7 @@ namespace MiKu.NET {
         public static void DestroyRail(Rail rail) {
             float oldTime = rail.startTime;
             Trace.WriteLine("Deleting the rail: " + rail.railId);
-            foreach(int noteObjectKey in rail.noteObjects.Keys.ToList()) {
+            foreach(int noteObjectKey in rail.noteObjects.Keys.ToList().OrEmptyIfNull()) {
                 rail.DestroyNoteObjectAndRemoveItFromTheRail(noteObjectKey);
             }
             rail.scheduleForDeletion = true;
@@ -404,7 +407,7 @@ namespace MiKu.NET {
             // for each matched rail we need to determine if we are clicking on the exact point it starts or ends or anywhere else
             // if we're clicking on that same point
             Dictionary<EditorNote.NoteHandType, List<RailClickWrapper>> railClicks = new Dictionary<EditorNote.NoteHandType, List<RailClickWrapper>>();
-            foreach(Rail rail in matches) {
+            foreach(Rail rail in matches.OrEmptyIfNull()) {
                 EditorNote note = rail.GetNoteAtPosition(time);
                 if(note == null) {
                     AddIntoDictionary(railClicks, rail.noteType, new RailClickWrapper(rail, RailClickType.NoNote));
@@ -419,7 +422,7 @@ namespace MiKu.NET {
 
             // now that we have collected this information we can decide if we can allow click here
             {
-                foreach(KeyValuePair<EditorNote.NoteHandType, List<RailClickWrapper>> kvp in railClicks) {
+                foreach(KeyValuePair<EditorNote.NoteHandType, List<RailClickWrapper>> kvp in railClicks.OrEmptyIfNull()) {
                     if(Track.IsOppositeNoteType(kvp.Key, handType)) {
                         //red for blue or blue for red are allowed
                         continue;
@@ -446,7 +449,7 @@ namespace MiKu.NET {
             if(workingTrack.ContainsKey(time)) {
                 List<EditorNote> notes = workingTrack[time];
                 if(notes != null) {
-                    foreach(EditorNote testedNote in notes) {
+                    foreach(EditorNote testedNote in notes.OrEmptyIfNull()) {
                         if(testedNote.HandType == handType || Track.IsOppositeNoteType(testedNote.HandType, handType)) {
                             // same or opposite type are allowed
                             continue;
@@ -484,25 +487,25 @@ namespace MiKu.NET {
             if(newRail.notesByID.Count == 0)
                 return null;
 
-            newRail.leader = newRail.notesByTime.First().Value;
+            newRail.Leader = newRail.notesByTime.First().Value;
             newRail.RecalcDuration();
             List<float> directOrder = newRail.notesByTime.Keys.ToList();
             List<float> reverseOrder = newRail.notesByTime.Keys.ToList();
             reverseOrder.Reverse();
             RailNoteWrapper previousNote = null;
-            foreach(float time in directOrder) {
+            foreach(float time in directOrder.OrEmptyIfNull()) {
                 newRail.notesByTime[time].AssignPreviousNote(previousNote);
                 previousNote = newRail.notesByTime[time];
             }
             RailNoteWrapper nextNote = null;
-            foreach(float time in reverseOrder) {
+            foreach(float time in reverseOrder.OrEmptyIfNull()) {
                 newRail.notesByTime[time].nextNote = nextNote;
                 nextNote = newRail.notesByTime[time];
             }
 
             newRail.notesByTime.First().Value.thisNote.UsageType = EditorNote.NoteUsageType.Breaker;
             newRail.notesByTime.Last().Value.thisNote.UsageType = EditorNote.NoteUsageType.Breaker;
-            if(newRail.leader != newRail.GetLastNote())
+            if(newRail.Leader != newRail.GetLastNote())
                 newRail.breakerTail = newRail.GetLastNote();
 
             return newRail;
@@ -516,7 +519,7 @@ namespace MiKu.NET {
 
             bool skipWholeRail = false;
             List<RailNoteWrapper> newList = new List<RailNoteWrapper>();
-            foreach(RailNoteWrapper note in rail.notesByTime.Values) {
+            foreach(RailNoteWrapper note in rail.notesByTime.Values.OrEmptyIfNull()) {
                 RailNoteWrapper nextNote = note.nextNote;
                 if(note.thisNote.TimePoint >= start && note.thisNote.TimePoint <= end) {
                     newList.Add(new RailNoteWrapper(note.thisNote.Clone()));
@@ -541,7 +544,7 @@ namespace MiKu.NET {
                 return null;
 
             RailNoteWrapper previousNote = null;
-            foreach(RailNoteWrapper note in newList) {
+            foreach(RailNoteWrapper note in newList.OrEmptyIfNull()) {
                 note.AssignPreviousNote(previousNote);
                 if(previousNote != null)
                     previousNote.nextNote = note;
@@ -555,18 +558,18 @@ namespace MiKu.NET {
             newRail.noteType = rail.noteType;
             newRail.Log();
 
-            foreach(RailNoteWrapper note in newList) {
+            foreach(RailNoteWrapper note in newList.OrEmptyIfNull()) {
                 newRail.notesByTime.Add(note.thisNote.TimePoint, note);
                 newRail.notesByID.Add(note.thisNote.noteId, note);
             }
-            newRail.leader = newRail.notesByTime.First().Value;
+            newRail.Leader = newRail.notesByTime.First().Value;
             newRail.RecalcDuration();
             return newRail;
         }
 
         public static List<Rail> GetCopyOfRailsInRange(List<Rail> rails, float rangeStart, float rangeEnd, RailRangeBehaviour copyType) {
             List<Rail> copies = new List<Rail>();
-            foreach(Rail rail in rails) {
+            foreach(Rail rail in rails.OrEmptyIfNull()) {
                 Rail copy = CloneRail(rail, rangeStart, rangeEnd, copyType);
                 if(copy != null)
                     copies.Add(copy);
@@ -580,9 +583,13 @@ namespace MiKu.NET {
         public static List<Rail> GetListOfRailsInRange(List<Rail> rails, float rangeStart, float rangeEnd, RailRangeBehaviour rangeFetchType, RailFetchBehaviour pointFetchType = RailFetchBehaviour.All) {
             List<Rail> fetchedRails = new List<Rail>();
             bool pointFetch = rangeStart == rangeEnd;
-            foreach(Rail rail in rails) {
+            foreach(Rail rail in rails.OrEmptyIfNull()) {
                 if(rail.startTime >= rangeStart && rail.endTime <= rangeEnd) {
                     if(pointFetch && pointFetchType == RailFetchBehaviour.HasPointsAtCurrentTime && !rail.HasNoteAtTime(rangeStart))
+                        continue;
+                    if(pointFetch && pointFetchType == RailFetchBehaviour.HasEdgesAtCurrentTime && !rail.HasEdgeNoteAtTime(rangeStart))
+                        continue;
+                    if(pointFetch && pointFetchType == RailFetchBehaviour.StartsAtCurrentTime && rail.Leader.thisNote.TimePoint != rangeStart)
                         continue;
                     fetchedRails.Add(rail);
                     continue;
@@ -590,17 +597,29 @@ namespace MiKu.NET {
                 if(rail.startTime >= rangeStart && rail.startTime <= rangeEnd && rail.endTime > rangeEnd && rangeFetchType == RailRangeBehaviour.Allow) {
                     if(pointFetch && pointFetchType == RailFetchBehaviour.HasPointsAtCurrentTime && !rail.HasNoteAtTime(rangeStart))
                         continue;
+                    if(pointFetch && pointFetchType == RailFetchBehaviour.HasEdgesAtCurrentTime && !rail.HasEdgeNoteAtTime(rangeStart))
+                        continue;
+                    if(pointFetch && pointFetchType == RailFetchBehaviour.StartsAtCurrentTime && rail.Leader.thisNote.TimePoint != rangeStart)
+                        continue;
                     fetchedRails.Add(rail);
                     continue;
                 }
                 if(rail.startTime < rangeStart && rail.endTime >= rangeStart && rail.endTime <= rangeEnd && rangeFetchType == RailRangeBehaviour.Allow) {
                     if(pointFetch && pointFetchType == RailFetchBehaviour.HasPointsAtCurrentTime && !rail.HasNoteAtTime(rangeStart))
                         continue;
+                    if(pointFetch && pointFetchType == RailFetchBehaviour.HasEdgesAtCurrentTime && !rail.HasEdgeNoteAtTime(rangeStart))
+                        continue;
+                    if(pointFetch && pointFetchType == RailFetchBehaviour.StartsAtCurrentTime && rail.Leader.thisNote.TimePoint != rangeStart)
+                        continue;
                     fetchedRails.Add(rail);
                     continue;
                 }
                 if(rail.startTime < rangeStart && rail.endTime >= rangeEnd && rangeFetchType == RailRangeBehaviour.Allow) {
                     if(pointFetch && pointFetchType == RailFetchBehaviour.HasPointsAtCurrentTime && !rail.HasNoteAtTime(rangeStart))
+                        continue;
+                    if(pointFetch && pointFetchType == RailFetchBehaviour.HasEdgesAtCurrentTime && !rail.HasEdgeNoteAtTime(rangeStart))
+                        continue;
+                    if(pointFetch && pointFetchType == RailFetchBehaviour.StartsAtCurrentTime && rail.Leader.thisNote.TimePoint != rangeStart)
                         continue;
                     fetchedRails.Add(rail);
                     continue;
@@ -616,16 +635,16 @@ namespace MiKu.NET {
             if(fetchedRails == null)
                 return;
 
-            foreach(Rail rail in fetchedRails) {
+            foreach(Rail rail in fetchedRails.OrEmptyIfNull()) {
                 RailHelper.DestroyRail(rail);
                 Track.s_instance.DecreaseTotalDisplayedNotesCount();
             }
         }
         public static void DestroyAllRailsForCurrentDifficulty() {
             List<Rail> rails = Track.s_instance.GetCurrentRailListByDifficulty();
-            foreach(Rail rail in rails) {
+            foreach(Rail rail in rails.OrEmptyIfNull()) {
                 Trace.WriteLine("Deleting the rail: " + rail.railId);
-                foreach(int noteObjectKey in rail.noteObjects.Keys.ToList()) {
+                foreach(int noteObjectKey in rail.noteObjects.Keys.ToList().OrEmptyIfNull()) {
                     rail.DestroyNoteObjectAndRemoveItFromTheRail(noteObjectKey);
                 }
                 rail.scheduleForDeletion = true;
@@ -639,7 +658,7 @@ namespace MiKu.NET {
                 return null;
 
             List<Rail> railsWithJunctionsAtThisTime = new List<Rail>();
-            foreach(Rail rail in railsAtCurrentTime) {
+            foreach(Rail rail in railsAtCurrentTime.OrEmptyIfNull()) {
                 if(handType != rail.noteType && handType!= EditorNote.NoteHandType.NoHand)
                     continue;
                 if(rail.HasNoteAtTime(time))
@@ -649,7 +668,7 @@ namespace MiKu.NET {
             bool foundRailAtExactPoint = false;
 
             Dictionary<float, Rail> dictOfDistances = new Dictionary<float, Rail>();
-            foreach(Rail rail in railsWithJunctionsAtThisTime) {
+            foreach(Rail rail in railsWithJunctionsAtThisTime.OrEmptyIfNull()) {
                 EditorNote note = rail.GetNoteAtPosition(time);
                 float distance = Vector2.Distance(point, new Vector2(note.Position[0], note.Position[1]));
                 if(distance > 0.05) {
@@ -674,7 +693,7 @@ namespace MiKu.NET {
             List<Rail> railsAtCurrentTime = RailHelper.GetListOfRailsInRange(Track.s_instance.GetCurrentRailListByDifficulty(), time, time, RailHelper.RailRangeBehaviour.Allow);
 
             List<Rail> railsWithJunctionsAtThisTime = new List<Rail>();
-            foreach(Rail rail in railsAtCurrentTime) {
+            foreach(Rail rail in railsAtCurrentTime.OrEmptyIfNull()) {
                 if(rail.HasNoteAtTime(time) && rail.noteType == handType) {
                     EditorNote note = rail.GetNoteAtPosition(time);
                     Vector3 newPos = NotesArea.s_instance.grid.GetNextPointOnGrid(new Vector3(note.Position[0], note.Position[1], note.Position[2]), value > 0, GridManager.GridShiftBehaviour.Horizonal);
@@ -691,7 +710,7 @@ namespace MiKu.NET {
             List<Rail> railsAtCurrentTime = RailHelper.GetListOfRailsInRange(Track.s_instance.GetCurrentRailListByDifficulty(), time, time, RailHelper.RailRangeBehaviour.Allow);
 
             List<Rail> railsWithJunctionsAtThisTime = new List<Rail>();
-            foreach(Rail rail in railsAtCurrentTime) {
+            foreach(Rail rail in railsAtCurrentTime.OrEmptyIfNull()) {
                 if(rail.HasNoteAtTime(time) && rail.noteType == handType) {
                     EditorNote note = rail.GetNoteAtPosition(time);
                     Vector3 newPos = NotesArea.s_instance.grid.GetNextPointOnGrid(new Vector3(note.Position[0], note.Position[1], note.Position[2]), value > 0, GridManager.GridShiftBehaviour.Vertical);
@@ -713,12 +732,12 @@ namespace MiKu.NET {
             List<float> times = new List<float>();
             List<Rail> rails = Track.s_instance.GetCurrentRailListByDifficulty();
             rails.Sort((rail1, rail2) => rail1.startTime.CompareTo(rail2.startTime));
-            foreach(Rail rail in rails) {
+            foreach(Rail rail in rails.OrEmptyIfNull()) {
                 if(railTimeFindPolicy == RailTimeFindPolicy.EdgesOnly) {
                     times.Add(rail.startTime);
                     times.Add(rail.endTime);
                 } else {
-                    foreach(RailNoteWrapper note in rail.notesByTime.Values) {
+                    foreach(RailNoteWrapper note in rail.notesByTime.Values.OrEmptyIfNull()) {
                         times.Add(note.thisNote.TimePoint);
                     }
                 }
@@ -729,9 +748,9 @@ namespace MiKu.NET {
         public static void LogRails(List<Rail> rails, string operation) {
             rails.Sort((rail1, rail2) => rail1.startTime.CompareTo(rail2.startTime));
             Trace.WriteLine("Rails before " + operation);
-            foreach(Rail rail in rails) {
+            foreach(Rail rail in rails.OrEmptyIfNull()) {
                 Trace.WriteLine("Rail id:" + rail.railId + " starts at: " + rail.startTime + " ends at: " + rail.endTime);
-                foreach(RailNoteWrapper note in rail.notesByTime.Values) {
+                foreach(RailNoteWrapper note in rail.notesByTime.Values.OrEmptyIfNull()) {
                     Trace.WriteLine("Rail segment point is located at:" + " x:" + note.thisNote.Position[0] + " y:" + note.thisNote.Position[1] + " z:" + note.thisNote.Position[2]+ " note type is: " + note.thisNote.UsageType);
                 }
             }
@@ -746,7 +765,7 @@ namespace MiKu.NET {
             if(railsAtCurrentTime != null) {
                 
                 
-                foreach(Rail rail in railsAtCurrentTime) {
+                foreach(Rail rail in railsAtCurrentTime.OrEmptyIfNull()) {
                     // skipping different colored rails
                     bool allowedOppositeColor = isOnMirrorMode && Track.IsOppositeNoteType(rail.noteType, noteType);
                     if(railsAtCurrentTime.Count > 1 && rail.noteType != noteType && !allowedOppositeColor)
@@ -764,7 +783,7 @@ namespace MiKu.NET {
                         continue;
 
                     // if the rail doesn't end there we just break it
-                    if(railNote.noteId != rail.leader.thisNote.noteId && railNote.noteId != rail.GetLastNote().thisNote.noteId) {
+                    if(railNote.noteId != rail.Leader.thisNote.noteId && railNote.noteId != rail.GetLastNote().thisNote.noteId) {
                         rail.FlipNoteTypeToBreaker(railNote.noteId);
                         continue;
                     }
@@ -783,7 +802,7 @@ namespace MiKu.NET {
                         // need to differentiate between had and tail breakers here
                         // also it looks like the next rail can be picked as wrong color
                         bool mergeHappened = false;
-                        if(railNote.noteId == rail.leader.thisNote.noteId) {
+                        if(railNote.noteId == rail.Leader.thisNote.noteId) {
                             // flipping the leader note
                             Rail previousRail = RailHelper.GetPreviousRail(rail.railId, rail.startTime, adjustedNoteType, usageType);
 
@@ -837,11 +856,16 @@ namespace MiKu.NET {
                 }
             }
         }
-
+        public static void SanitycheckRailList(List<Rail> rails) {
+            foreach(Rail rail in rails.OrEmptyIfNull()) {
+                if(rail.breakerHead == null || rail.breakerTail == null)
+                    Trace.WriteLine("Rail isn't broken: " + rail.railId);
+            }
+        }
 
         public static List<Vector2> FetchRailPositionsAtTime(float time, List<Rail> rails) {
             List<Vector2> list = new List<Vector2>();
-            foreach(Rail rail in rails) {
+            foreach(Rail rail in rails.OrEmptyIfNull()) {
                 EditorNote note = rail.GetNoteAtPosition(time);
                 if(note != null) {
                     list.Add(new Vector2(note.Position[0], note.Position[1]));

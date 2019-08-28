@@ -21,6 +21,77 @@ using System.Diagnostics;
 
 namespace MiKu.NET {
 
+    public sealed class FloatEqualityComparer : IEqualityComparer<float> {
+        int GetPreciseInt(float f) {
+            return (int)(f);
+        }
+
+        public bool Equals(float f1, float f2) {
+            return GetPreciseInt(f1) == GetPreciseInt(f2);
+        }
+        public int GetHashCode(float f) {
+            return GetPreciseInt(f).GetHashCode();
+        }
+    }
+
+    public sealed class TimeWrapper{
+        TimeWrapper(float value) { Value = value; }
+        public float Value
+        {
+            get
+            {
+                return _value;
+            }
+
+            set
+            {
+                _value = value;
+            }
+        }
+        float _value;
+
+        int GetPreciseInt(TimeWrapper f) {
+            return (int)(f.Value);
+        }
+
+        public override bool Equals(object obj) {
+            TimeWrapper objectAsTimeWrapper = obj as TimeWrapper;
+
+            if(objectAsTimeWrapper == null) {
+                return false;
+            }
+
+            return Equals(this.Value, objectAsTimeWrapper.Value);
+        }
+        public int GetHashCode(TimeWrapper f) {
+            return GetPreciseInt(f).GetHashCode();
+        }
+        public override int GetHashCode() {
+            return GetPreciseInt(this).GetHashCode();
+        }
+        public bool Equals(TimeWrapper f1, TimeWrapper f2) {
+            return GetPreciseInt(f1) == GetPreciseInt(f2);
+        }
+        public static bool operator==(TimeWrapper a, TimeWrapper b) {
+            return Equals(a.Value, b.Value);
+        }
+        public static bool operator!=(TimeWrapper a, TimeWrapper b) {
+            return !Equals(a.Value, b.Value);
+        }
+        public static bool operator <=(TimeWrapper a, TimeWrapper b) {
+            if(Equals(a.Value, b.Value))
+                return true;
+            return a.Value < b.Value;
+        }
+        public static bool operator >=(TimeWrapper a, TimeWrapper b) {
+            if(Equals(a.Value, b.Value))
+                return true;
+            return a.Value > b.Value;
+        }
+    }
+  
+
+
     /// <sumary>
     /// Small class for the representation of the Track info
     /// </sumary>
@@ -720,7 +791,7 @@ namespace MiKu.NET {
         private InternalBPM bpmSecondary = InternalBPM.DefaultSecondaryBPM();
         private InternalBPM bpmPrecise = InternalBPM.DefaultPreciseBPM();
         private PlayStopMode playStopMode = PlayStopMode.StepBack;
-
+        public static FloatEqualityComparer floatComparator = new FloatEqualityComparer();
 
         //private float MBPM = 1f / 1f;
         //private float MBPMSecondary = 1f / 1f;
@@ -1078,18 +1149,18 @@ namespace MiKu.NET {
         public static HashSet<float> CollectOccupiedTimes(bool collectRailSegments = true) {
             HashSet<float> setOfTImes = new HashSet<float>();
             List<float> noteTimes = Track.s_instance.GetCurrentTrackDifficulty().Keys.ToList();
-            foreach(float time in noteTimes) {
+            foreach(float time in noteTimes.OrEmptyIfNull()) {
                 setOfTImes.Add(time);
             }
             List<Rail> rails = Track.s_instance.GetCurrentRailListByDifficulty();
             if(collectRailSegments) {
-                foreach(Rail rail in rails) {
-                    foreach(float time in rail.notesByTime.Keys.ToList()) {
+                foreach(Rail rail in rails.OrEmptyIfNull()) {
+                    foreach(float time in rail.notesByTime.Keys.ToList().OrEmptyIfNull()) {
                         setOfTImes.Add(time);
                     }
                 }
             } else {
-                foreach(Rail rail in rails) {
+                foreach(Rail rail in rails.OrEmptyIfNull()) {
                     setOfTImes.Add(rail.startTime);
                     setOfTImes.Add(rail.endTime);
                 }
@@ -1097,12 +1168,12 @@ namespace MiKu.NET {
 
 
             List<float> lights = Track.s_instance.GetCurrentLightsByDifficulty();
-            foreach(float time in lights) {
+            foreach(float time in lights.OrEmptyIfNull()) {
                 setOfTImes.Add(time);
             }
 
             List<EditorSlide> slides = Track.s_instance.GetCurrentMovementListByDifficulty();
-            foreach(EditorSlide slide in slides) {
+            foreach(EditorSlide slide in slides.OrEmptyIfNull()) {
                 setOfTImes.Add(slide.time);
             }
 
@@ -1668,7 +1739,7 @@ namespace MiKu.NET {
                     PerformScrollStepBackwards(CurrentTime, currentScrollMode);
                     return;
                 } else if(isCTRLDown && !isALTDown) {
-                    ChangeStepMeasure(true, bpmPrimary);
+                    ChangeStepMeasure(false, bpmPrimary);
                 }
                 if(isALTDown) {
                     cameraMoved = true;
@@ -2108,12 +2179,12 @@ namespace MiKu.NET {
 
                 CurrentChart = new EditorChart();
                 EditorBeats defaultBeats = new EditorBeats();
-                defaultBeats.Easy = new Dictionary<float, List<EditorNote>>();
-                defaultBeats.Normal = new Dictionary<float, List<EditorNote>>();
-                defaultBeats.Hard = new Dictionary<float, List<EditorNote>>();
-                defaultBeats.Expert = new Dictionary<float, List<EditorNote>>();
-                defaultBeats.Master = new Dictionary<float, List<EditorNote>>();
-                defaultBeats.Custom = new Dictionary<float, List<EditorNote>>();
+                defaultBeats.Easy = new Dictionary<float, List<EditorNote>>(new FloatEqualityComparer());
+                defaultBeats.Normal = new Dictionary<float, List<EditorNote>>(new FloatEqualityComparer());
+                defaultBeats.Hard = new Dictionary<float, List<EditorNote>>(new FloatEqualityComparer());
+                defaultBeats.Expert = new Dictionary<float, List<EditorNote>>(new FloatEqualityComparer());
+                defaultBeats.Master = new Dictionary<float, List<EditorNote>>(new FloatEqualityComparer());
+                defaultBeats.Custom = new Dictionary<float, List<EditorNote>>(new FloatEqualityComparer());
                 CurrentChart.Track = defaultBeats;
 
                 EditorEffects defaultEffects = new EditorEffects();
@@ -4401,7 +4472,7 @@ namespace MiKu.NET {
             if(workingTrack != null && workingTrack.Count > 0) {
                 // Iterate each entry on the Dictionary and get the note to update
                 //foreach( List<Note> _notes in valueColl ) {
-                foreach(float key in keys_sorted) {
+                foreach(float key in keys_sorted.OrEmptyIfNull()) {
                     if(key > (TrackDuration * MS)) {
                         // If the note to add is pass the current song duration, we delete it
                         workingTrack.Remove(key);
@@ -4455,7 +4526,7 @@ namespace MiKu.NET {
                 }
                 // need to also instantiate everything in the rails section
                 List<Rail> rails = GetCurrentRailListByDifficulty();
-                foreach(Rail rail in rails) {
+                foreach(Rail rail in rails.OrEmptyIfNull()) {
                     RailHelper.ReinstantiateRail(rail);
                     RailHelper.ReinstantiateRailSegmentObjects(rail);
                     s_instance.IncreaseTotalDisplayedNotesCount();
@@ -4559,7 +4630,7 @@ namespace MiKu.NET {
             if(copiedTrack != null && copiedTrack.Count > 0) {
 
                 // Iterate each entry on the Dictionary and get the note to copy
-                foreach(KeyValuePair<float, List<EditorNote>> kvp in copiedTrack) {
+                foreach(KeyValuePair<float, List<EditorNote>> kvp in copiedTrack.OrEmptyIfNull()) {
                     List<EditorNote> _notes = kvp.Value;
                     List<EditorNote> copiedList = new List<EditorNote>();
 
@@ -4589,7 +4660,7 @@ namespace MiKu.NET {
 
             // todo needs to also receive rails
             List<Rail> newClones = Miku_Clipboard.CopiedRails;
-            foreach(Rail rail in newClones) {
+            foreach(Rail rail in newClones.OrEmptyIfNull()) {
                 Rail cloneOfAClone = RailHelper.CloneRail(rail, rail.startTime, rail.endTime, RailHelper.RailRangeBehaviour.Allow);
                 newClones.Add(cloneOfAClone);
                 s_instance.IncreaseTotalDisplayedNotesCount();
@@ -5237,6 +5308,8 @@ namespace MiKu.NET {
             List<float> crouchs = GetCurrentMovementListByDifficulty(false);
             List<EditorSlide> slides = GetCurrentMovementListByDifficulty();
             List<float> lights = GetCurrentLightsByDifficulty();
+            List<Rail> rails = GetCurrentRailListByDifficulty();
+
             GameObject targetToDelete;
             float lookUpTime;
 
@@ -5267,6 +5340,8 @@ namespace MiKu.NET {
                 lights_tofilter = lights.Where(time => time >= CurrentSelection.startTime
                     && time <= CurrentSelection.endTime).ToList();
 
+                rails = RailHelper.GetListOfRailsInRange(rails, CurrentSelection.startTime, CurrentSelection.endTime, RailHelper.RailRangeBehaviour.Allow);
+
             } else {
                 RefreshCurrentTime();
 
@@ -5281,6 +5356,7 @@ namespace MiKu.NET {
                 slides_tofilter = slides.Where(s => s.time == CurrentTime).ToList();
 
                 lights_tofilter = lights.Where(time => time == CurrentTime).ToList();
+                rails = RailHelper.GetListOfRailsInRange(rails, CurrentSelection.startTime, CurrentSelection.startTime, RailHelper.RailRangeBehaviour.Allow, RailHelper.RailFetchBehaviour.HasEdgesAtCurrentTime);
             }
 
             for(int j = 0; j < keys_tofilter.Count; ++j) {
@@ -5370,6 +5446,10 @@ namespace MiKu.NET {
                         DestroyImmediate(targetToDelete);
                     }
                 }
+            }
+
+            foreach(Rail rail in rails.OrEmptyIfNull()) {
+                RailHelper.DestroyRail(rail);
             }
 
             // LogMessage(keys_tofilter.Count+" Keys deleted");
@@ -5725,9 +5805,9 @@ namespace MiKu.NET {
             List<Rail> rails = s_instance.GetCurrentRailListByDifficulty();
             List<Rail> filteredRails = rails.Where((rail) => rail.startTime > startTime && rail.startTime < endTime).ToList();
             bool hasInterruptions = false;
-            foreach(float time in filteredNoteTimes) {
-                List<EditorNote> notesAtTIme = notes[time];
-                foreach(EditorNote note in notesAtTIme) {
+            foreach(float time in filteredNoteTimes.OrEmptyIfNull()) {
+                List<EditorNote> notesAtTime = notes[time];
+                foreach(EditorNote note in notesAtTime.OrEmptyIfNull()) {
                     if(IsOppositeNoteType(note.HandType, handType))
                         continue;
                     else if(note.HandType ==  handType && extensionPolicy == RailHelper.RailExtensionPolicy.AllowNotesOfSameColor)
@@ -5741,7 +5821,7 @@ namespace MiKu.NET {
                     return true;
             }
 
-            foreach(Rail rail in filteredRails) {
+            foreach(Rail rail in filteredRails.OrEmptyIfNull()) {
                 if(rail.railId == railId || rail.railId == secondRailId)
                     continue;
 
@@ -5785,7 +5865,7 @@ namespace MiKu.NET {
                 return null;
 
             List<EditorNote> notes = workingTrack[time];
-            foreach(EditorNote note in notes) {
+            foreach(EditorNote note in notes.OrEmptyIfNull()) {
                 if(note.HandType == handType)
                     return note;
             }
@@ -5798,9 +5878,14 @@ namespace MiKu.NET {
             Dictionary<float, List<EditorNote>> workingTrack = s_instance.GetCurrentTrackDifficulty();
             List<Vector2> railPoints = RailHelper.FetchRailPositionsAtTime(time, s_instance.GetCurrentRailListByDifficulty());
             list.AddRange(railPoints);
+            if(workingTrack.Count == 1 && !workingTrack.ContainsKey(time)) {
+                Trace.WriteLine("Current time:" + time);
+                Trace.WriteLine("Track time:" + workingTrack.First());
+            }
+
             if(workingTrack.ContainsKey(time)) {
                 List<EditorNote> noteList = workingTrack[time];
-                foreach(EditorNote note in noteList) {
+                foreach(EditorNote note in noteList.OrEmptyIfNull()) {
                     list.Add(new Vector2(note.Position[0], note.Position[1]));
                 }
             }
@@ -5845,10 +5930,10 @@ namespace MiKu.NET {
                     // need to check that we aren't in the incorrect rails section
                     // for that we first filter which rails appear at this time point
                     List<Rail> rails = s_instance.GetCurrentRailListByDifficulty();
-                    List<Rail> railsAtCurrentTIme = RailHelper.GetListOfRailsInRange(rails, CurrentTime, CurrentTime, RailHelper.RailRangeBehaviour.Allow);
+                    List<Rail> railsAtCurrentTime = RailHelper.GetListOfRailsInRange(rails, CurrentTime, CurrentTime, RailHelper.RailRangeBehaviour.Allow);
                     bool isIncorrectPlacement = false;
-                    if(railsAtCurrentTIme != null) {
-                        foreach(Rail rail in railsAtCurrentTIme) {
+                    if(railsAtCurrentTime != null) {
+                        foreach(Rail rail in railsAtCurrentTime.OrEmptyIfNull()) {
                             // this is fine
                             if(rail.noteType == s_instance.selectedNoteType || IsOppositeNoteType(rail.noteType, s_instance.selectedNoteType))
                                 continue;
@@ -6100,7 +6185,7 @@ namespace MiKu.NET {
                                         matchedRail.RemoveNote(noteToRemove.noteId);
                                         return;
                                     }
-                                } else if(railNote.noteId == matchedRail.leader.thisNote.noteId) {
+                                } else if(railNote.noteId == matchedRail.Leader.thisNote.noteId) {
                                     // we check if there's a rail to the left we can expand with this position
                                     Rail rail = RailHelper.AttemptExtendTail(CurrentTime, noteFromNoteArea.transform.position, rails,
                                         s_instance.isALTDown ? RailHelper.RailExtensionPolicy.AllowNotesOfSameColor : RailHelper.RailExtensionPolicy.NoInterruptions);
@@ -6109,9 +6194,9 @@ namespace MiKu.NET {
                                         if(lastNote != null) {
                                             if(rail.Size() > 1) {
                                                 rail.FlipNoteTypeToBreaker(lastNote.thisNote.noteId);
-                                                rail.FlipNoteTypeToBreaker(rail.leader.thisNote.noteId);
+                                                rail.FlipNoteTypeToBreaker(rail.Leader.thisNote.noteId);
                                                 if(matchedRail != null) {
-                                                    bool createdNewRail = matchedRail.FlipNoteTypeToBreaker(matchedRail.leader.thisNote.noteId);
+                                                    bool createdNewRail = matchedRail.FlipNoteTypeToBreaker(matchedRail.Leader.thisNote.noteId);
                                                     if(createdNewRail)
                                                         s_instance.IncreaseTotalDisplayedNotesCount();
                                                 }
@@ -6132,7 +6217,7 @@ namespace MiKu.NET {
                                         return;
                                     }
                                     if(conjoinedRail.Size() > 1) {
-                                        conjoinedRail.FlipNoteTypeToBreaker(conjoinedRail.leader.thisNote.noteId);
+                                        conjoinedRail.FlipNoteTypeToBreaker(conjoinedRail.Leader.thisNote.noteId);
                                         conjoinedRail.FlipNoteTypeToBreaker(conjoinedRail.GetLastNote().thisNote.noteId);
                                     }
                                     if(matchedRail != null)
@@ -6199,7 +6284,7 @@ namespace MiKu.NET {
                                             Trace.WriteLine("Deleting the rail: " + matchedRail.railId);
                                             List<Rail> tempRailList = s_instance.GetCurrentRailListByDifficulty();
                                             tempRailList.Remove(matchedRail);
-                                            matchedRail.DestroyLeader();
+                                            matchedRail.DestroyLeaderGameObject();
                                             s_instance.DecreaseTotalDisplayedNotesCount();
                                         }
                                     } else {
@@ -6215,7 +6300,7 @@ namespace MiKu.NET {
                                     Trace.WriteLine("Deleting the rail: " + matchedRail.railId);
                                     List<Rail> tempRailList = s_instance.GetCurrentRailListByDifficulty();
                                     tempRailList.Remove(matchedRail);
-                                    matchedRail.DestroyLeader();
+                                    matchedRail.DestroyLeaderGameObject();
                                     s_instance.DecreaseTotalDisplayedNotesCount();
                                 }
                                 Trace.WriteLine("Moved the note. Returning");
@@ -6365,27 +6450,46 @@ namespace MiKu.NET {
             }
         }
 
-        ///// <summary>
-        ///// Return a string formated to be use as the note id
-        ///// </summary>
-        ///// <param name="_ms">Millesconds of the current position to use on the formating</param>
-        ///// <param name="index">Index of the note to use on the formating</param>    
-        ///// <param name="noteType">The type of note to look for, default is <see cref="EditorNote.NoteHandType.RightHanded" /></param>
-        //public static string FormatNoteName(float _ms, int index, EditorNote.NoteHandType noteType = EditorNote.NoteHandType.RightHanded) {
-        //    return (_ms.ToString("R") + noteType.ToString() + index).ToString();
-        //}
 
-        //public static string FormatNoteName(float _ms) {
-        //    return (_ms.ToString("R") + s_instance.selectedNoteType.ToString() + s_instance.TotalNotes + 1).ToString();
-        //}
 
-        /// <summary>
-        /// Add the passed Note GameObject to the <see cref="disabledNotes" /> list of disabled objects
-        /// also disable the GameObject after added
-        /// </summary>
-        /// <param name="note">The GameObject to add to the list</summary>
-        /// <param name="playBeatSound">If false not sound effect will be played</summary>
-        public static void AddNoteToDisabledList(GameObject note, bool playBeatSound = true) {
+        public static int GetAmountOfNotesAtTime(float time) {
+            var difficultyList = s_instance.GetCurrentTrackDifficulty();
+            var rails = s_instance.GetCurrentRailListByDifficulty();
+            int notesCount = 0;
+            if(difficultyList != null && difficultyList.ContainsKey(time) && difficultyList[time] != null) {
+                notesCount = difficultyList[time].Count;
+            }
+            int railsCount = 0;
+            if(rails != null) {
+                rails = RailHelper.GetListOfRailsInRange(rails, time, time, RailHelper.RailRangeBehaviour.Allow, RailHelper.RailFetchBehaviour.StartsAtCurrentTime);
+                if(rails != null) {
+                    railsCount = rails.Count;
+                }
+            }
+            return notesCount + railsCount;
+        }
+
+            ///// <summary>
+            ///// Return a string formated to be use as the note id
+            ///// </summary>
+            ///// <param name="_ms">Millesconds of the current position to use on the formating</param>
+            ///// <param name="index">Index of the note to use on the formating</param>    
+            ///// <param name="noteType">The type of note to look for, default is <see cref="EditorNote.NoteHandType.RightHanded" /></param>
+            //public static string FormatNoteName(float _ms, int index, EditorNote.NoteHandType noteType = EditorNote.NoteHandType.RightHanded) {
+            //    return (_ms.ToString("R") + noteType.ToString() + index).ToString();
+            //}
+
+            //public static string FormatNoteName(float _ms) {
+            //    return (_ms.ToString("R") + s_instance.selectedNoteType.ToString() + s_instance.TotalNotes + 1).ToString();
+            //}
+
+            /// <summary>
+            /// Add the passed Note GameObject to the <see cref="disabledNotes" /> list of disabled objects
+            /// also disable the GameObject after added
+            /// </summary>
+            /// <param name="note">The GameObject to add to the list</summary>
+            /// <param name="playBeatSound">If false not sound effect will be played</summary>
+            public static void AddNoteToDisabledList(GameObject note, bool playBeatSound = true) {
             s_instance.disabledNotes.Add(note);
             note.SetActive(false);
             Transform directionWrap = note.transform.parent.Find("DirectionWrap");
@@ -7020,7 +7124,7 @@ namespace MiKu.NET {
                     Dictionary<float, List<EditorNote>> updateData = new Dictionary<float, List<EditorNote>>();
 
                     // Iterate each entry on the Dictionary and get the note to update
-                    foreach(KeyValuePair<float, List<EditorNote>> kvp in workingTrack) {
+                    foreach(KeyValuePair<float, List<EditorNote>> kvp in workingTrack.OrEmptyIfNull()) {
                         List<EditorNote> _notes = kvp.Value;
                         List<EditorNote> updateList = new List<EditorNote>();
 
@@ -7297,7 +7401,7 @@ namespace MiKu.NET {
                 Dictionary<float, List<EditorNote>> updateData = new Dictionary<float, List<EditorNote>>();
 
                 // Iterate each entry on the Dictionary and get the note to update
-                foreach(KeyValuePair<float, List<EditorNote>> kvp in workingTrack) {
+                foreach(KeyValuePair<float, List<EditorNote>> kvp in workingTrack.OrEmptyIfNull()) {
                     List<EditorNote> _notes = kvp.Value;
 
                     // Iterate each note and update its info
@@ -7399,7 +7503,7 @@ namespace MiKu.NET {
 
             if(workingTrack != null && workingTrack.Count > 0) {
                 // Iterate each entry on the Dictionary and get the note to update
-                foreach(KeyValuePair<float, List<EditorNote>> kvp in workingTrack) {
+                foreach(KeyValuePair<float, List<EditorNote>> kvp in workingTrack.OrEmptyIfNull()) {
                     List<EditorNote> _notes = kvp.Value;
 
                     // Iterate each note and update its info
@@ -7478,16 +7582,16 @@ namespace MiKu.NET {
             expertRails.Sort((rail1, rail2) => rail1.startTime.CompareTo(rail2.startTime));
             customRails.Sort((rail1, rail2) => rail1.startTime.CompareTo(rail2.startTime));
             Trace.WriteLine("Expert rails");
-            foreach(Rail rail in expertRails) {
+            foreach(Rail rail in expertRails.OrEmptyIfNull()) {
                 Trace.WriteLine("Rail id:" + rail.railId + " starts at: " + rail.startTime + " ends at: " + rail.endTime);
-                foreach(RailNoteWrapper note in rail.notesByTime.Values) {
+                foreach(RailNoteWrapper note in rail.notesByTime.Values.OrEmptyIfNull()) {
                     Trace.WriteLine("Rail segment point is located at:" + note.thisNote.Position[2] + " note type is: " + note.thisNote.UsageType);
                 }
             }
             Trace.WriteLine("Custom rails");
-            foreach(Rail rail in customRails) {
+            foreach(Rail rail in customRails.OrEmptyIfNull()) {
                 Trace.WriteLine("Rail id:" + rail.railId + " starts at: " + rail.startTime + " ends at: " + rail.endTime);
-                foreach(RailNoteWrapper note in rail.notesByTime.Values) {
+                foreach(RailNoteWrapper note in rail.notesByTime.Values.OrEmptyIfNull()) {
                     Trace.WriteLine("Rail segment point is located at:" + note.thisNote.Position[2] + " note type is: " + note.thisNote.UsageType);
                 }
             }
@@ -7518,6 +7622,7 @@ namespace MiKu.NET {
             DeleteNotesGameObjects();
             CurrentDifficulty = difficulty;
             LoadChartNotes();
+            RailHelper.SanitycheckRailList(s_instance.GetCurrentRailListByDifficulty());
             // m_DifficultyDisplay.text = CurrentDifficulty.ToString();
             m_statsDifficultyText.text = CurrentDifficulty.ToString();
 

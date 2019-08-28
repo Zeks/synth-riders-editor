@@ -51,7 +51,7 @@ namespace MiKu.NET {
     }
     
     public class Rail {
-        
+        public static FloatEqualityComparer floatComparator = new FloatEqualityComparer();
         public Rail() {
             railId = railCounter++;
             Trace.WriteLine("Created new rail with ID: " + railId);
@@ -62,10 +62,7 @@ namespace MiKu.NET {
 
 
         ~Rail() {
-            if(leader != null) {
-
-                DestroyNoteObjectAndRemoveItFromTheRail(leader.thisNote.noteId);
-            }
+            DestroyLeaderGameObject();
             Trace.WriteLine("DESTRUCTOR called for rail with ID: " + railId);
         }
 
@@ -97,6 +94,22 @@ namespace MiKu.NET {
 
             Trace.WriteLine("Returning note count of: " + times.Count);
             return times.Count > 0;
+        }
+
+        public bool HasEdgeNoteAtTime(float time) {
+            Trace.WriteLine("Detecting if there is an edge note at: " + time  + "Rail spans from:"  + startTime + " to " + endTime);
+
+            float timeRangeDuplicatesStart = time - Track.MIN_TIME_OVERLAY_CHECK;
+            float timeRangeDuplicatesEnd = time + Track.MIN_TIME_OVERLAY_CHECK;
+
+            List<float> times = notesByTime.Keys.ToList();
+            Trace.WriteLine("Rail already has notes at: " + times);
+
+            times = times.Where(testedTIme => testedTIme >= timeRangeDuplicatesStart
+                    && testedTIme <= timeRangeDuplicatesEnd).ToList();
+
+            Trace.WriteLine("Returning note count of: " + times.Count);
+            return times.Count > 0 && notesByTime[times[0]] == Leader || notesByTime[times[0]] == GetLastNote();
         }
 
         public EditorNote GetNoteAtPosition(float time) {
@@ -177,7 +190,7 @@ namespace MiKu.NET {
 
             Trace.WriteLine("Note found: " + notesByID[id].thisNote.noteId + "positioned at x:" + notesByID[id].thisNote.Position[0] + " y:" + notesByID[id].thisNote.Position[1] + " z:" + notesByID[id].thisNote.Position[2]);
 
-            RailNoteWrapper leaderStorage = leader;
+            
 
             // three distinct cases here, removing sole leader, breaker and removing simple note
             // first removes the rail altogether
@@ -195,20 +208,12 @@ namespace MiKu.NET {
             RailNoteWrapper removedNote = notesByID[id];
             EditorNote note = removedNote.thisNote;
 
+            RailNoteWrapper leaderStorage = Leader;
+
             if(IsBreakerNote(note.UsageType))
                 RemoveBreakerNote(removedNote);
             else
                 RemoveSimpleNote(removedNote);
-
-            //if rail has changed the leader we need to adjust the sound effects list to reflect it
-            if(leaderStorage != null && leaderStorage != leader) {
-                DestroyNoteObjectAndRemoveItFromTheRail(leaderStorage.thisNote.noteId);
-                List<float> times = Track.CollectOccupiedTimes(false).ToList();
-                if(!times.Contains(leaderStorage.thisNote.TimePoint)) {
-                    Track.RemoveTimeFromSFXList(leaderStorage.thisNote.TimePoint);
-                }
-                Track.AddTimeToSFXList(leader.thisNote.TimePoint);
-            }
 
             Trace.WriteLine("Removing note from rails dictionaries");
             notesByID.Remove(id);
@@ -224,9 +229,9 @@ namespace MiKu.NET {
             return;
         }
 
-        public void DestroyLeader() {
-            if(leader != null)
-                DestroyNoteObjectAndRemoveItFromTheRail(leader.thisNote.noteId);
+        public void DestroyLeaderGameObject() {
+            if(Leader != null)
+                DestroyNoteObjectAndRemoveItFromTheRail(Leader.thisNote.noteId);
         }
 
         void RemoveSimpleNote(RailNoteWrapper wrapper) {
@@ -237,11 +242,11 @@ namespace MiKu.NET {
             // by this point we've established it's not the breaker so we only need 
             // to concern ourselves if we're removing the leader or not
             // need to check that this note isn't the leader and assign a new one
-            if(leader.thisNote.noteId == note.noteId) {
+            if(Leader.thisNote.noteId == note.noteId) {
                 Trace.WriteLine("Removing leader note.");
-                RailNoteWrapper oldNextNote = leader.nextNote;
-                Trace.WriteLine("New leader with id: " + leader.thisNote.noteId + "positioned at x:" + leader.thisNote.Position[0] + " y:" + leader.thisNote.Position[1] + " z:" + leader.thisNote.Position[2]);
-                leader = oldNextNote;
+                RailNoteWrapper oldNextNote = Leader.nextNote;
+                Trace.WriteLine("New leader with id: " + Leader.thisNote.noteId + "positioned at x:" + Leader.thisNote.Position[0] + " y:" + Leader.thisNote.Position[1] + " z:" + Leader.thisNote.Position[2]);
+                Leader = oldNextNote;
             } else {
                 Trace.WriteLine("Removing simple note.");
                 RailNoteWrapper oldPreviousNote = wrapper.GetPreviousNote(); 
@@ -276,7 +281,7 @@ namespace MiKu.NET {
             if(wrapper == breakerHead) {
                 breakerHead = null;
                 if(wrapper.nextNote != null) {
-                    leader= wrapper.nextNote;
+                    Leader = wrapper.nextNote;
                     wrapper.nextNote.AssignPreviousNote(null);
                 }
             }
@@ -286,7 +291,7 @@ namespace MiKu.NET {
             Trace.WriteLine("////NOTE ADD/////" + note.noteId);
             // extending past the railbraker needs to make a new note railbreaker
             RailNoteWrapper wrapper = new RailNoteWrapper(note);
-            RailNoteWrapper leaderStorage = leader;
+            RailNoteWrapper leaderStorage = Leader;
 
             bool added = true;
             if(IsBreakerNote(note.UsageType)) { 
@@ -298,14 +303,6 @@ namespace MiKu.NET {
                 return null;
 
             //if rail has changed the leader we need to adjust the sound effects list to reflect it
-            if(leaderStorage != null && leaderStorage != leader) {
-                List<float> times = Track.CollectOccupiedTimes(false).ToList();
-                if(!times.Contains(leaderStorage.thisNote.TimePoint)) {
-                    Track.RemoveTimeFromSFXList(leaderStorage.thisNote.TimePoint);
-                }
-                Track.AddTimeToSFXList(leader.thisNote.TimePoint);
-            }
-
             notesByID[note.noteId] = wrapper;
             notesByTime[note.TimePoint] = wrapper;
 
@@ -325,16 +322,16 @@ namespace MiKu.NET {
 
             // adding new leader
             if(previous == null) {
-                RailNoteWrapper previousLeader = leader;
+                RailNoteWrapper previousLeader = Leader;
 
                 // leader is keeping the displayed notes
                 // therefore it needs to go or it will not be cleared in time
                 if(previousLeader != null) { 
-                    DestroyLeader();
+                    DestroyLeaderGameObject();
                     
                 }
 
-                leader = wrapper;
+                Leader = wrapper;
                 if(previousLeader != null) {
                     wrapper.nextNote = previousLeader;
                     previousLeader.AssignPreviousNote(wrapper);
@@ -408,7 +405,7 @@ namespace MiKu.NET {
                     return true;
                 Trace.WriteLine("Initiating the rail with a breaker note.");
                 // rail that starts with the breaker is theoretically possible
-                leader = wrapper;
+                Leader = wrapper;
                 //note.HandType == EditorNote.NoteUsageType.Line; // adding breaker as a first note doesn't make sense
             } else {
                 // adding non first note
@@ -419,7 +416,7 @@ namespace MiKu.NET {
                 // if we're breaking an existing rail
                 if(previous.nextNote != null) {
                     Trace.WriteLine("Breaking the existing rail.");
-                    DestroyLeader();
+                    DestroyLeaderGameObject();
 
 
                     RailNoteWrapper previousLeftPoint = previous;
@@ -469,7 +466,7 @@ namespace MiKu.NET {
             RailNoteWrapper previousRightPoint = note.nextNote;
             Rail potentialNewRail = null;
             // two cases here: we're breaking the rail OR marking a leader as a closed one
-            if(note != leader) {
+            if(note != Leader) {
                 // note isn't a leader, this means we are cutting off the tail
                 note.nextNote = null;
 
@@ -499,7 +496,7 @@ namespace MiKu.NET {
                 return;
 
             note.thisNote.UsageType =  EditorNote.NoteUsageType.Line;
-            if(note != leader) {
+            if(note != Leader) {
                 breakerTail = null;
             } else {
                 breakerHead = null;
@@ -641,7 +638,7 @@ namespace MiKu.NET {
             EditorNote note = wrapper.thisNote;
             DestroyNoteObjectAndRemoveItFromTheRail(note.noteId);
 
-            bool isSegment = wrapper == leader ? false : true;
+            bool isSegment = wrapper == Leader ? false : true;
             GameObject noteGO = GameObject.Instantiate(Track.s_instance.GetNoteMarkerByType(note.HandType, note.UsageType, isSegment));
             noteGO.transform.localPosition = new Vector3(
                                                 note.Position[0],
@@ -693,9 +690,9 @@ namespace MiKu.NET {
             lastNote.thisNote.UsageType = EditorNote.NoteUsageType.Line;
             InstantiateNoteObject(lastNote);
             // this destroys the displayed part
-            nextRail.DestroyLeader();
+            nextRail.DestroyLeaderGameObject();
 
-            foreach(int noteId in nextRail.notesByID.Keys.ToList()) {
+            foreach(int noteId in nextRail.notesByID.Keys.ToList().OrEmptyIfNull()) {
                 AddNote(nextRail.notesByID[noteId].thisNote);
                 nextRail.RemoveNote(noteId);
            }
@@ -703,19 +700,19 @@ namespace MiKu.NET {
             Trace.WriteLine("Deleting the rail: " + nextRail.railId);
             List<Rail> tempRailList = Track.s_instance.GetCurrentRailListByDifficulty();
             tempRailList.Remove(nextRail);
-            nextRail.DestroyLeader();
+            nextRail.DestroyLeaderGameObject();
 
         }
 
         public void MoveEveryPointOnTheTimeline(float shift, bool reinstantiate = false) {
-            foreach(RailNoteWrapper note in notesByTime.Values) {
+            foreach(RailNoteWrapper note in notesByTime.Values.OrEmptyIfNull()) {
                 note.thisNote.TimePoint += shift;
                 note.thisNote.Position[2] = Track.MStoUnit(note.thisNote.TimePoint);
             }
             // need to recreate the time hash
             List<RailNoteWrapper> rails = notesByTime.Values.ToList();
             notesByTime.Clear();
-            foreach(RailNoteWrapper note in rails) {
+            foreach(RailNoteWrapper note in rails.OrEmptyIfNull()) {
                 if(note != null)
                     notesByTime.Add(note.thisNote.TimePoint, note);
             }
@@ -729,13 +726,13 @@ namespace MiKu.NET {
 
         public void SwitchHandTo(EditorNote.NoteHandType type) {
             this.noteType = type;
-            foreach(RailNoteWrapper note in notesByTime.Values) {
+            foreach(RailNoteWrapper note in notesByTime.Values.OrEmptyIfNull()) {
                 note.thisNote.HandType = type;
             }
         }
 
         public void ShiftEveryNoteBy(Vector2 vec) {
-            foreach(RailNoteWrapper note in notesByTime.Values) {
+            foreach(RailNoteWrapper note in notesByTime.Values.OrEmptyIfNull()) {
                 note.thisNote.Position[0] += vec.x;
                 note.thisNote.Position[1] += vec.y;
             }
@@ -774,7 +771,32 @@ namespace MiKu.NET {
         // and its own note object instantiation / destruction
         public Dictionary<int, GameObject> noteObjects; 
 
-        public RailNoteWrapper leader;
+        public RailNoteWrapper _leader;
+    
+        public RailNoteWrapper Leader
+        {
+            get
+            {
+                return _leader;
+            }
+
+            set
+            {
+                if(_leader != null) {
+
+                    int count = Track.GetAmountOfNotesAtTime(_leader.thisNote.TimePoint);
+                    if(count == 1)
+                        Track.RemoveTimeFromSFXList(_leader.thisNote.TimePoint);
+                    DestroyLeaderGameObject();
+                }
+                _leader = value;
+                if(_leader.thisNote.UsageType == EditorNote.NoteUsageType.Breaker)
+                    breakerHead = _leader;
+
+                Track.AddTimeToSFXList(_leader.thisNote.TimePoint);
+            }
+        }
+
         public RailNoteWrapper breakerTail;
         public RailNoteWrapper breakerHead;
         //public LongNote railInstance;

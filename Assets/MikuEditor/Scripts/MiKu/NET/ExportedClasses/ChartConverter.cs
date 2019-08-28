@@ -102,11 +102,11 @@ namespace MiKu.NET.Charting {
             if(exportValue == null) {
                 exportValue = new Dictionary<float, List<Note>>();
             }
-            foreach(KeyValuePair<float, List<EditorNote>> entry in editorValue) {
+            foreach(KeyValuePair<float, List<EditorNote>> entry in editorValue.OrEmptyIfNull()) {
                 if(!exportValue.ContainsKey(entry.Key))
                     exportValue.Add(entry.Key, new List<Note>());
                 // will need to create note's name in the format that game understands
-                foreach(var editorNote in entry.Value) {
+                foreach(var editorNote in entry.Value.OrEmptyIfNull()) {
                     Note exportNote = new Note(new UnityEngine.Vector3 { x = editorNote.Position[0], y = editorNote.Position[1], z = editorNote.Position[2] },
                         editorNote.name, editorNote.ComboId, ConvertEditorNoteTypeToGameNoteType(editorNote.HandType));
                     exportNote.Segments = editorNote.Segments;
@@ -122,8 +122,8 @@ namespace MiKu.NET.Charting {
             if(exportValue == null) {
                 exportValue = new Dictionary<float, List<Note>>();
             }
-            foreach(Rail rail in rails) {
-                EditorNote leaderNote = rail.leader.thisNote;
+            foreach(Rail rail in rails.OrEmptyIfNull()) {
+                EditorNote leaderNote = rail.Leader.thisNote;
                 if(!exportValue.ContainsKey(leaderNote.TimePoint)) {
                     exportValue.Add(leaderNote.TimePoint, new List<Note>());
                 }
@@ -132,7 +132,7 @@ namespace MiKu.NET.Charting {
                 Note gameNote = new Note(pos, "Rail_" + leaderNote.noteId, -1 /* will be assigned later */, ConvertEditorNoteTypeToGameNoteType(leaderNote.HandType));
                 gameNote.Segments = new float[rail.notesByTime.Count-1, 3];
                 int i = 0;
-                foreach(float time in rail.notesByTime.Keys) {
+                foreach(float time in rail.notesByTime.Keys.OrEmptyIfNull()) {
                     if(leaderNote.TimePoint == time)
                         continue;
                     EditorNote  segmentNote = rail.notesByTime[time].thisNote;
@@ -158,11 +158,11 @@ namespace MiKu.NET.Charting {
             if(editorDictionary == null) {
                 editorDictionary = new Dictionary<float, List<EditorNote>>();
             }
-            foreach(KeyValuePair<float, List<Note>> entry in gameDictionary) {
+            foreach(KeyValuePair<float, List<Note>> entry in gameDictionary.OrEmptyIfNull()) {
                 if(!editorDictionary.ContainsKey(entry.Key))
                     editorDictionary.Add(entry.Key, new List<EditorNote>());
 
-                foreach(var gameNote in entry.Value) {
+                foreach(var gameNote in entry.Value.OrEmptyIfNull()) {
                     EditorNote exportNote = new EditorNote(
                         new UnityEngine.Vector3 { x = gameNote.Position[0], y = gameNote.Position[1], z = gameNote.Position[2] }, entry.Key,
                          gameNote.ComboId, ConvertGameNoteTypeToEditorNoteType(gameNote.Type));
@@ -274,7 +274,7 @@ namespace MiKu.NET.Charting {
             List<float> times = difficulty.Keys.ToList();
             times.Sort();
             Note.NoteType previousType = Note.NoteType.NoHand;
-            foreach(float time in times) {
+            foreach(float time in times.OrEmptyIfNull()) {
                 List<Note> notes = difficulty[time];
                 if(notes == null)
                     continue;
@@ -339,7 +339,7 @@ namespace MiKu.NET.Charting {
             // exporting bookmarks
             if(editorChart.Bookmarks != null && editorChart.Bookmarks.BookmarksList != null) {
                 int size = editorChart.Bookmarks.BookmarksList.Count;
-                foreach(var editorBookmark in editorChart.Bookmarks.BookmarksList) {
+                foreach(var editorBookmark in editorChart.Bookmarks.BookmarksList.OrEmptyIfNull()) {
                     Bookmark exportBookmark = new Bookmark
                     {
                         name = editorBookmark.name,
@@ -476,12 +476,12 @@ namespace MiKu.NET.Charting {
 
             if(editorChart.Track == null) {
                 EditorBeats defaultBeats = new EditorBeats();
-                defaultBeats.Easy = new Dictionary<float, List<EditorNote>>();
-                defaultBeats.Normal = new Dictionary<float, List<EditorNote>>();
-                defaultBeats.Hard = new Dictionary<float, List<EditorNote>>();
-                defaultBeats.Expert = new Dictionary<float, List<EditorNote>>();
-                defaultBeats.Master = new Dictionary<float, List<EditorNote>>();
-                defaultBeats.Custom = new Dictionary<float, List<EditorNote>>();
+                defaultBeats.Easy = new Dictionary<float, List<EditorNote>>(new FloatEqualityComparer());
+                defaultBeats.Normal = new Dictionary<float, List<EditorNote>>(new FloatEqualityComparer());
+                defaultBeats.Hard = new Dictionary<float, List<EditorNote>>(new FloatEqualityComparer());
+                defaultBeats.Expert = new Dictionary<float, List<EditorNote>>(new FloatEqualityComparer());
+                defaultBeats.Master = new Dictionary<float, List<EditorNote>>(new FloatEqualityComparer());
+                defaultBeats.Custom = new Dictionary<float, List<EditorNote>>(new FloatEqualityComparer());
                 editorChart.Track = defaultBeats;
             }
 
@@ -642,7 +642,7 @@ namespace MiKu.NET.Charting {
             // exporting bookmarks
             if(gameChart.Bookmarks != null && gameChart.Bookmarks.BookmarksList != null) {
                 int size = gameChart.Bookmarks.BookmarksList.Count;
-                foreach(var gameBookmark in gameChart.Bookmarks.BookmarksList) {
+                foreach(var gameBookmark in gameChart.Bookmarks.BookmarksList.OrEmptyIfNull()) {
                     EditorBookmark exportBookmark = new EditorBookmark
                     {
                         name = gameBookmark.name,

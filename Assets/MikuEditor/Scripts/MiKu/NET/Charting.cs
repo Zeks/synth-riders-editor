@@ -39,6 +39,8 @@ namespace MiKu.NET.Charting {
         };
 
         ~EditorNote() {
+            if(this.GameObject != null)
+                GameObject.DestroyImmediate(this.GameObject);
         }
 
         public EditorNote Clone() {

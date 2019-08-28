@@ -51,7 +51,7 @@ public class Miku_Clipboard : MonoBehaviour {
             }            
 
             // Iterate each entry on the Dictionary and get the note to copy
-            foreach( KeyValuePair<float, List<EditorNote>> kvp in workingTrack )
+            foreach( KeyValuePair<float, List<EditorNote>> kvp in workingTrack.OrEmptyIfNull())
             {
                 List<EditorNote> _notes = kvp.Value;
                 List<EditorNote> copiedList = new List<EditorNote>();
