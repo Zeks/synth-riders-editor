@@ -4136,29 +4136,28 @@ namespace MiKu.NET {
             //_currentTime+= K*MBPM;
             //UnityEngine.Debug.Log("Current "+_currentTime);
             StorePreviousTime();
-            float floatCurrentTimeValue = _currentTime.FloatValue;
-            if(floatCurrentTimeValue % _CK == 0) {
-                floatCurrentTimeValue += _CK;
+            if(_currentTime.FloatValue % _CK == 0) {
+                _currentTime.FloatValue += _CK;
             } else {
-                float nextPoint = floatCurrentTimeValue + (_CK - (floatCurrentTimeValue % _CK));
+                float nextPoint = _currentTime.FloatValue + (_CK - (_currentTime.FloatValue % _CK));
                 //UnityEngine.Debug.Log("Next "+nextPoint);
                 //print(_CK);
 
-                if(nextPoint == floatCurrentTimeValue) {
-                    nextPoint = floatCurrentTimeValue + _CK;
+                if(nextPoint == _currentTime.FloatValue) {
+                    nextPoint = _currentTime.FloatValue + _CK;
                 }
 
-                if((nextPoint - floatCurrentTimeValue) <= _CK && lastUsedCK == _CK) {
-                    nextPoint = floatCurrentTimeValue + _CK;
+                if((nextPoint - _currentTime.FloatValue) <= _CK && lastUsedCK == _CK) {
+                    nextPoint = _currentTime.FloatValue + _CK;
                 }
 
                 //nextPoint = _currentTime + _CK;
-                floatCurrentTimeValue = nextPoint; //_currentTime + ( _CK - (_currentTime%_CK ) );
+                _currentTime.FloatValue = nextPoint; //_currentTime + ( _CK - (_currentTime%_CK ) );
             }
 
-            _currentTime.FloatValue = Mathf.Min(floatCurrentTimeValue, (TM - 1) * K);
+            _currentTime.FloatValue = Mathf.Min(_currentTime.FloatValue, (TM - 1) * K);
             lastUsedCK = _CK;
-            return MStoUnit(floatCurrentTimeValue);
+            return MStoUnit(_currentTime.FloatValue);
         }
 
         /// <summary>
@@ -4172,27 +4171,26 @@ namespace MiKu.NET {
             float _CK = (K * bpm.Value);
             //_currentTime-= K*MBPM;
             StorePreviousTime();
-            float floatCurrentTimeValue = _currentTime.FloatValue;
-            if(floatCurrentTimeValue % _CK == 0) {
-                floatCurrentTimeValue -= _CK;
+            if(_currentTime.FloatValue % _CK == 0) {
+                _currentTime.FloatValue -= _CK;
             } else {
-                float nextPoint = floatCurrentTimeValue - (floatCurrentTimeValue % _CK);
+                float nextPoint = _currentTime.FloatValue - (_currentTime.FloatValue % _CK);
 
-                if(nextPoint == floatCurrentTimeValue) {
-                    nextPoint = floatCurrentTimeValue - _CK;
+                if(nextPoint == _currentTime.FloatValue) {
+                    nextPoint = _currentTime.FloatValue - _CK;
                     //print("Now Here");
                     // || (_currentTime - nextPoint) <= _CK
                 }
 
-                if((floatCurrentTimeValue - nextPoint) <= _CK && lastUsedCK == _CK) {
-                    nextPoint = floatCurrentTimeValue - _CK;
+                if((_currentTime.FloatValue - nextPoint) <= _CK && lastUsedCK == _CK) {
+                    nextPoint = _currentTime.FloatValue - _CK;
                 }
 
-                floatCurrentTimeValue = nextPoint; //_currentTime - ( _currentTime%_CK ); 
+                _currentTime.FloatValue = nextPoint; //_currentTime - ( _currentTime%_CK ); 
             }
-            _currentTime.FloatValue = Mathf.Max(floatCurrentTimeValue, 0);
+            _currentTime.FloatValue = Mathf.Max(_currentTime.FloatValue, 0);
             lastUsedCK = _CK;
-            return MStoUnit(floatCurrentTimeValue);
+            return MStoUnit(_currentTime.FloatValue);
         }
 
         /// <summary>
@@ -5964,10 +5962,13 @@ namespace MiKu.NET {
                 Trace.WriteLine("Current time:" + time);
                 Trace.WriteLine("Track time:" + workingTrack.First());
             }
-
+            Trace.WriteLine("Time sixty fourths: " + (int)(time.FloatValue/(Track.BPM/200f)));
             if(workingTrack.ContainsKey(time)) {
+                
+                
                 List<EditorNote> noteList = workingTrack[time];
                 foreach(EditorNote note in noteList.OrEmptyIfNull()) {
+                    Trace.WriteLine("Note sixty fourths:" + note.sixtyFourths);
                     list.Add(new Vector2(note.Position[0], note.Position[1]));
                 }
             }

@@ -163,7 +163,7 @@ namespace MiKu.NET.Charting {
                     editorDictionary.Add(entry.Key, new List<EditorNote>());
 
                 foreach(var gameNote in entry.Value.OrEmptyIfNull()) {
-                    EditorNote exportNote = new EditorNote(
+                    EditorNote exportNote = new EditorNote(bpm,
                         new UnityEngine.Vector3 { x = gameNote.Position[0], y = gameNote.Position[1], z = gameNote.Position[2] }, entry.Key,
                          gameNote.ComboId, ConvertGameNoteTypeToEditorNoteType(gameNote.Type));
                     // if we have segments this means we need to create a rail from them
