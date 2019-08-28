@@ -14,7 +14,7 @@ public class Miku_Clipboard : MonoBehaviour {
     public static bool Initialized { get; set; }   
 
     // The clipboard dictionary
-    private Dictionary<float, List<EditorNote>> clipboardDict;
+    private Dictionary<TimeWrapper, List<EditorNote>> clipboardDict;
     private List<Rail> clipboardRails;
 
     private float clipboardBPM = 0;
@@ -36,7 +36,7 @@ public class Miku_Clipboard : MonoBehaviour {
     /// Save a copy of the passed Dictionary to the clipboard	
     /// </summary>
     /// <param name="workingTrack">The Dictionary to be copied</param>
-    public static void CopyTrackToClipboard( Dictionary<float, List<EditorNote>> workingTrack, float pasteBPM ) {
+    public static void CopyTrackToClipboard( Dictionary<TimeWrapper, List<EditorNote>> workingTrack, float pasteBPM ) {
         if(s_instance == null) return;
         
         ClipboardBPM = pasteBPM;
@@ -47,11 +47,11 @@ public class Miku_Clipboard : MonoBehaviour {
             if(CopiedDict != null) {
                 CopiedDict.Clear();
             } else {
-                CopiedDict = new Dictionary<float, List<EditorNote>>();
+                CopiedDict = new Dictionary<TimeWrapper, List<EditorNote>>();
             }            
 
             // Iterate each entry on the Dictionary and get the note to copy
-            foreach( KeyValuePair<float, List<EditorNote>> kvp in workingTrack.OrEmptyIfNull())
+            foreach( KeyValuePair<TimeWrapper, List<EditorNote>> kvp in workingTrack.OrEmptyIfNull())
             {
                 List<EditorNote> _notes = kvp.Value;
                 List<EditorNote> copiedList = new List<EditorNote>();
@@ -77,7 +77,7 @@ public class Miku_Clipboard : MonoBehaviour {
         CopiedRails = RailHelper.GetCopyOfRailsInRange(Track.s_instance.GetCurrentRailListByDifficulty(), 0, Track.s_instance.TrackDuration, RailHelper.RailRangeBehaviour.Allow);
     }
 
-    public static Dictionary<float, List<EditorNote>> CopiedDict
+    public static Dictionary<TimeWrapper, List<EditorNote>> CopiedDict
     {
         get
         {

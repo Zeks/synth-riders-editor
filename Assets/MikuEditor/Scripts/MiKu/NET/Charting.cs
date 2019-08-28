@@ -64,7 +64,7 @@ namespace MiKu.NET.Charting {
 
         private static int noteCounter = 0;
 
-        private float timePoint;
+        private TimeWrapper timePoint;
 
         /// <value>
 		/// ID for cache use, when set the format used is Note_{value passed}
@@ -120,7 +120,7 @@ namespace MiKu.NET.Charting {
 		/// </value>
         public NoteDirection Direction { get; set; }
 
-        public float TimePoint
+        public TimeWrapper TimePoint
         {
             get
             {
@@ -173,32 +173,32 @@ namespace MiKu.NET.Charting {
         /// <value>
         /// Notes for the easy dificulty
         /// </value>
-        public Dictionary<float, List<EditorNote>> Easy { get; set; }
+        public Dictionary<TimeWrapper, List<EditorNote>> Easy { get; set; }
 
         /// <value>
         /// Notes for the normal dificulty
         /// </value>
-        public Dictionary<float, List<EditorNote>> Normal { get; set; }
+        public Dictionary<TimeWrapper, List<EditorNote>> Normal { get; set; }
 
         /// <value>
         /// Notes for the hard dificulty
         /// </value>
-        public Dictionary<float, List<EditorNote>> Hard { get; set; }
+        public Dictionary<TimeWrapper, List<EditorNote>> Hard { get; set; }
 
         /// <value>
         /// Notes for the expert dificulty
         /// </value>
-        public Dictionary<float, List<EditorNote>> Expert { get; set; }
+        public Dictionary<TimeWrapper, List<EditorNote>> Expert { get; set; }
 
         /// <value>
         /// Notes for the Master dificulty
         /// </value>
-        public Dictionary<float, List<EditorNote>> Master { get; set; }
+        public Dictionary<TimeWrapper, List<EditorNote>> Master { get; set; }
 
         /// <value>
         /// Notes for the Custom dificulty
         /// </value>
-        public Dictionary<float, List<EditorNote>> Custom { get; set; }
+        public Dictionary<TimeWrapper, List<EditorNote>> Custom { get; set; }
     }
 
 
@@ -246,32 +246,32 @@ namespace MiKu.NET.Charting {
         /// <value>
         /// Effects for the easy dificulty
         /// </value>
-        public List<float> Easy { get; set; }
+        public List<TimeWrapper> Easy { get; set; }
 
         /// <value>
         /// Effects for the Normal dificulty
         /// </value>
-        public List<float> Normal { get; set; }
+        public List<TimeWrapper> Normal { get; set; }
 
         /// <value>
         /// Effects for the Hard dificulty
         /// </value>
-        public List<float> Hard { get; set; }
+        public List<TimeWrapper> Hard { get; set; }
 
         /// <value>
         /// Effects for the Expert dificulty
         /// </value>
-        public List<float> Expert { get; set; }
+        public List<TimeWrapper> Expert { get; set; }
 
         /// <value>
         /// Effects for the Master dificulty
         /// </value>
-        public List<float> Master { get; set; }
+        public List<TimeWrapper> Master { get; set; }
 
         /// <value>
         /// Effects for the Custom dificulty
         /// </value>
-        public List<float> Custom { get; set; }
+        public List<TimeWrapper> Custom { get; set; }
     }
 
     [Serializable]
@@ -282,37 +282,37 @@ namespace MiKu.NET.Charting {
         /// <value>
         /// Lights for the easy dificulty
         /// </value>
-        public List<float> Easy { get; set; }
+        public List<TimeWrapper> Easy { get; set; }
 
         /// <value>
         /// Lights for the Normal dificulty
         /// </value>
-        public List<float> Normal { get; set; }
+        public List<TimeWrapper> Normal { get; set; }
 
         /// <value>
         /// Lights for the Hard dificulty
         /// </value>
-        public List<float> Hard { get; set; }
+        public List<TimeWrapper> Hard { get; set; }
 
         /// <value>
         /// Lights for the Expert dificulty
         /// </value>
-        public List<float> Expert { get; set; }
+        public List<TimeWrapper> Expert { get; set; }
 
         /// <value>
         /// Lights for the Master dificulty
         /// </value>
-        public List<float> Master { get; set; }
+        public List<TimeWrapper> Master { get; set; }
 
         /// <value>
         /// Lights for the Custom dificulty
         /// </value>
-        public List<float> Custom { get; set; }
+        public List<TimeWrapper> Custom { get; set; }
     }
 
     [Serializable]
     public struct EditorBookmark {
-        public float time;
+        public TimeWrapper time;
         public string name;
     }
 
@@ -341,32 +341,32 @@ namespace MiKu.NET.Charting {
         /// <value>
         /// Jumps for the easy dificulty
         /// </value>
-        public List<float> Easy { get; set; }
+        public List<TimeWrapper> Easy { get; set; }
 
         /// <value>
         /// Jumps for the Normal dificulty
         /// </value>
-        public List<float> Normal { get; set; }
+        public List<TimeWrapper> Normal { get; set; }
 
         /// <value>
         /// Jumps for the Hard dificulty
         /// </value>
-        public List<float> Hard { get; set; }
+        public List<TimeWrapper> Hard { get; set; }
 
         /// <value>
         /// Jumps for the Expert dificulty
         /// </value>
-        public List<float> Expert { get; set; }
+        public List<TimeWrapper> Expert { get; set; }
 
         /// <value>
         /// Jumps for the Master dificulty
         /// </value>
-        public List<float> Master { get; set; }
+        public List<TimeWrapper> Master { get; set; }
 
         /// <value>
         /// Jumps for the Custom dificulty
         /// </value>
-        public List<float> Custom { get; set; }
+        public List<TimeWrapper> Custom { get; set; }
     }
 
     [Serializable]
@@ -377,37 +377,37 @@ namespace MiKu.NET.Charting {
         /// <value>
         /// Crouchs for the easy dificulty
         /// </value>
-        public List<float> Easy { get; set; }
+        public List<TimeWrapper> Easy { get; set; }
 
         /// <value>
         /// Crouchs for the Normal dificulty
         /// </value>
-        public List<float> Normal { get; set; }
+        public List<TimeWrapper> Normal { get; set; }
 
         /// <value>
         /// Crouchs for the Hard dificulty
         /// </value>
-        public List<float> Hard { get; set; }
+        public List<TimeWrapper> Hard { get; set; }
 
         /// <value>
         /// Crouchs for the Expert dificulty
         /// </value>
-        public List<float> Expert { get; set; }
+        public List<TimeWrapper> Expert { get; set; }
 
         /// <value>
         /// Crouchs for the Master dificulty
         /// </value>
-        public List<float> Master { get; set; }
+        public List<TimeWrapper> Master { get; set; }
 
         /// <value>
         /// Crouchs for the Custom dificulty
         /// </value>
-        public List<float> Custom { get; set; }
+        public List<TimeWrapper> Custom { get; set; }
     }
 
     [Serializable]
     public struct EditorSlide {
-        public float time;
+        public TimeWrapper time;
         public EditorNote.NoteHandType slideType;
 
         public bool initialized;
@@ -451,7 +451,7 @@ namespace MiKu.NET.Charting {
 
     [Serializable]
     public struct EditorDrum {
-        public float time;
+        public TimeWrapper time;
         public int playType;
         public string audio;
     }

@@ -56,7 +56,7 @@ namespace MiKu.NET {
             railId = railCounter++;
             Trace.WriteLine("Created new rail with ID: " + railId);
             notesByID = new Dictionary<int, RailNoteWrapper>();
-            notesByTime = new SortedDictionary<float, RailNoteWrapper>();
+            notesByTime = new SortedDictionary<TimeWrapper, RailNoteWrapper>();
             noteObjects = new Dictionary<int, GameObject>();
         }
 
@@ -70,7 +70,7 @@ namespace MiKu.NET {
             Trace.WriteLine("Rail ID: " + railId + "start:"  + startTime + " end:" + endTime +  " duration:" + duration +  "type: " + noteType);
         }
 
-        public bool TimeInInterval(float time) {
+        public bool TimeInInterval(TimeWrapper time) {
             Trace.WriteLine("Detecting if time: " + time + " is within " + startTime + " and " + endTime);
             if(time >= startTime && time <= endTime) {
                 Trace.WriteLine("returning true");
@@ -80,13 +80,13 @@ namespace MiKu.NET {
             return false;
         }
 
-        public bool HasNoteAtTime(float time) {
+        public bool HasNoteAtTime(TimeWrapper time) {
             Trace.WriteLine("Detecting if there is a note at: " + time  + "Rail spans from:"  + startTime + " to " + endTime);
 
-            float timeRangeDuplicatesStart = time - Track.MIN_TIME_OVERLAY_CHECK;
-            float timeRangeDuplicatesEnd = time + Track.MIN_TIME_OVERLAY_CHECK;
+            TimeWrapper timeRangeDuplicatesStart = time.FloatValue - Track.MIN_TIME_OVERLAY_CHECK;
+            TimeWrapper timeRangeDuplicatesEnd = time.FloatValue + Track.MIN_TIME_OVERLAY_CHECK;
 
-            List<float> times = notesByTime.Keys.ToList();
+            List<TimeWrapper> times = notesByTime.Keys.ToList();
             Trace.WriteLine("Rail already has notes at: " + times);
 
             times = times.Where(testedTIme => testedTIme >= timeRangeDuplicatesStart
@@ -96,13 +96,13 @@ namespace MiKu.NET {
             return times.Count > 0;
         }
 
-        public bool HasEdgeNoteAtTime(float time) {
+        public bool HasEdgeNoteAtTime(TimeWrapper time) {
             Trace.WriteLine("Detecting if there is an edge note at: " + time  + "Rail spans from:"  + startTime + " to " + endTime);
 
-            float timeRangeDuplicatesStart = time - Track.MIN_TIME_OVERLAY_CHECK;
-            float timeRangeDuplicatesEnd = time + Track.MIN_TIME_OVERLAY_CHECK;
+            TimeWrapper timeRangeDuplicatesStart = time - Track.MIN_TIME_OVERLAY_CHECK;
+            TimeWrapper timeRangeDuplicatesEnd = time + Track.MIN_TIME_OVERLAY_CHECK;
 
-            List<float> times = notesByTime.Keys.ToList();
+            List<TimeWrapper> times = notesByTime.Keys.ToList();
             Trace.WriteLine("Rail already has notes at: " + times);
 
             times = times.Where(testedTIme => testedTIme >= timeRangeDuplicatesStart
@@ -112,13 +112,13 @@ namespace MiKu.NET {
             return times.Count > 0 && notesByTime[times[0]] == Leader || notesByTime[times[0]] == GetLastNote();
         }
 
-        public EditorNote GetNoteAtPosition(float time) {
+        public EditorNote GetNoteAtPosition(TimeWrapper time) {
             Trace.WriteLine("Asked for note at time: " + time);
             // need to get the closest forward match
-            float timeRangeDuplicatesStart = time - Track.MIN_TIME_OVERLAY_CHECK;
-            float timeRangeDuplicatesEnd = time + Track.MIN_TIME_OVERLAY_CHECK;
+            TimeWrapper timeRangeDuplicatesStart = time.FloatValue - Track.MIN_TIME_OVERLAY_CHECK;
+            TimeWrapper timeRangeDuplicatesEnd = time.FloatValue + Track.MIN_TIME_OVERLAY_CHECK;
 
-            List<float> times = notesByTime.Keys.ToList();
+            List<TimeWrapper> times = notesByTime.Keys.ToList();
             times.Sort();
 
             times = times.Where(testedTIme => testedTIme >= timeRangeDuplicatesStart
@@ -137,13 +137,13 @@ namespace MiKu.NET {
         }
 
 
-        public void MoveNoteAtTimeToPosition(float time, float x, float y) {
+        public void MoveNoteAtTimeToPosition(TimeWrapper time, float x, float y) {
             Trace.WriteLine("Asked to move note at: " + time + " to x: " + x + " y:" + y);
             // need to get the closest forward match
-            float timeRangeDuplicatesStart = time - Track.MIN_TIME_OVERLAY_CHECK;
-            float timeRangeDuplicatesEnd = time + Track.MIN_TIME_OVERLAY_CHECK;
+            TimeWrapper timeRangeDuplicatesStart = time - Track.MIN_TIME_OVERLAY_CHECK;
+            TimeWrapper timeRangeDuplicatesEnd = time + Track.MIN_TIME_OVERLAY_CHECK;
 
-            List<float> times = notesByTime.Keys.ToList();
+            List<TimeWrapper> times = notesByTime.Keys.ToList();
             times.Sort();
 
             times = times.Where(testedTIme => testedTIme >= timeRangeDuplicatesStart
@@ -356,7 +356,7 @@ namespace MiKu.NET {
                 wrapper.AssignPreviousNote(previous);
             }
         }
-        public bool WillBeNewHead(float time) {
+        public bool WillBeNewHead(TimeWrapper time) {
             if(notesByTime.Count == 0)
                 return true;
             if(time < notesByTime.Keys.ToList()[0]) {
@@ -509,15 +509,15 @@ namespace MiKu.NET {
         }
 
 
-        public RailNoteWrapper GetPreviousNote(float time) {
+        public RailNoteWrapper GetPreviousNote(TimeWrapper time) {
             Trace.WriteLine("Looking for a note just before: " + time);
-            List<float> keys = notesByTime.Keys.ToList();
+            List<TimeWrapper> keys = notesByTime.Keys.ToList();
             keys.Sort();
             keys.Reverse();
             Trace.WriteLine("Will look among: " + keys);
-            float first = keys.FirstOrDefault(x => x < time);
+            TimeWrapper first = keys.FirstOrDefault(x => x < time);
             Trace.WriteLine("Found time: " + first);
-            if(EqualityComparer<float>.Default.Equals(first, default(float))) {
+            if(EqualityComparer<TimeWrapper>.Default.Equals(first, default(float))) {
                 Trace.WriteLine("Returning null");
                 return null;
             }
@@ -529,10 +529,10 @@ namespace MiKu.NET {
             return noteType;
         }
 
-        public RailNoteWrapper GetNoteAtThisOrFollowingTime(float time) {
-            List<float> notes = notesByTime.Keys.ToList();
+        public RailNoteWrapper GetNoteAtThisOrFollowingTime(TimeWrapper time) {
+            List<TimeWrapper> notes = notesByTime.Keys.ToList();
             notes.Sort();
-            float first = notes.FirstOrDefault(x => x >= time);
+            TimeWrapper first = notes.FirstOrDefault(x => x >= time);
             if(first == default(float))
                 return null;
 
@@ -613,7 +613,7 @@ namespace MiKu.NET {
 
         public void RecalcDuration() {
             Trace.WriteLine("Recalcualting rail duration for rail: " + this.railId);
-            List<float> keys = notesByTime.Keys.ToList();
+            List<TimeWrapper> keys = notesByTime.Keys.ToList();
             if(keys.Count == 0) {
                 Trace.WriteLine("Rail is empty, nothing to calculate");
                 return;
@@ -673,7 +673,7 @@ namespace MiKu.NET {
         }
 
         public RailNoteWrapper GetLastNote(){
-            List<float> noteTimes = notesByTime.Keys.ToList();
+            List<TimeWrapper> noteTimes = notesByTime.Keys.ToList();
             if(noteTimes == null || noteTimes.Count == 0)
                 return null;
 
@@ -704,7 +704,7 @@ namespace MiKu.NET {
 
         }
 
-        public void MoveEveryPointOnTheTimeline(float shift, bool reinstantiate = false) {
+        public void MoveEveryPointOnTheTimeline(TimeWrapper shift, bool reinstantiate = false) {
             foreach(RailNoteWrapper note in notesByTime.Values.OrEmptyIfNull()) {
                 note.thisNote.TimePoint += shift;
                 note.thisNote.Position[2] = Track.MStoUnit(note.thisNote.TimePoint);
@@ -743,7 +743,7 @@ namespace MiKu.NET {
         }
 
         public void ReassignBreakersFromNoteTypes() {
-            List<float> times = notesByTime.Keys.ToList();
+            List<TimeWrapper> times = notesByTime.Keys.ToList();
             if(times.Count > 1 && notesByTime[times.First()] != null && notesByTime[times.First()].thisNote != null && notesByTime[times.First()].thisNote.UsageType == EditorNote.NoteUsageType.Breaker) {
                 breakerHead = notesByTime[times.First()];
             }
@@ -757,16 +757,16 @@ namespace MiKu.NET {
         public static int railCounter = 0;
 
         public int railId;
-        public float startTime;
-        public float endTime;
-        public float duration;
+        public TimeWrapper startTime;
+        public TimeWrapper endTime;
+        public TimeWrapper duration;
 
         public EditorNote.NoteHandType noteType;
 
         public bool scheduleForDeletion = false;
 
         public Dictionary<int, RailNoteWrapper> notesByID;
-        public SortedDictionary<float, RailNoteWrapper> notesByTime;
+        public SortedDictionary<TimeWrapper, RailNoteWrapper> notesByTime;
         // rail does its own object housekeeping
         // and its own note object instantiation / destruction
         public Dictionary<int, GameObject> noteObjects; 

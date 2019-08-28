@@ -6,8 +6,8 @@ namespace MiKu.NET {
 
     public class ClickCatcher : MonoBehaviour, IPointerClickHandler {
         
-        private void PlaceWithSnapToStep(float time, PointerEventData.InputButton button) {
-            float convertedTime = 0;
+        private void PlaceWithSnapToStep(TimeWrapper time, PointerEventData.InputButton button) {
+            TimeWrapper convertedTime = 0;
             convertedTime = Track.s_instance.SnapToStep(time);
             if(convertedTime == 0)
                 return;
@@ -18,8 +18,8 @@ namespace MiKu.NET {
                 Track.s_instance.RemovePlaceholderFromChart(convertedTime);
         }
 
-        private void PlaceWithSnapToBars(float time, PointerEventData.InputButton button) { 
-            float convertedTime = 0;
+        private void PlaceWithSnapToBars(TimeWrapper time, PointerEventData.InputButton button) {
+            TimeWrapper convertedTime = 0;
             convertedTime = Track.s_instance.SnapToPeak(time, Track.PlacerClickSnapMode.MajorBar);
             if(convertedTime == 0)
                 return;
@@ -45,7 +45,7 @@ namespace MiKu.NET {
             float deltaPercent = delta/transform.sizeDelta.y;
             float deltaRealWorld = 1482*deltaPercent;
 
-            float time = Track.CurrentTime + deltaRealWorld;
+            TimeWrapper time = Track.CurrentTime + deltaRealWorld;
             if(Track.s_instance.isALTDown)
                 PlaceWithSnapToBars(time, eventData.button);
             else
