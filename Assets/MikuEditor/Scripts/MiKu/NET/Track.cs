@@ -20,24 +20,6 @@ using UnityEngine.UI;
 using System.Diagnostics;
 
 namespace MiKu.NET {
-
-    public sealed class FloatEqualityComparer : IEqualityComparer<float> {
-        int GetPreciseInt(float f) {
-            return (int)Math.Round(f*100, 0, MidpointRounding.AwayFromZero);
-        }
-        //public bool Equals(float f1, float f2) {
-        //    return Math.Abs(f1 - f2) < 0.01;
-        //}
-
-        public bool Equals(float f1, float f2) {
-            return GetPreciseInt(f1) == GetPreciseInt(f2);
-        }
-        public int GetHashCode(float f) {
-            var hashCode = GetPreciseInt(f).GetHashCode();
-            return hashCode;
-        }
-    }
-
     public sealed class TimeWrapper : IComparable, IEqualityComparer<TimeWrapper> {
         public TimeWrapper(float value) { FloatValue = value; }
         public TimeWrapper() { }
@@ -67,7 +49,7 @@ namespace MiKu.NET {
 
         public static HashSource GetPreciseInt(TimeWrapper f) {
             HashSource result = new HashSource();
-            float divisor = ((Track.BPM/60f)/64f)*200;
+            float divisor = ((Track.BPM/60f)/64f)*300;
             result.partial = Math.Abs(f.FloatValue - (int)f.FloatValue);
             //if(result.partial > 0.48 || result.partial < 0.52)
             //    result.whole = (int)(Math.Round((int)f.FloatValue/divisor));
@@ -879,7 +861,7 @@ namespace MiKu.NET {
         private InternalBPM bpmSecondary = InternalBPM.DefaultSecondaryBPM();
         private InternalBPM bpmPrecise = InternalBPM.DefaultPreciseBPM();
         private PlayStopMode playStopMode = PlayStopMode.StepBack;
-        public static FloatEqualityComparer floatComparator = new FloatEqualityComparer();
+        //public static FloatEqualityComparer floatComparator = new FloatEqualityComparer();
 
         //private float MBPM = 1f / 1f;
         //private float MBPMSecondary = 1f / 1f;
@@ -1585,6 +1567,7 @@ namespace MiKu.NET {
             // Input.GetKeyDown(KeyCode.Space)
             if((Input.GetButtonDown("Play") || (Input.GetButtonDown("PlayReturn") && !isSHIFTDown)) && !PromtWindowOpen) {
                 CloseSpecialSection();
+                gridManager.ResetLinesMaterial();
                 TogglePlay(Input.GetButton("PlayReturn"));
             }
 
@@ -3131,6 +3114,7 @@ namespace MiKu.NET {
             if(IsPlaying) {
                 lastHitNoteZ = -1;
                 Stop(returnToStart);
+                s_instance.gridManager.HighlightLinesForPointList(s_instance.FetchObjectPositionsAtCurrentTime(CurrentTime));
             } else Play();
         }
 

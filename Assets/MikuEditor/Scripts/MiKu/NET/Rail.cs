@@ -51,7 +51,7 @@ namespace MiKu.NET {
     }
     
     public class Rail {
-        public static FloatEqualityComparer floatComparator = new FloatEqualityComparer();
+        //public static FloatEqualityComparer floatComparator = new FloatEqualityComparer();
         public Rail() {
             railId = railCounter++;
             Trace.WriteLine("Created new rail with ID: " + railId);

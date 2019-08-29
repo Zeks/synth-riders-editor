@@ -9,7 +9,7 @@ using Shogoki.Utils;
 
 namespace MiKu.NET {
     public static class RailHelper {
-        public static FloatEqualityComparer floatComparator = new FloatEqualityComparer();
+        //public static FloatEqualityComparer floatComparator = new FloatEqualityComparer();
         public enum RailRangeBehaviour {
             Skip = 0,
             Allow = 1,
