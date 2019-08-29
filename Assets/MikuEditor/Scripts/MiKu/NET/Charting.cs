@@ -128,12 +128,10 @@ namespace MiKu.NET.Charting {
             }
         }
 
-        void SetTime(float time, float bpm) {
+        public void SetTime(TimeWrapper time, float bpm) {
             timePoint = time;
-            sixtyFourths = (int)(time/(Track.BPM/64f));
         }
 
-        public int sixtyFourths = 0;
 
         public EditorNote(UnityEngine.Vector3 pos, float time = default(float), int idCmb = -1, NoteHandType t = NoteHandType.OneHandSpecial, NoteDirection d = NoteDirection.None) {
             noteId = noteCounter++;
@@ -146,10 +144,10 @@ namespace MiKu.NET.Charting {
             UsageType = EditorNote.NoteUsageType.Ball;
             Position = new float[3] { pos.x, pos.y, pos.z };
             Direction = d;
-            sixtyFourths = (int)(time/(Track.BPM/64f));
         }
 
         public EditorNote(float bpm, UnityEngine.Vector3 pos, float time = default(float), int idCmb = -1, NoteHandType t = NoteHandType.OneHandSpecial, NoteDirection d = NoteDirection.None) {
+            //Trace.WriteLine("Adding note at: " + time);
             noteId = noteCounter++;
             name = noteId.ToString();
 
@@ -160,7 +158,6 @@ namespace MiKu.NET.Charting {
             UsageType = EditorNote.NoteUsageType.Ball;
             Position = new float[3] { pos.x, pos.y, pos.z };
             Direction = d;
-            sixtyFourths = (int)(time/(bpm/200f));
         }
 
 
@@ -172,7 +169,6 @@ namespace MiKu.NET.Charting {
             HandType = handType;
             UsageType = usageType;
             Position = new float[3] { pos.x, pos.y, pos.z };
-            sixtyFourths = (int)(time/(bpm/200f));
         }
 
         public EditorNote() {

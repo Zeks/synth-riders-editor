@@ -107,7 +107,7 @@ namespace MiKu.NET.Charting {
                     exportValue.Add(entry.Key.FloatValue, new List<Note>());
                 // will need to create note's name in the format that game understands
                 foreach(var editorNote in entry.Value.OrEmptyIfNull()) {
-                    Note exportNote = new Note(new UnityEngine.Vector3 { x = editorNote.Position[0], y = editorNote.Position[1], z = editorNote.Position[2] },
+                    Note exportNote = new Note(new UnityEngine.Vector3 { x = editorNote.Position[0], y = editorNote.Position[1], z = Track.MStoUnit(editorNote.TimePoint) },
                         editorNote.name, editorNote.ComboId, ConvertEditorNoteTypeToGameNoteType(editorNote.HandType));
                     exportNote.Segments = editorNote.Segments;
                     exportValue[entry.Key.FloatValue].Add(exportNote);
@@ -156,11 +156,10 @@ namespace MiKu.NET.Charting {
             if(gameDictionary == null)
                 return;
             if(editorDictionary == null) {
-                editorDictionary = new Dictionary<TimeWrapper, List<EditorNote>>();
+                editorDictionary = new Dictionary<TimeWrapper, List<EditorNote>>(new TimeWrapper());
             }
             foreach(KeyValuePair<float, List<Note>> entry in gameDictionary.OrEmptyIfNull()) {
-                if(!editorDictionary.ContainsKey(entry.Key))
-                    editorDictionary.Add(entry.Key, new List<EditorNote>());
+                
 
                 foreach(var gameNote in entry.Value.OrEmptyIfNull()) {
                     EditorNote exportNote = new EditorNote(bpm,
@@ -180,9 +179,13 @@ namespace MiKu.NET.Charting {
                         }
                     }
 
-                    if(exportNote.Segments == null || exportNote.Segments.Length == 0)
+                    if(exportNote.Segments == null || exportNote.Segments.Length == 0) {
+                        if(!editorDictionary.ContainsKey(new TimeWrapper(entry.Key)))
+                            editorDictionary.Add(entry.Key, new List<EditorNote>());
                         editorDictionary[entry.Key].Add(exportNote);
-                    else {
+                        bool contains = editorDictionary.ContainsKey(entry.Key);
+                        contains = editorDictionary.ContainsKey(entry.Key);
+                    } else {
                         // if there are segments, note belongs to a rail
                         Rail rail = RailHelper.CreateRailFromSegments(bpm, entry.Key, exportNote);
                         listOfRails.Add(rail);
@@ -476,12 +479,12 @@ namespace MiKu.NET.Charting {
 
             if(editorChart.Track == null) {
                 EditorBeats defaultBeats = new EditorBeats();
-                defaultBeats.Easy = new Dictionary<TimeWrapper, List<EditorNote>>();
-                defaultBeats.Normal = new Dictionary<TimeWrapper, List<EditorNote>>();
-                defaultBeats.Hard = new Dictionary<TimeWrapper, List<EditorNote>>();
-                defaultBeats.Expert = new Dictionary<TimeWrapper, List<EditorNote>>();
-                defaultBeats.Master = new Dictionary<TimeWrapper, List<EditorNote>>();
-                defaultBeats.Custom = new Dictionary<TimeWrapper, List<EditorNote>>();
+                defaultBeats.Easy = new Dictionary<TimeWrapper, List<EditorNote>>(new TimeWrapper());
+                defaultBeats.Normal = new Dictionary<TimeWrapper, List<EditorNote>>(new TimeWrapper());
+                defaultBeats.Hard = new Dictionary<TimeWrapper, List<EditorNote>>(new TimeWrapper());
+                defaultBeats.Expert = new Dictionary<TimeWrapper, List<EditorNote>>(new TimeWrapper());
+                defaultBeats.Master = new Dictionary<TimeWrapper, List<EditorNote>>(new TimeWrapper());
+                defaultBeats.Custom = new Dictionary<TimeWrapper, List<EditorNote>>(new TimeWrapper());
                 editorChart.Track = defaultBeats;
             }
 

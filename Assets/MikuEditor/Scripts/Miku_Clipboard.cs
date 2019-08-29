@@ -47,7 +47,7 @@ public class Miku_Clipboard : MonoBehaviour {
             if(CopiedDict != null) {
                 CopiedDict.Clear();
             } else {
-                CopiedDict = new Dictionary<TimeWrapper, List<EditorNote>>();
+                CopiedDict = new Dictionary<TimeWrapper, List<EditorNote>>(new TimeWrapper());
             }            
 
             // Iterate each entry on the Dictionary and get the note to copy

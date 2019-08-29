@@ -42,8 +42,12 @@ namespace MiKu.NET {
         public TimeWrapper(float value) { FloatValue = value; }
         public TimeWrapper() { }
         public static TimeWrapper Create(float value) { return new TimeWrapper(value); }
+        public class HashSource {
+            public int whole = 0;
+            public float partial = 0;
+        }
         //public static const TimeWrapper defaultObject = new TimeWrapper();
-        public float FloatValue
+        public float FloatValue 
         {
             get
             {
@@ -56,21 +60,21 @@ namespace MiKu.NET {
             }
         }
 
-        public float RoundedValue
-        {
-            get
-            {
-                return (int)Math.Round(_value, 0, MidpointRounding.AwayFromZero);
-            }
 
-        }
-
-        
         float _value = 0;
 
 
-        public static int GetPreciseInt(TimeWrapper f) {
-            return (int)(f.RoundedValue);
+
+        public static HashSource GetPreciseInt(TimeWrapper f) {
+            HashSource result = new HashSource();
+            float divisor = ((Track.BPM/60f)/64f)*200;
+            result.partial = Math.Abs(f.FloatValue - (int)f.FloatValue);
+            //if(result.partial > 0.48 || result.partial < 0.52)
+            //    result.whole = (int)(Math.Round((int)f.FloatValue/divisor));
+            //else
+            result.whole = (int)(Math.Round(f.FloatValue/divisor, 0, MidpointRounding.AwayFromZero));
+            //Trace.WriteLine("Created hash source:" + result.whole + " divisor: " + divisor + " oroginal: " + f.FloatValue);
+            return result;
         }
 
         public int CompareTo(object obj) {
@@ -95,17 +99,23 @@ namespace MiKu.NET {
         }
 
         public bool Equals(TimeWrapper f1, TimeWrapper f2) {
-            return GetPreciseInt(f1) == GetPreciseInt(f2);
+            return GetPreciseInt(f1).whole == GetPreciseInt(f2).whole;
         }
 
         public int GetHashCode(TimeWrapper f) {
-            return GetPreciseInt(f).GetHashCode();
+            Int32 generatedHash = GetPreciseInt(f).whole.GetHashCode();
+            return generatedHash;
         }
         public override int GetHashCode() {
-            return GetPreciseInt(this).GetHashCode();
+            Int32 generatedHash = GetPreciseInt(this).whole.GetHashCode();
+            return generatedHash;
         }
         public static bool EqualsTo(TimeWrapper f1, TimeWrapper f2) {
-            return GetPreciseInt(f1) == GetPreciseInt(f2);
+            int value1 = GetPreciseInt(f1).whole;
+            int value2 = GetPreciseInt(f2).whole;
+            //Trace.WriteLine("Comparing times: " + f1.FloatValue + " and " + f2.FloatValue);
+            //Trace.WriteLine("Comparing integers: " + value1 + " and " + value2);
+            return value1 == value2;
         }
         public static bool operator ==(TimeWrapper a, TimeWrapper b) {
             if(System.Object.ReferenceEquals(a, null) && System.Object.ReferenceEquals(b, null))
@@ -156,13 +166,13 @@ namespace MiKu.NET {
 
         public static List<float> Convert(List<TimeWrapper> wrappers) {
             List<float> list = new List<float>();
-            foreach(var time in wrappers)
+            foreach(var time in wrappers.OrEmptyIfNull())
                 list.Add(time.FloatValue);
             return list;
         }
         public static List<TimeWrapper> Convert(List<float> wrappers) {
             List<TimeWrapper> list = new List<TimeWrapper>();
-            foreach(var time in wrappers)
+            foreach(var time in wrappers.OrEmptyIfNull())
                 list.Add(time);
             return list;
         }
@@ -1205,7 +1215,7 @@ namespace MiKu.NET {
                 CurrentSelection = new SelectionArea();
                 //
                 CurrentClipBoard = new ClipBoardStruct();
-                CurrentClipBoard.notes = new Dictionary<TimeWrapper, List<EditorNote>>();
+                CurrentClipBoard.notes = new Dictionary<TimeWrapper, List<EditorNote>>(new TimeWrapper());
                 CurrentClipBoard.effects = new List<TimeWrapper>();
                 CurrentClipBoard.jumps = new List<TimeWrapper>();
                 CurrentClipBoard.crouchs = new List<TimeWrapper>();
@@ -2164,65 +2174,57 @@ namespace MiKu.NET {
         /// Init The chart metadata
         /// </summary>
         private void InitChart() {
+            bool contains = false;
             if(Serializer.Initialized) {
                 // reading the currently available data from converter into the Track
                 // the result needs to be assigned to Track later
                 ChartConverter converter = new ChartConverter();
-                if(Serializer.ChartData != null)
+                BPM = Serializer.ChartData.BPM;
+                if(Serializer.ChartData != null) {
+                    
                     converter.ConvertGameChartToEditorChart(Serializer.ChartData);
-
-                CurrentChart = ChartConverter.editorChart;
-                BPM = CurrentChart.BPM;
-
-                if(CurrentChart.Track.Master == null) {
-                    CurrentChart.Track.Master = new Dictionary<TimeWrapper, List<EditorNote>>();
                 }
 
+                CurrentChart = ChartConverter.editorChart;
+                
+
+                if(CurrentChart.Track.Master == null) {
+                    CurrentChart.Track.Master = new Dictionary<TimeWrapper, List<EditorNote>>(new TimeWrapper());
+                }
                 if(CurrentChart.Effects.Master == null) {
                     CurrentChart.Effects.Master = new List<TimeWrapper>();
                 }
-
                 if(CurrentChart.Jumps.Master == null) {
                     CurrentChart.Jumps.Master = new List<TimeWrapper>();
                 }
-
                 if(CurrentChart.Crouchs.Master == null) {
                     CurrentChart.Crouchs.Master = new List<TimeWrapper>();
                 }
-
                 if(CurrentChart.Slides.Master == null) {
                     CurrentChart.Slides.Master = new List<EditorSlide>();
                 }
-
                 if(CurrentChart.Track.Custom == null) {
-                    CurrentChart.Track.Custom = new Dictionary<TimeWrapper, List<EditorNote>>();
+                    CurrentChart.Track.Custom = new Dictionary<TimeWrapper, List<EditorNote>>(new TimeWrapper());
                 }
-
                 if(CurrentChart.Effects.Custom == null) {
                     CurrentChart.Effects.Custom = new List<TimeWrapper>();
                 }
-
                 if(CurrentChart.Jumps.Custom == null) {
                     CurrentChart.Jumps.Custom = new List<TimeWrapper>();
                 }
-
                 if(CurrentChart.Crouchs.Custom == null) {
                     CurrentChart.Crouchs.Custom = new List<TimeWrapper>();
                 }
-
                 if(CurrentChart.Slides.Custom == null) {
                     CurrentChart.Slides.Custom = new List<EditorSlide>();
                 }
-
                 if(CurrentChart.CustomDifficultyName == null || CurrentChart.CustomDifficultyName == string.Empty) {
                     CurrentChart.CustomDifficultyName = "Custom";
                     CurrentChart.CustomDifficultySpeed = 1;
                 }
-
                 if(CurrentChart.Tags == null) {
                     CurrentChart.Tags = new List<string>();
                 }
-
                 if(CurrentChart.Rails == null) {
                     EditorRails defaultRails = new EditorRails();
                     defaultRails.Easy = new List<Rail>();
@@ -2257,12 +2259,12 @@ namespace MiKu.NET {
 
                 CurrentChart = new EditorChart();
                 EditorBeats defaultBeats = new EditorBeats();
-                defaultBeats.Easy = new Dictionary<TimeWrapper, List<EditorNote>>();
-                defaultBeats.Normal = new Dictionary<TimeWrapper, List<EditorNote>>();
-                defaultBeats.Hard = new Dictionary<TimeWrapper, List<EditorNote>>();
-                defaultBeats.Expert = new Dictionary<TimeWrapper, List<EditorNote>>();
-                defaultBeats.Master = new Dictionary<TimeWrapper, List<EditorNote>>();
-                defaultBeats.Custom = new Dictionary<TimeWrapper, List<EditorNote>>();
+                defaultBeats.Easy = new Dictionary<TimeWrapper, List<EditorNote>>(new TimeWrapper());
+                defaultBeats.Normal = new Dictionary<TimeWrapper, List<EditorNote>>(new TimeWrapper());
+                defaultBeats.Hard = new Dictionary<TimeWrapper, List<EditorNote>>(new TimeWrapper());
+                defaultBeats.Expert = new Dictionary<TimeWrapper, List<EditorNote>>(new TimeWrapper());
+                defaultBeats.Master = new Dictionary<TimeWrapper, List<EditorNote>>(new TimeWrapper());
+                defaultBeats.Custom = new Dictionary<TimeWrapper, List<EditorNote>>(new TimeWrapper());
                 CurrentChart.Track = defaultBeats;
 
                 EditorEffects defaultEffects = new EditorEffects();
@@ -2731,7 +2733,7 @@ namespace MiKu.NET {
             m_BPMDisplay.SetText(BPM.ToString());
             DrawTrackLines();
             DrawTrackXSLines(GetBPMForCurrentStepMode(), true);
-            UpdateNotePositions();
+            UpdateNotePositions(lastBPM, lastK != K);
             PreviousTime = 0;
             CurrentTime = 0;
             MoveCamera(true, CurrentTime);
@@ -4545,7 +4547,7 @@ namespace MiKu.NET {
             ResetTotalNotesCount();
             Dictionary<TimeWrapper, List<EditorNote>> workingTrack = GetCurrentTrackDifficulty();
             Dictionary<TimeWrapper, List<EditorNote>>.ValueCollection valueColl = workingTrack.Values;
-
+            
             List<TimeWrapper> keys_sorted = workingTrack.Keys.ToList();
             keys_sorted.Sort();
 
@@ -4557,6 +4559,7 @@ namespace MiKu.NET {
                         // If the note to add is pass the current song duration, we delete it
                         workingTrack.Remove(key);
                     } else {
+                        float bpm = Track.BPM;
                         List<EditorNote> _notes = workingTrack[key];
                         // Iterate each note and update its info
                         for(int i = 0; i < _notes.Count; i++) {
@@ -4719,7 +4722,7 @@ namespace MiKu.NET {
                         EditorNote n = _notes[i];
                         EditorNote newNote = new EditorNote(Vector3.zero);
                         newNote.Position = n.Position;
-                        newNote.TimePoint = n.TimePoint;
+                        newNote.SetTime(n.TimePoint, Track.BPM);
                         //newNote.name = Track.FormatNoteName(kvp.Key, i, n.HandType);
                         newNote.HandType = n.HandType;
                         newNote.UsageType = n.UsageType;
@@ -5962,16 +5965,30 @@ namespace MiKu.NET {
                 Trace.WriteLine("Current time:" + time);
                 Trace.WriteLine("Track time:" + workingTrack.First());
             }
-            Trace.WriteLine("Time sixty fourths: " + (int)(time.FloatValue/(Track.BPM/200f)));
+
             if(workingTrack.ContainsKey(time)) {
-                
-                
+
+
                 List<EditorNote> noteList = workingTrack[time];
                 foreach(EditorNote note in noteList.OrEmptyIfNull()) {
-                    Trace.WriteLine("Note sixty fourths:" + note.sixtyFourths);
                     list.Add(new Vector2(note.Position[0], note.Position[1]));
                 }
+            } else {
+                // pure debugging code
+                //int hashNewTime = time.GetHashCode();
+                //List<int> hashes = new List<int>();
+                //List<float> times = new List<float>();
+                //var keyList = workingTrack.Keys.ToList();
+                //keyList.Sort();
+                //foreach(var key in keyList) { 
+                //    hashes.Add(key.GetHashCode());
+                //    times.Add(key.FloatValue);
+                //}
+                //hashes.Reverse();
+                //times.Reverse();
+                //hashNewTime = hashNewTime;
             }
+
             return list;
         }
 
@@ -7197,15 +7214,35 @@ namespace MiKu.NET {
         void UpdateNotePositions(float fromBPM = 0, bool kWasChange = false) {
             isBusy = true;
 
+            hitSFXSource.Clear();
             try {
                 // Get the current working track
-                Dictionary<TimeWrapper, List<EditorNote>> workingTrack = GetCurrentTrackDifficulty();
+                List<Rail> rails = GetCurrentRailListByDifficulty();
                 TimeWrapper newTime;
                 float newPos;
+                foreach(Rail rail in rails) {
+                    rail.DestroyLeaderGameObject();
+                    foreach(RailNoteWrapper note in rail.notesByTime.Values) {
+                        rail.DestroyNoteObjectAndRemoveItFromTheRail(note.thisNote.noteId);
+                        newTime = UpdateTimeToBPM(note.thisNote.TimePoint, fromBPM);
+                        if(note == rail.Leader)
+                            AddTimeToSFXList(newTime);
+                        newPos = MStoUnit(newTime);
+                        note.thisNote.Position[2] = newPos;
+                    }
+                    
+                    RailHelper.ReinstantiateRail(rail);
+                    RailHelper.ReinstantiateRailSegmentObjects(rail);
+                }
+
+
+                Dictionary<TimeWrapper, List<EditorNote>> workingTrack = GetCurrentTrackDifficulty();
+                
+                
 
                 if(workingTrack != null && workingTrack.Count > 0) {
                     // New Dictionary on where the new data will be update
-                    Dictionary<TimeWrapper, List<EditorNote>> updateData = new Dictionary<TimeWrapper, List<EditorNote>>();
+                    Dictionary<TimeWrapper, List<EditorNote>> updateData = new Dictionary<TimeWrapper, List<EditorNote>>(new TimeWrapper());
 
                     // Iterate each entry on the Dictionary and get the note to update
                     foreach(KeyValuePair<TimeWrapper, List<EditorNote>> kvp in workingTrack.OrEmptyIfNull()) {
@@ -7267,6 +7304,8 @@ namespace MiKu.NET {
                         }
 
                         // Add update note to new list
+                        //Trace.WriteLine("Appending to new list:" + "Old time: " + kvp.Key.FloatValue + " New Time: " + newTime.FloatValue);
+                        Track.AddTimeToSFXList(newTime);
                         updateData.Add(newTime, updateList);
                     }
 
@@ -7482,7 +7521,7 @@ namespace MiKu.NET {
 
             if(workingTrack != null && workingTrack.Count > 0) {
                 // New Empty Dictionary on where the new data will be update
-                Dictionary<TimeWrapper, List<EditorNote>> updateData = new Dictionary<TimeWrapper, List<EditorNote>>();
+                Dictionary<TimeWrapper, List<EditorNote>> updateData = new Dictionary<TimeWrapper, List<EditorNote>>(new TimeWrapper());
 
                 // Iterate each entry on the Dictionary and get the note to update
                 foreach(KeyValuePair<TimeWrapper, List<EditorNote>> kvp in workingTrack.OrEmptyIfNull()) {
@@ -7731,8 +7770,9 @@ namespace MiKu.NET {
                     return CurrentChart.Track.Hard;
                 case TrackDifficulty.Expert:
                     return CurrentChart.Track.Expert;
-                case TrackDifficulty.Master:
+                case TrackDifficulty.Master: {
                     return CurrentChart.Track.Master;
+                    }
                 case TrackDifficulty.Custom:
                     return CurrentChart.Track.Custom;
             }

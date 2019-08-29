@@ -39,7 +39,7 @@ namespace MiKu.NET {
             }
         }
 
-        public static void ReinstantiateRail(Rail rail) {
+        public static void ReinstantiateRail(Rail rail, bool addSfx = true) {
             if(rail == null) {
                 Trace.WriteLine("Can't instantiate the null rail. Returning");
 
@@ -59,10 +59,10 @@ namespace MiKu.NET {
                 return;
             }
 
-            if(!Track.Instance.AddTimeToCurrentTrack(rail.startTime)) {
-                Trace.WriteLine("Failed to add the time to track. Returning");
-                return;
-            }
+            //if(!Track.Instance.AddTimeToCurrentTrack(rail.startTime)) {
+            //    Trace.WriteLine("Failed to add the time to track. Returning");
+            //    return;
+            //}
 
 
             EditorNote leaderNote = rail.Leader.thisNote;
@@ -104,8 +104,8 @@ namespace MiKu.NET {
                 Trace.WriteLine("Rendering line");
                 waveCustom.targetOptional = leaderNote.Segments;
                 waveCustom.RenderLine(true);
-
-                Track.AddTimeToSFXList(rail.startTime);
+                if(addSfx)
+                    Track.AddTimeToSFXList(rail.startTime);
             } else {
                 Trace.WriteLine("Failed to get component to render line");
             }
@@ -667,7 +667,7 @@ namespace MiKu.NET {
 
             bool foundRailAtExactPoint = false;
 
-            Dictionary<TimeWrapper, Rail> dictOfDistances = new Dictionary<TimeWrapper, Rail>();
+            Dictionary<TimeWrapper, Rail> dictOfDistances = new Dictionary<TimeWrapper, Rail>(new TimeWrapper());
             foreach(Rail rail in railsWithJunctionsAtThisTime.OrEmptyIfNull()) {
                 EditorNote note = rail.GetNoteAtPosition(time);
                 float distance = Vector2.Distance(point, new Vector2(note.Position[0], note.Position[1]));
