@@ -22,9 +22,10 @@ using System.Diagnostics;
 namespace MiKu.NET {
     public sealed class TimeWrapper : IComparable, IEqualityComparer<TimeWrapper> {
         public TimeWrapper(float value) {
-            FloatValue = value;
             Divisor = ((Track.BPM/60f)/64f)*150;
-            Hash = (int)(Math.Round(FloatValue/Divisor, 0, MidpointRounding.AwayFromZero));
+            FloatValue = value;
+            
+            //Hash = (int)(Math.Round(FloatValue/Divisor, 0, MidpointRounding.AwayFromZero));
         }
         public TimeWrapper() { }
         public static TimeWrapper Create(float value) { return new TimeWrapper(value); }
@@ -38,6 +39,10 @@ namespace MiKu.NET {
 
             set
             {
+                Hash = (int)(Math.Round(value/Divisor, 0, MidpointRounding.AwayFromZero));
+                _pureHash=Hash;
+                if(Hash%2 != 0)
+                    Hash+=1;
                 _value = value;
             }
         }
@@ -70,6 +75,7 @@ namespace MiKu.NET {
         float _value = 0;
         float _divisor = 1;
         int _hash = 1;
+        int _pureHash = 1;
 
 
         public static int GetPreciseInt(TimeWrapper f) {
@@ -271,26 +277,26 @@ namespace MiKu.NET {
     }
     public class InternalBPM {
         private float _value = 1f;
-        private float _increaseFactor = 1f;
+        private int _increaseFactor = 1;
         private CurrentStepMode _stepMode = CurrentStepMode.Primary;
         public static InternalBPM DefaultPrimaryBPM() {
             InternalBPM bpm = new InternalBPM();
             bpm.Value = 1f;
-            bpm.IncreaseFactor= 1f;
+            bpm.IncreaseFactor= 1;
             bpm.StepMode = CurrentStepMode.Primary;
             return bpm;
         }
         public static InternalBPM DefaultSecondaryBPM() {
             InternalBPM bpm = new InternalBPM();
             bpm.Value = 1f;
-            bpm.IncreaseFactor= 1f;
+            bpm.IncreaseFactor= 1;
             bpm.StepMode = CurrentStepMode.Secondary;
             return bpm;
         }
         public static InternalBPM DefaultPreciseBPM() {
             InternalBPM bpm = new InternalBPM();
             bpm.Value = 1f/64f;
-            bpm.IncreaseFactor= 64f;
+            bpm.IncreaseFactor= 64;
             bpm.StepMode = CurrentStepMode.Precise;
             return bpm;
         }
@@ -306,7 +312,7 @@ namespace MiKu.NET {
                 _value = value;
             }
         }
-        public float IncreaseFactor
+        public int IncreaseFactor
         {
             get
             {
@@ -2781,7 +2787,7 @@ namespace MiKu.NET {
             bpm.IncreaseFactor = (isIncrease) ? ((bpm.IncreaseFactor >= 8) ? bpm.IncreaseFactor * 2 : bpm.IncreaseFactor + 1) :
                 ((bpm.IncreaseFactor >= 16) ? bpm.IncreaseFactor / 2 : bpm.IncreaseFactor - 1);
             bpm.IncreaseFactor = Mathf.Clamp(bpm.IncreaseFactor, 1, 64);
-            bpm.Value = 1 / bpm.IncreaseFactor;
+            bpm.Value = (float)1 / bpm.IncreaseFactor;
             if(bpm.StepMode == CurrentStepMode.Primary)
                 m_StepMeasureDisplay.SetText(string.Format("1/{0}", bpm.IncreaseFactor));
             if(bpm.StepMode == CurrentStepMode.Secondary)
@@ -4133,6 +4139,21 @@ namespace MiKu.NET {
         /// </remarks>
         /// <returns>Returns <typeparamref name="float"/></returns>
         float GetNextStepPoint(InternalBPM bpm) {
+            int multiplier = 64/bpm.IncreaseFactor;
+            int slicesPerStep = new TimeWrapper(K * bpm.Value).Hash;
+            int leftCount = _currentTime.Hash/slicesPerStep;
+            int rightCount = (leftCount + 1)*slicesPerStep;
+            int diffSlices = rightCount-_currentTime.Hash;
+            float timeShiftCoef = (float)diffSlices/slicesPerStep;
+            float timeIncrease = (float)Math.Ceiling(timeShiftCoef * K * bpm.Value);
+            _currentTime.FloatValue=(_currentTime.Hash/slicesPerStep)*K * bpm.Value + timeIncrease;
+            if(_currentTime.Hash%slicesPerStep != 0) {
+                if(_currentTime.Hash > _currentTime.Hash%slicesPerStep)
+                    _currentTime.Hash-=2;
+                else
+                    _currentTime.Hash+=2;
+            }
+            return MStoUnit(_currentTime.FloatValue);
             float _CK = (K * bpm.Value);
 
             //_currentTime+= K*MBPM;
@@ -4170,6 +4191,26 @@ namespace MiKu.NET {
         /// </remarks>
         /// <returns>Returns <typeparamref name="float"/></returns>
         float GetPrevStepPoint(InternalBPM bpm) {
+            int multiplier = 64/bpm.IncreaseFactor;
+            int slicesPerStep = new TimeWrapper(K * bpm.Value).Hash;
+            int leftCount = _currentTime.Hash/slicesPerStep;
+            //int rightCount = (leftCount + 1)*slicesPerStep;
+            int diffSlices = _currentTime.Hash - leftCount*slicesPerStep;
+            if(diffSlices == 0)
+                diffSlices=slicesPerStep;
+            float realSteps = _currentTime.FloatValue/(K * bpm.Value);
+            float realSlices= slicesPerStep*_currentTime.FloatValue/(K * bpm.Value);
+            float timeShiftCoef = (float)diffSlices/slicesPerStep;
+            float timeIncrease = (timeShiftCoef * K * bpm.Value);
+            _currentTime.FloatValue=(_currentTime.Hash/slicesPerStep)*K * bpm.Value - timeIncrease;
+            if(_currentTime.Hash%slicesPerStep != 0) {
+                if(_currentTime.Hash > _currentTime.Hash%slicesPerStep)
+                    _currentTime.Hash-=2;
+                else
+                    _currentTime.Hash+=2;
+            }
+            return MStoUnit(_currentTime.FloatValue);
+
             float _CK = (K * bpm.Value);
             //_currentTime-= K*MBPM;
             StorePreviousTime();
@@ -6753,6 +6794,14 @@ namespace MiKu.NET {
         public static void JumpToTime(TimeWrapper time) {
             time = Mathf.Min(time.FloatValue, s_instance.TrackDuration * MS);
             s_instance._currentTime = s_instance.GetCloseStepMeasure(time, false);
+            int slicesPerStep = new TimeWrapper(s_instance.K * s_instance.GetBPMForCurrentStepMode().Value).Hash;
+            if(s_instance._currentTime.Hash%slicesPerStep != 0) {
+                if(s_instance._currentTime.Hash > s_instance._currentTime.Hash%slicesPerStep)
+                    s_instance._currentTime.Hash-=2;
+                else
+                    s_instance._currentTime.Hash+=2;
+            }
+
             s_instance.MoveCamera(true, MStoUnit(s_instance._currentTime));
             if(PromtWindowOpen) {
                 s_instance.ClosePromtWindow();
