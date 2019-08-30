@@ -21,7 +21,11 @@ using System.Diagnostics;
 
 namespace MiKu.NET {
     public sealed class TimeWrapper : IComparable, IEqualityComparer<TimeWrapper> {
-        public TimeWrapper(float value) { FloatValue = value; }
+        public TimeWrapper(float value) {
+            FloatValue = value;
+            Divisor = ((Track.BPM/60f)/64f)*150;
+            Hash = (int)(Math.Round(FloatValue/Divisor, 0, MidpointRounding.AwayFromZero));
+        }
         public TimeWrapper() { }
         public static TimeWrapper Create(float value) { return new TimeWrapper(value); }
 
@@ -37,17 +41,40 @@ namespace MiKu.NET {
                 _value = value;
             }
         }
+        public float Divisor
+        {
+            get
+            {
+                return _divisor;
+            }
 
+            set
+            {
+                _divisor = value;
+            }
+        }
+
+        public int Hash
+        {
+            get
+            {
+                return _hash;
+            }
+
+            set
+            {
+                _hash = value;
+            }
+        }
 
         float _value = 0;
-
+        float _divisor = 1;
+        int _hash = 1;
 
 
         public static int GetPreciseInt(TimeWrapper f) {
-            float divisor = ((Track.BPM/60f)/64f)*300;
-            return (int)(Math.Round(f.FloatValue/divisor, 0, MidpointRounding.AwayFromZero));
+            return f.Hash;
             //Trace.WriteLine("Created hash source:" + result.whole + " divisor: " + divisor + " oroginal: " + f.FloatValue);
-
         }
 
         public int CompareTo(object obj) {
