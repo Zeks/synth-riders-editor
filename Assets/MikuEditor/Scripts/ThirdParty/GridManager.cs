@@ -202,12 +202,16 @@ public class GridManager : MonoBehaviour
         foreach(GameObject lineObject in GridLines) {
             LineRenderer rend = lineObject.GetComponent<LineRenderer>();
             rend.sharedMaterial = gridLineNormal;
+            rend.startWidth = 0.005f;
+            rend.endWidth = 0.005f;
         }
     }
 
     void HiglightLine(GameObject lineObject) {
         LineRenderer rend = lineObject.GetComponent<LineRenderer>();
         rend.sharedMaterial = gridLineHighligted;
+        rend.startWidth = 0.03f;
+        rend.endWidth = 0.03f;
     }
 
     public void HighlightLinesForPointList(List<Vector2> pointList) {
