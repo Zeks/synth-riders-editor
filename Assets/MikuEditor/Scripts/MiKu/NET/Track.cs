@@ -24,11 +24,7 @@ namespace MiKu.NET {
         public TimeWrapper(float value) { FloatValue = value; }
         public TimeWrapper() { }
         public static TimeWrapper Create(float value) { return new TimeWrapper(value); }
-        public class HashSource {
-            public int whole = 0;
-            public float partial = 0;
-        }
-        //public static const TimeWrapper defaultObject = new TimeWrapper();
+
         public float FloatValue 
         {
             get
@@ -47,16 +43,11 @@ namespace MiKu.NET {
 
 
 
-        public static HashSource GetPreciseInt(TimeWrapper f) {
-            HashSource result = new HashSource();
+        public static int GetPreciseInt(TimeWrapper f) {
             float divisor = ((Track.BPM/60f)/64f)*300;
-            result.partial = Math.Abs(f.FloatValue - (int)f.FloatValue);
-            //if(result.partial > 0.48 || result.partial < 0.52)
-            //    result.whole = (int)(Math.Round((int)f.FloatValue/divisor));
-            //else
-            result.whole = (int)(Math.Round(f.FloatValue/divisor, 0, MidpointRounding.AwayFromZero));
+            return (int)(Math.Round(f.FloatValue/divisor, 0, MidpointRounding.AwayFromZero));
             //Trace.WriteLine("Created hash source:" + result.whole + " divisor: " + divisor + " oroginal: " + f.FloatValue);
-            return result;
+
         }
 
         public int CompareTo(object obj) {
@@ -81,23 +72,21 @@ namespace MiKu.NET {
         }
 
         public bool Equals(TimeWrapper f1, TimeWrapper f2) {
-            return GetPreciseInt(f1).whole == GetPreciseInt(f2).whole;
+            return GetPreciseInt(f1) == GetPreciseInt(f2);
         }
 
         public int GetHashCode(TimeWrapper f) {
-            Int32 generatedHash = GetPreciseInt(f).whole.GetHashCode();
-            return generatedHash;
+            return GetPreciseInt(f).GetHashCode();
         }
         public override int GetHashCode() {
-            Int32 generatedHash = GetPreciseInt(this).whole.GetHashCode();
-            return generatedHash;
+            return GetPreciseInt(this).GetHashCode();
         }
         public static bool EqualsTo(TimeWrapper f1, TimeWrapper f2) {
-            int value1 = GetPreciseInt(f1).whole;
-            int value2 = GetPreciseInt(f2).whole;
+            //int value1 = GetPreciseInt(f1);
+            //int value2 = GetPreciseInt(f2);
             //Trace.WriteLine("Comparing times: " + f1.FloatValue + " and " + f2.FloatValue);
             //Trace.WriteLine("Comparing integers: " + value1 + " and " + value2);
-            return value1 == value2;
+            return GetPreciseInt(f1) == GetPreciseInt(f2);
         }
         public static bool operator ==(TimeWrapper a, TimeWrapper b) {
             if(System.Object.ReferenceEquals(a, null) && System.Object.ReferenceEquals(b, null))
@@ -861,7 +850,7 @@ namespace MiKu.NET {
         private InternalBPM bpmSecondary = InternalBPM.DefaultSecondaryBPM();
         private InternalBPM bpmPrecise = InternalBPM.DefaultPreciseBPM();
         private PlayStopMode playStopMode = PlayStopMode.StepBack;
-        //public static FloatEqualityComparer floatComparator = new FloatEqualityComparer();
+        //
 
         //private float MBPM = 1f / 1f;
         //private float MBPMSecondary = 1f / 1f;
