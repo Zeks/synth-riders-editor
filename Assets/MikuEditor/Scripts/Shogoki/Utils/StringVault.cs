@@ -81,6 +81,14 @@ namespace Shogoki.Utils {
         string alert_CantPlaceRailOfDifferntSubtype = "You need to finish the current rail";
 
         [SerializeField]
+        [TextArea(3, 8)]
+        string alert_NothingToMoveAtThisPoint = "Nothing to move here";
+
+        [SerializeField]
+        [TextArea(3, 8)]
+        string alert_NoRailToRecolorOrDeleteAtThisPoint = "No rail to recolor or delete at this point";
+
+        [SerializeField]
 		[TextArea(3, 8)]
 		string alert_MaxNumberOfTypeNotes = "Max number of {0} notes reached";	
 
@@ -471,7 +479,25 @@ namespace Shogoki.Utils {
                 return s_instance.alert_CantPlaceRailOfDifferntSubtype;
             }
         }
+
         
+        public static string Alert_NothingToMoveAtThisPoint
+        {
+            get
+            {
+                return s_instance.alert_NothingToMoveAtThisPoint;
+            }
+        }
+
+        public static string Alert_NoRailToRecolorOrDeleteAtThisPoint
+        {
+            get
+            {
+                return s_instance.alert_NoRailToRecolorOrDeleteAtThisPoint;
+            }
+        }
+
+
         public static string Alert_MaxNumberOfTypeNotes
         {
             get

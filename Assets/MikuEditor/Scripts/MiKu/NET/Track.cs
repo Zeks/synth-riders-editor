@@ -6036,8 +6036,9 @@ namespace MiKu.NET {
                             RailHelper.ReinstantiateRail(rail);
                             RailHelper.ReinstantiateRailSegmentObjects(rail);
                             return;
-                        }
-                    }
+                        } 
+                    } 
+
 
                     // need to check that we aren't in the incorrect rails section
                     // for that we first filter which rails appear at this time point
@@ -6074,39 +6075,8 @@ namespace MiKu.NET {
                             // if there is a note fo this color, we move it here
                             EditorNote potentialMovedNote = GetSimpleNoteAtTime(CurrentTime, s_instance.selectedNoteType);
                             if(potentialMovedNote == null) {
-                                //nothing to move, we just instantiate a new one
-                                EditorNote newNote = new EditorNote(noteFromNoteArea.transform.position, Track.CurrentTime.FloatValue);
-                                newNote.HandType = s_instance.selectedNoteType;
-
-                                // Check if the note placed if of special type 
-                                if(IsOfSpecialType(newNote)) {
-                                    // If whe are no creating a special, Then we init the new special section
-                                    if(!s_instance.specialSectionStarted) {
-                                        s_instance.specialSectionStarted = true;
-                                        s_instance.currentSpecialSectionID++;
-                                        Miku_DialogManager.ShowDialog(Miku_DialogManager.DialogType.Info, StringVault.Info_SpecialModeStarted);
-                                        s_instance.ToggleWorkingStateAlertOn(StringVault.Info_UserOnSpecialSection);
-                                    }
-
-                                    // Assing the Special ID to the note
-                                    newNote.ComboId = s_instance.currentSpecialSectionID;
-
-                                    Track.LogMessage("Current Special ID: " + s_instance.currentSpecialSectionID);
-                                }
-                                if(!workingTrack.ContainsKey(CurrentTime)) {
-                                    workingTrack.Add(CurrentTime, new List<EditorNote>());
-                                    AddTimeToSFXList(CurrentTime);
-                                }
-                                // Finally we added the note to the dictonary
-                                // ref of the note for easy of access to properties                        
-                                if(workingTrack.ContainsKey(CurrentTime)) {
-                                    // print("Trying currentTime "+CurrentTime);
-                                    workingTrack[CurrentTime].Add(newNote);
-                                    s_instance.IncreaseTotalDisplayedNotesCount();
-                                    s_instance.AddNoteGameObjectToScene(newNote);
-                                } else {
-                                    Track.LogMessage("Time does not exist");
-                                }
+                                // alt should only move notes, not instantiate them
+                                Miku_DialogManager.ShowDialog(Miku_DialogManager.DialogType.Alert, StringVault.Alert_NothingToMoveAtThisPoint);
                                 return;
                             } else {
                                 // we move the note to the clicked position
@@ -6129,15 +6099,23 @@ namespace MiKu.NET {
 
                         // if there are no notes to overlap, instantiate time in the dictionary
                         if(!hasNotesWithinDeltaTime && !isIncorrectPlacement) {
-                            Trace.WriteLine("Adding new time to track: " + CurrentTime);
-                            workingTrack.Add(CurrentTime, new List<EditorNote>());
-                            AddTimeToSFXList(CurrentTime);
+                            if(!s_instance.isSHIFTDown) {
+                                Trace.WriteLine("Adding new time to track: " + CurrentTime);
+                                workingTrack.Add(CurrentTime, new List<EditorNote>());
+                                AddTimeToSFXList(CurrentTime);
+                            } else {
+                                Miku_DialogManager.ShowDialog(Miku_DialogManager.DialogType.Alert, StringVault.Alert_NoRailToRecolorOrDeleteAtThisPoint);
+                                return;
+                            }
                         } else {
                             // find and remove notes that overlaps and return if one was removed
                             // needs a rail handler inside because removed rail note requires whole rail recalc
                             if(RemoveOverlappingNote(workingTrack, keys_tofilter, noteFromNoteArea)) {
                                 Trace.WriteLine("Note removed. Returning");
                                 return;
+                            } else if(s_instance.isSHIFTDown) {
+                                    Miku_DialogManager.ShowDialog(Miku_DialogManager.DialogType.Alert, StringVault.Alert_NoRailToRecolorOrDeleteAtThisPoint);
+                                    return;
                             }
                             // check if max notes of current type are reached for the time delta and return if true
                             {
@@ -6167,7 +6145,7 @@ namespace MiKu.NET {
                             RailHelper.ReinstantiateRail(rail);
                             RailHelper.ReinstantiateRailSegmentObjects(rail);
                             return;
-                        }
+                        } 
                     }
 
                     if(s_instance.isALTDown) {
@@ -6268,7 +6246,7 @@ namespace MiKu.NET {
                         }
 
                         // we're being explicitly told that a new rail should be created at this point
-                        if(s_instance.isCTRLDown) {
+                        if(s_instance.isCTRLDown && !s_instance.isALTDown && s_instance.isSHIFTDown) {
                             // potential problems:
                             // 1) need to break an existing rail
                             // 2) need to make sure extend doesn't happen
@@ -6378,12 +6356,13 @@ namespace MiKu.NET {
 
                         // if we found a match we move the rail note to a new position and recalc the rail
                         if(matchedRail != null) {
+                            bool onlyDeleteMode = s_instance.isSHIFTDown;
                             EditorNote railNote = matchedRail.GetNoteAtPosition(CurrentTime);
                             if(railNote != null) {
                                 Vector2 foundNotePosition = new Vector2(railNote.Position[0], railNote.Position[1]);
                                 Vector2 clickedPosition = new Vector2(noteFromNoteArea.transform.position.x, noteFromNoteArea.transform.position.y);
                                 float distance = Vector2.Distance(foundNotePosition, clickedPosition);
-                                if(distance > 0.05f) {
+                                if(distance > 0.05f && !onlyDeleteMode) {
                                     // we've clicked away from current note. this means we need to move it
                                     matchedRail.MoveNoteAtTimeToPosition(CurrentTime, noteFromNoteArea.transform.position.x, noteFromNoteArea.transform.position.y);
                                 } else {
@@ -6417,6 +6396,10 @@ namespace MiKu.NET {
                             }
                             return;
                         }
+                        if(s_instance.isSHIFTDown) {
+                                Miku_DialogManager.ShowDialog(Miku_DialogManager.DialogType.Alert, StringVault.Alert_NoRailToRecolorOrDeleteAtThisPoint);
+                                return;
+                        }
                         // if we're placing the special combo rail over a common one, display promt and exit
                         // same for the opposite case
                         Trace.WriteLine("Making sure we're not placing a note of the incompatible type over existing rail");
@@ -6438,6 +6421,13 @@ namespace MiKu.NET {
                                 return;
                             }
                         }
+
+                        if(s_instance.isALTDown) {
+                            // we do not want to instantiate a note with alt, returning
+                            Miku_DialogManager.ShowDialog(Miku_DialogManager.DialogType.Alert, StringVault.Alert_NothingToMoveAtThisPoint);
+                            return;
+                        }
+
 
                         Trace.WriteLine("Creating a note to add to some rail");
                         EditorNote noteForRail = new EditorNote(noteFromNoteArea.transform.position, Track.CurrentTime.FloatValue);
