@@ -6495,11 +6495,9 @@ namespace MiKu.NET {
                                 return;
                             }
                         }
-
+                        bool extendOnly = false;
                         if(s_instance.isALTDown) {
-                            // we do not want to instantiate a note with alt, returning
-                            Miku_DialogManager.ShowDialog(Miku_DialogManager.DialogType.Alert, StringVault.Alert_NothingToMoveAtThisPoint);
-                            return;
+                            extendOnly = true;
                         }
 
 
@@ -6517,11 +6515,14 @@ namespace MiKu.NET {
                         // this should net us exactly one rail
                         Trace.WriteLine("Attempting to find a rail that this note can be added to in the middle");
                         List<Rail> activeRailsOfSameType = rails.Where(filteredRail => filteredRail.TimeInInterval(CurrentTime) && filteredRail.noteType == s_instance.selectedNoteType).ToList();
-
+                        
                         foreach(Rail testedRail in activeRailsOfSameType.OrEmptyIfNull()) {
                             if(testedRail.scheduleForDeletion)
                                 continue;
-
+                            if(extendOnly) {
+                                Miku_DialogManager.ShowDialog(Miku_DialogManager.DialogType.Alert, StringVault.Alert_NothingToMoveAtThisPoint);
+                                return;
+                            }
                             Trace.WriteLine("Adding note inside the rail:");
                             testedRail.Log();
                             testedRail.AddNote(noteForRail);
