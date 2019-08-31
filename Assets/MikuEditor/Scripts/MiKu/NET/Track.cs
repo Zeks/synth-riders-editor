@@ -22,7 +22,7 @@ using System.Diagnostics;
 namespace MiKu.NET {
     public sealed class TimeWrapper : IComparable, IEqualityComparer<TimeWrapper> {
         public TimeWrapper(float value) {
-            Divisor = ((Track.BPM/60f)/64f)*150;
+            Divisor = ((Track.BPM/60f)/64f)*50;
             FloatValue = value;
             
             //Hash = (int)(Math.Round(FloatValue/Divisor, 0, MidpointRounding.AwayFromZero));
@@ -4140,46 +4140,17 @@ namespace MiKu.NET {
         /// <returns>Returns <typeparamref name="float"/></returns>
         float GetNextStepPoint(InternalBPM bpm) {
             int multiplier = 64/bpm.IncreaseFactor;
-            int slicesPerStep = new TimeWrapper(K * bpm.Value).Hash;
-            int leftCount = _currentTime.Hash/slicesPerStep;
-            int rightCount = (leftCount + 1)*slicesPerStep;
-            int diffSlices = rightCount-_currentTime.Hash;
-            float timeShiftCoef = (float)diffSlices/slicesPerStep;
-            float timeIncrease = (float)Math.Ceiling(timeShiftCoef * K * bpm.Value);
-            _currentTime.FloatValue=(_currentTime.Hash/slicesPerStep)*K * bpm.Value + timeIncrease;
-            if(_currentTime.Hash%slicesPerStep != 0) {
-                if(_currentTime.Hash > _currentTime.Hash%slicesPerStep)
-                    _currentTime.Hash-=2;
-                else
-                    _currentTime.Hash+=2;
-            }
-            return MStoUnit(_currentTime.FloatValue);
-            float _CK = (K * bpm.Value);
-
-            //_currentTime+= K*MBPM;
-            //UnityEngine.Debug.Log("Current "+_currentTime);
-            StorePreviousTime();
-            if(_currentTime.FloatValue % _CK == 0) {
-                _currentTime.FloatValue += _CK;
-            } else {
-                float nextPoint = _currentTime.FloatValue + (_CK - (_currentTime.FloatValue % _CK));
-                //UnityEngine.Debug.Log("Next "+nextPoint);
-                //print(_CK);
-
-                if(nextPoint == _currentTime.FloatValue) {
-                    nextPoint = _currentTime.FloatValue + _CK;
-                }
-
-                if((nextPoint - _currentTime.FloatValue) <= _CK && lastUsedCK == _CK) {
-                    nextPoint = _currentTime.FloatValue + _CK;
-                }
-
-                //nextPoint = _currentTime + _CK;
-                _currentTime.FloatValue = nextPoint; //_currentTime + ( _CK - (_currentTime%_CK ) );
-            }
-
+            float realStepsFloat = _currentTime.FloatValue/(K * bpm.Value);
+            int realStepsInt = (int)realStepsFloat;
+            float previousPoint = realStepsFloat*K*bpm.Value;
+            float nextPoint = (realStepsFloat+1)*K*bpm.Value;
+            float timeDiff = nextPoint - _currentTime.FloatValue;
+            float fraction = Math.Abs((realStepsInt+1)*K*bpm.Value - _currentTime.FloatValue)/(K*bpm.Value) ;
+            if(fraction > 0.1)
+                _currentTime.FloatValue=(realStepsInt+1)*K*bpm.Value;
+            else
+                _currentTime.FloatValue=(realStepsInt+2)*K*bpm.Value;
             _currentTime.FloatValue = Mathf.Min(_currentTime.FloatValue, (TM - 1) * K);
-            lastUsedCK = _CK;
             return MStoUnit(_currentTime.FloatValue);
         }
 
@@ -4192,47 +4163,18 @@ namespace MiKu.NET {
         /// <returns>Returns <typeparamref name="float"/></returns>
         float GetPrevStepPoint(InternalBPM bpm) {
             int multiplier = 64/bpm.IncreaseFactor;
-            int slicesPerStep = new TimeWrapper(K * bpm.Value).Hash;
-            int leftCount = _currentTime.Hash/slicesPerStep;
-            //int rightCount = (leftCount + 1)*slicesPerStep;
-            int diffSlices = _currentTime.Hash - leftCount*slicesPerStep;
-            if(diffSlices == 0)
-                diffSlices=slicesPerStep;
-            float realSteps = _currentTime.FloatValue/(K * bpm.Value);
-            float realSlices= slicesPerStep*_currentTime.FloatValue/(K * bpm.Value);
-            float timeShiftCoef = (float)diffSlices/slicesPerStep;
-            float timeIncrease = (timeShiftCoef * K * bpm.Value);
-            _currentTime.FloatValue=(_currentTime.Hash/slicesPerStep)*K * bpm.Value - timeIncrease;
-            if(_currentTime.Hash%slicesPerStep != 0) {
-                if(_currentTime.Hash > _currentTime.Hash%slicesPerStep)
-                    _currentTime.Hash-=2;
-                else
-                    _currentTime.Hash+=2;
-            }
-            return MStoUnit(_currentTime.FloatValue);
-
-            float _CK = (K * bpm.Value);
-            //_currentTime-= K*MBPM;
-            StorePreviousTime();
-            if(_currentTime.FloatValue % _CK == 0) {
-                _currentTime.FloatValue -= _CK;
-            } else {
-                float nextPoint = _currentTime.FloatValue - (_currentTime.FloatValue % _CK);
-
-                if(nextPoint == _currentTime.FloatValue) {
-                    nextPoint = _currentTime.FloatValue - _CK;
-                    //print("Now Here");
-                    // || (_currentTime - nextPoint) <= _CK
-                }
-
-                if((_currentTime.FloatValue - nextPoint) <= _CK && lastUsedCK == _CK) {
-                    nextPoint = _currentTime.FloatValue - _CK;
-                }
-
-                _currentTime.FloatValue = nextPoint; //_currentTime - ( _currentTime%_CK ); 
-            }
+            float realStepsFloat = _currentTime.FloatValue/(K * bpm.Value);
+            int realStepsInt = (int)realStepsFloat;
+            float previousPoint = realStepsFloat*K*bpm.Value;
+            float timeDiff = _currentTime.FloatValue-previousPoint;
+            float fraction = Math.Abs(realStepsInt*K*bpm.Value-_currentTime.FloatValue)/(K*bpm.Value);
+            bool diffLessThan0 = (realStepsInt*K*bpm.Value-_currentTime.FloatValue) < 0;
+            if(diffLessThan0 && fraction > 0.1)
+                _currentTime.FloatValue=(realStepsInt)*K*bpm.Value;
+            else 
+                _currentTime.FloatValue=(realStepsInt-1)*K*bpm.Value;
+            // if(Math.Abs(realStepsFloat - realStepsInt)/(K*bpm.Value) < 0.1)
             _currentTime.FloatValue = Mathf.Max(_currentTime.FloatValue, 0);
-            lastUsedCK = _CK;
             return MStoUnit(_currentTime.FloatValue);
         }
 
