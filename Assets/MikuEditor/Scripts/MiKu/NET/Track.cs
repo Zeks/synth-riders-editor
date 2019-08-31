@@ -251,16 +251,42 @@ namespace MiKu.NET {
     }
 
     public class SelectionArea {
-        public TimeWrapper startTime = -1f;
-        public TimeWrapper endTime = -1f;
+        private TimeWrapper _startTime = -1f;
+        private TimeWrapper _endTime = -1f;
+        public TimeWrapper StartTime
+        {
+            get
+            {
+                return _startTime;
+            }
+
+            set
+            {
+                _startTime = value;
+            }
+        }
+        public TimeWrapper EndTime
+        {
+            get
+            {
+                return _endTime;
+            }
+
+            set
+            {
+                _endTime = value;
+            }
+        }
+
+
         public void ResetSelection() {
-            startTime = -1;
-            endTime = -1;
+            StartTime = -1;
+            EndTime = -1;
         }
         public void ResetSelectionIfPoint() {
-            if(startTime == endTime) { 
-                startTime = -1;
-                endTime = -1;
+            if(StartTime == EndTime) {
+                StartTime = -1;
+                EndTime = -1;
             }
         }
     }
@@ -1498,8 +1524,9 @@ namespace MiKu.NET {
             if(Input.GetButtonDown("Input Modifier3")) {
                 if(!PromtWindowOpen && !isPlaying) {
                     isSHIFTDown = true;
-                    RefreshCurrentTime();
-                    ToggleSelectionArea();
+                    SetSelectionStart(CurrentTime);
+                    UpdateSelectionMarker();
+                    //ToggleSelectionArea();
                 }
             }
 
@@ -1507,7 +1534,9 @@ namespace MiKu.NET {
             if(Input.GetButtonUp("Input Modifier3")) {
                 if(!PromtWindowOpen && !isPlaying) {
                     isSHIFTDown = false;
-                    ToggleSelectionArea(true);
+                    SetSelectionEnd(CurrentTime);
+                    UpdateSelectionMarker();
+                    //ToggleSelectionArea(true);
                 }
             }
 
@@ -1578,9 +1607,9 @@ namespace MiKu.NET {
                     DoClearNotePositions();
                 } else if(!IsPlaying) {
                     CloseSpecialSection();
-                    if(CurrentSelection.startTime.FloatValue < -0.5f) {
-                        CurrentSelection.startTime = CurrentTime;
-                        CurrentSelection.endTime = CurrentTime;
+                    if(CurrentSelection.StartTime.FloatValue < -0.5f) {
+                        CurrentSelection.StartTime = CurrentTime;
+                        CurrentSelection.EndTime = CurrentTime;
                     }
                     DeleteNotesAtTheCurrentTime();
                 }
@@ -1627,7 +1656,7 @@ namespace MiKu.NET {
                 } else if(helpWindowOpen) {
                     ToggleHelpWindow();
                 } else {
-                    if(CurrentSelection.endTime > CurrentSelection.startTime) {
+                    if(CurrentSelection.EndTime > CurrentSelection.StartTime) {
                         ClearSelectionMarker();
                     } else {
                         DoReturnToMainMenu();
@@ -1830,6 +1859,10 @@ namespace MiKu.NET {
                 bool resetSelectionIfNeeded = true;
                 if(!isCTRLDown && !isALTDown || currentScrollMode != ScrollMode.Steps) {
                     PerformScrollStepForwards(CurrentTime, currentScrollMode);
+                    if(isSHIFTDown) {
+                        CurrentSelection.EndTime = CurrentTime;
+                        UpdateSelectionMarker();
+                    }
                     return;
                 } else if(isCTRLDown && !isALTDown) {
                     ChangeStepMeasure(true, bpmPrimary);
@@ -1856,6 +1889,10 @@ namespace MiKu.NET {
                 if(resetSelectionIfNeeded) {
                     CurrentSelection.ResetSelectionIfPoint();
                 }
+                if(isSHIFTDown) {
+                    CurrentSelection.EndTime = CurrentTime;
+                    UpdateSelectionMarker();
+                }
 
             } else if(Input.GetAxis("Mouse ScrollWheel") < 0f && !IsPlaying && !PromtWindowOpen) // backwards
               {
@@ -1863,6 +1900,10 @@ namespace MiKu.NET {
                 bool resetSelectionIfNeeded = true;
                 if(!isCTRLDown && !isALTDown || currentScrollMode != ScrollMode.Steps) {
                     PerformScrollStepBackwards(CurrentTime, currentScrollMode);
+                    if(isSHIFTDown) {
+                        CurrentSelection.EndTime = CurrentTime;
+                        UpdateSelectionMarker();
+                    }
                     return;
                 } else if(isCTRLDown && !isALTDown) {
                     resetSelectionIfNeeded = false;
@@ -1887,6 +1928,10 @@ namespace MiKu.NET {
                 }
                 if(resetSelectionIfNeeded) {
                     CurrentSelection.ResetSelectionIfPoint();
+                }
+                if(isSHIFTDown) {
+                    CurrentSelection.EndTime = CurrentTime;
+                    UpdateSelectionMarker();
                 }
             }
 
@@ -2106,10 +2151,7 @@ namespace MiKu.NET {
             }
 
 
-            if(isSHIFTDown) {
-                CurrentSelection.endTime = CurrentTime;
-                UpdateSelectionMarker();
-            }
+            
 
             // Directional Notes
 
@@ -3362,29 +3404,29 @@ namespace MiKu.NET {
                 CurrentClipBoard.rails.Clear();
 
             List<TimeWrapper> keys_tofilter = workingTrack.Keys.ToList();
-            if(CurrentSelection.endTime > CurrentSelection.startTime) {
-                keys_tofilter = keys_tofilter.Where(time => time >= CurrentSelection.startTime
-                    && time <= CurrentSelection.endTime).ToList();
+            if(CurrentSelection.EndTime > CurrentSelection.StartTime) {
+                keys_tofilter = keys_tofilter.Where(time => time >= CurrentSelection.StartTime
+                    && time <= CurrentSelection.EndTime).ToList();
 
-                CurrentClipBoard.effects = effects.Where(time => time >= CurrentSelection.startTime
-                    && time <= CurrentSelection.endTime).ToList();
+                CurrentClipBoard.effects = effects.Where(time => time >= CurrentSelection.StartTime
+                    && time <= CurrentSelection.EndTime).ToList();
 
-                CurrentClipBoard.jumps = jumps.Where(time => time >= CurrentSelection.startTime
-                    && time <= CurrentSelection.endTime).ToList();
+                CurrentClipBoard.jumps = jumps.Where(time => time >= CurrentSelection.StartTime
+                    && time <= CurrentSelection.EndTime).ToList();
 
-                CurrentClipBoard.crouchs = crouchs.Where(time => time >= CurrentSelection.startTime
-                    && time <= CurrentSelection.endTime).ToList();
+                CurrentClipBoard.crouchs = crouchs.Where(time => time >= CurrentSelection.StartTime
+                    && time <= CurrentSelection.EndTime).ToList();
 
-                CurrentClipBoard.slides = slides.Where(s => s.time >= CurrentSelection.startTime
-                    && s.time <= CurrentSelection.endTime).ToList();
+                CurrentClipBoard.slides = slides.Where(s => s.time >= CurrentSelection.StartTime
+                    && s.time <= CurrentSelection.EndTime).ToList();
 
-                CurrentClipBoard.lights = lights.Where(time => time >= CurrentSelection.startTime
-                    && time <= CurrentSelection.endTime).ToList();
+                CurrentClipBoard.lights = lights.Where(time => time >= CurrentSelection.StartTime
+                    && time <= CurrentSelection.EndTime).ToList();
 
-                CurrentClipBoard.startTime = CurrentSelection.startTime;
-                CurrentClipBoard.lenght = CurrentSelection.endTime - CurrentSelection.startTime;
+                CurrentClipBoard.startTime = CurrentSelection.StartTime;
+                CurrentClipBoard.lenght = CurrentSelection.EndTime - CurrentSelection.StartTime;
 
-                CurrentClipBoard.rails = RailHelper.GetCopyOfRailsInRange(rails, CurrentSelection.startTime, CurrentSelection.endTime, RailHelper.RailRangeBehaviour.Skip);
+                CurrentClipBoard.rails = RailHelper.GetCopyOfRailsInRange(rails, CurrentSelection.StartTime, CurrentSelection.EndTime, RailHelper.RailRangeBehaviour.Skip);
             } else {
                 //RefreshCurrentTime();
 
@@ -3403,7 +3445,7 @@ namespace MiKu.NET {
                 CurrentClipBoard.startTime = CurrentTime;
 
                 // will only copy rails consisting of one note like this
-                CurrentClipBoard.rails = RailHelper.GetCopyOfRailsInRange(rails, CurrentSelection.startTime, CurrentSelection.startTime, RailHelper.RailRangeBehaviour.Skip);
+                CurrentClipBoard.rails = RailHelper.GetCopyOfRailsInRange(rails, CurrentSelection.StartTime, CurrentSelection.StartTime, RailHelper.RailRangeBehaviour.Skip);
 
                 CurrentClipBoard.lenght = 0;
             }
@@ -3446,8 +3488,8 @@ namespace MiKu.NET {
             // this can be positive or negative
             TimeWrapper shiftLength = CurrentTime - CurrentClipBoard.startTime;
 
-            CurrentSelection.startTime = backUpTime;
-            CurrentSelection.endTime = backUpTime + CurrentClipBoard.lenght;
+            CurrentSelection.StartTime = backUpTime;
+            CurrentSelection.EndTime = backUpTime + CurrentClipBoard.lenght;
 
             // print(string.Format("Current {0} Lenght {1} Duration {2}", CurrentTime, CurrentClipBoard.lenght, TrackDuration * MS));
             if((CurrentTime + CurrentClipBoard.lenght) > (TrackDuration * MS) + MS) {
@@ -5434,27 +5476,27 @@ namespace MiKu.NET {
 
 
 
-            bool deletingRange = CurrentSelection.endTime > CurrentSelection.startTime;
+            bool deletingRange = CurrentSelection.EndTime > CurrentSelection.StartTime;
             if(deletingRange) {
-                keys_tofilter = keys_tofilter.Where(time => time >= CurrentSelection.startTime
-                    && time <= CurrentSelection.endTime).ToList();
+                keys_tofilter = keys_tofilter.Where(time => time >= CurrentSelection.StartTime
+                    && time <= CurrentSelection.EndTime).ToList();
 
-                effects_tofilter = workingEffects.Where(time => time >= CurrentSelection.startTime
-                    && time <= CurrentSelection.endTime).ToList();
+                effects_tofilter = workingEffects.Where(time => time >= CurrentSelection.StartTime
+                    && time <= CurrentSelection.EndTime).ToList();
 
-                jumps_tofilter = jumps.Where(time => time >= CurrentSelection.startTime
-                    && time <= CurrentSelection.endTime).ToList();
+                jumps_tofilter = jumps.Where(time => time >= CurrentSelection.StartTime
+                    && time <= CurrentSelection.EndTime).ToList();
 
-                crouchs_tofilter = crouchs.Where(time => time >= CurrentSelection.startTime
-                    && time <= CurrentSelection.endTime).ToList();
+                crouchs_tofilter = crouchs.Where(time => time >= CurrentSelection.StartTime
+                    && time <= CurrentSelection.EndTime).ToList();
 
-                slides_tofilter = slides.Where(s => s.time >= CurrentSelection.startTime
-                    && s.time <= CurrentSelection.endTime).ToList();
+                slides_tofilter = slides.Where(s => s.time >= CurrentSelection.StartTime
+                    && s.time <= CurrentSelection.EndTime).ToList();
 
-                lights_tofilter = lights.Where(time => time >= CurrentSelection.startTime
-                    && time <= CurrentSelection.endTime).ToList();
+                lights_tofilter = lights.Where(time => time >= CurrentSelection.StartTime
+                    && time <= CurrentSelection.EndTime).ToList();
 
-                rails = RailHelper.GetListOfRailsInRange(rails, CurrentSelection.startTime, CurrentSelection.endTime, RailHelper.RailRangeBehaviour.Allow);
+                rails = RailHelper.GetListOfRailsInRange(rails, CurrentSelection.StartTime, CurrentSelection.EndTime, RailHelper.RailRangeBehaviour.Allow);
 
             } else {
                 //RefreshCurrentTime();
@@ -5470,11 +5512,11 @@ namespace MiKu.NET {
                 slides_tofilter = slides.Where(s => s.time == CurrentTime).ToList();
 
                 lights_tofilter = lights.Where(time => time == CurrentTime).ToList();
-                rails = RailHelper.GetListOfRailsInRange(rails, CurrentSelection.startTime, CurrentSelection.startTime, RailHelper.RailRangeBehaviour.Allow, RailHelper.RailFetchBehaviour.HasPointsAtCurrentTime);
+                rails = RailHelper.GetListOfRailsInRange(rails, CurrentSelection.StartTime, CurrentSelection.StartTime, RailHelper.RailRangeBehaviour.Allow, RailHelper.RailFetchBehaviour.HasPointsAtCurrentTime);
             }
 
             foreach(Rail rail in rails.OrEmptyIfNull()) {
-                var notes = rail.GetNotesForRange(CurrentSelection.startTime, CurrentSelection.endTime);
+                var notes = rail.GetNotesForRange(CurrentSelection.StartTime, CurrentSelection.EndTime);
                 foreach(RailNoteWrapper note in notes) {
                     rail.RemoveNote(note.thisNote.noteId);
                 }
@@ -5579,8 +5621,8 @@ namespace MiKu.NET {
             slides_tofilter.Clear();
             lights_tofilter.Clear();
             ClearSelectionMarker();
-            CurrentSelection.startTime= -1f;
-            CurrentSelection.endTime= -1f;
+            CurrentSelection.StartTime= -1f;
+            CurrentSelection.EndTime= -1f;
             gridManager.ResetLinesMaterial();
             if(showPlacementLines)
                 gridManager.HighlightLinesForPointList(FetchObjectPositionsAtCurrentTime(CurrentTime));
@@ -8520,11 +8562,6 @@ namespace MiKu.NET {
         }
 
         private void ToggleSelectionArea(bool isOFF = false) {
-            if(isOFF)
-                CurrentSelection.endTime = CurrentTime;
-            else
-                CurrentSelection.startTime = CurrentTime;
-
             if(isOFF) {
                 ToggleWorkingStateAlertOff();
             } else {
@@ -8533,16 +8570,22 @@ namespace MiKu.NET {
             }
 
         }
+        private void SetSelectionStart(TimeWrapper time) {
+            CurrentSelection.StartTime = time;
+        }
+        private void SetSelectionEnd(TimeWrapper time) {
+            CurrentSelection.EndTime = time;
+        }
 
         private void SelectAll() {
-            CurrentSelection.startTime = 0;
-            CurrentSelection.endTime = TrackDuration * 1000;
+            CurrentSelection.StartTime = 0;
+            CurrentSelection.EndTime = TrackDuration * 1000;
             UpdateSelectionMarker();
         }
 
         private void ClearSelectionMarker() {
-            CurrentSelection.startTime = 0;
-            CurrentSelection.endTime = 0;
+            CurrentSelection.StartTime = 0;
+            CurrentSelection.EndTime = 0;
             UpdateSelectionMarker();
         }
 
@@ -8551,10 +8594,10 @@ namespace MiKu.NET {
         /// </summary>
         private void UpdateSelectionMarker() {
             if(m_selectionMarker != null) {
-                selectionStartPos.z = MStoUnit(CurrentSelection.startTime);
+                selectionStartPos.z = MStoUnit(CurrentSelection.StartTime);
 
-                if(CurrentSelection.endTime >= CurrentSelection.startTime) {
-                    selectionEndPos.z = MStoUnit(CurrentSelection.endTime);
+                if(CurrentSelection.EndTime >= CurrentSelection.StartTime) {
+                    selectionEndPos.z = MStoUnit(CurrentSelection.EndTime);
                 }
 
                 m_selectionMarker.SetPosition(0, selectionStartPos);
