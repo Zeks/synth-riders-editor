@@ -562,7 +562,7 @@ namespace MiKu.NET.Charting {
         /// <value>
         /// Offset on seconds befor the Song start playing
         /// </value>
-        public float Offset { get; set; }
+        public TimeWrapper Offset { get; set; }
 
         /// <value>
 		/// List of beats that made the Chart

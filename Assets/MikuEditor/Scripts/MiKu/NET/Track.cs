@@ -972,7 +972,7 @@ namespace MiKu.NET {
         private float trackDuration = 60;
 
         // Offset before the song start playing
-        private float startOffset = 0;
+        private TimeWrapper startOffset = 0;
 
         private float playSpeed = 1f;
 
@@ -2561,14 +2561,14 @@ namespace MiKu.NET {
             if(mode == PlacerClickSnapMode.MinorBar) {
                 barTimes.Sort();
                 barTimes.Reverse();
-                var temp = barTimes.SkipWhile(t => t > time);
-                result = temp.First();
+                var temp = barTimes.SkipWhile(t => t + StartOffset > time);
+                result = temp.First() + StartOffset;
             } else {
                 peakTimes.Sort();
                 peakTimes.Reverse();
-                var temp = peakTimes.SkipWhile(t => t > time);
+                var temp = peakTimes.SkipWhile(t => t + StartOffset > time);
                 if(temp.Count() > 0)
-                    result = temp.First();
+                    result = temp.First() + StartOffset;
                 else
                     result = 0;
             }
@@ -2841,7 +2841,7 @@ namespace MiKu.NET {
             int increment = (isIncrease) ? incrementFactor : -incrementFactor;
             StartOffset += increment;
 
-            StartOffset = Mathf.Max(0, StartOffset);
+            StartOffset = Mathf.Max(0, StartOffset.FloatValue);
             UpdateTrackDuration();
             UpdateDisplayStartOffset(StartOffset);
         }
@@ -4308,7 +4308,7 @@ namespace MiKu.NET {
         /// Play the track from the start or from <see cref="StartOffset"/>
         /// </summary>
         void Play() {
-            float seekTime = (StartOffset > 0) ? Mathf.Max(0, (_currentTime.FloatValue / MS) - (StartOffset / MS)) : (_currentTime.FloatValue / MS);
+            float seekTime = (StartOffset > 0) ? Mathf.Max(0, (_currentTime.FloatValue / MS) - (StartOffset.FloatValue / MS)) : (_currentTime.FloatValue / MS);
             // if(seekTime >= audioSource.clip.length) { seekTime = audioSource.clip.length; }
             audioSource.time = seekTime;
             /*float targetSample = (StartOffset > 0) ? Mathf.Max(0, (_currentTime / MS) - (StartOffset / MS) ) : (_currentTime / MS);
@@ -4420,7 +4420,7 @@ namespace MiKu.NET {
         /// Coorutine that start the AudioSource after the <see cref="StartOffset"/> millisecons has passed
         /// </summary>
         IEnumerator StartAudioSourceDelay() {
-            yield return new WaitForSecondsRealtime(Mathf.Max(0, ((StartOffset / MS) - (_currentTime.FloatValue / MS)) / PlaySpeed));
+            yield return new WaitForSecondsRealtime(Mathf.Max(0, ((StartOffset.FloatValue / MS) - (_currentTime.FloatValue / MS)) / PlaySpeed));
 
             if(IsPlaying) { audioSource.Play(); }
         }
@@ -4566,8 +4566,8 @@ namespace MiKu.NET {
         /// Update the display of the Start Offset to a user friendly form
         /// </summary>
         /// <param name="_ms">Milliseconds to format</param>
-        void UpdateDisplayStartOffset(float _ms) {
-            TimeSpan t = TimeSpan.FromMilliseconds(_ms);
+        void UpdateDisplayStartOffset(TimeWrapper _ms) {
+            TimeSpan t = TimeSpan.FromMilliseconds(_ms.FloatValue);
 
             m_OffsetDisplay.SetText(string.Format("{0:D2}s.{1:D3}ms",
                 t.Seconds.ToString(),
@@ -4604,9 +4604,9 @@ namespace MiKu.NET {
         private void UpdateTrackDuration() {
             if(Serializer.Initialized) {
                 // TrackDuration = (StartOffset / MS) + ( CurrentChart.AudioData.Length / (CurrentChart.AudioFrecuency * CurrentChart.AudioChannels) ) + END_OF_SONG_OFFSET;
-                TrackDuration = (StartOffset / MS) + (songClip.length) + END_OF_SONG_OFFSET;
+                TrackDuration = (StartOffset.FloatValue / MS) + (songClip.length) + END_OF_SONG_OFFSET;
             } else {
-                TrackDuration = (StartOffset / MS) + (MINUTE) + END_OF_SONG_OFFSET;
+                TrackDuration = (StartOffset.FloatValue / MS) + (MINUTE) + END_OF_SONG_OFFSET;
             }
 
         }
@@ -8713,7 +8713,7 @@ namespace MiKu.NET {
         /// <value>
         /// Offset on milliseconds befor the Song start playing
         /// </value>
-        public float StartOffset
+        public TimeWrapper StartOffset
         {
             get
             {

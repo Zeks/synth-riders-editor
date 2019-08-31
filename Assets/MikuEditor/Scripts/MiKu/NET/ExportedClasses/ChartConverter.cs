@@ -331,7 +331,7 @@ namespace MiKu.NET.Charting {
                 gameChart.Name = editorChart.Name;
 
             // can't be null
-            gameChart.Offset = editorChart.Offset;
+            gameChart.Offset = editorChart.Offset.FloatValue;
             gameChart.IsAdminOnly = editorChart.IsAdminOnly;
             gameChart.AudioChannels = editorChart.AudioChannels;
             gameChart.AudioFrecuency = editorChart.AudioFrecuency;
