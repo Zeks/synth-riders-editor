@@ -64,7 +64,7 @@ namespace MiKu.NET.Charting {
 
         private static int noteCounter = 0;
 
-        private TimeWrapper timePoint;
+        private TimeWrapper timePoint = new TimeWrapper(0);
 
         /// <value>
 		/// ID for cache use, when set the format used is Note_{value passed}
@@ -327,8 +327,8 @@ namespace MiKu.NET.Charting {
     }
 
     [Serializable]
-    public struct EditorBookmark {
-        public TimeWrapper time;
+    public class EditorBookmark {
+        public TimeWrapper time = new TimeWrapper(0);
         public string name;
     }
 
@@ -422,8 +422,8 @@ namespace MiKu.NET.Charting {
     }
 
     [Serializable]
-    public struct EditorSlide {
-        public TimeWrapper time;
+    public class EditorSlide {
+        public TimeWrapper time = new TimeWrapper(0);
         public EditorNote.NoteHandType slideType;
 
         public bool initialized;
@@ -466,8 +466,8 @@ namespace MiKu.NET.Charting {
     }
 
     [Serializable]
-    public struct EditorDrum {
-        public TimeWrapper time;
+    public class EditorDrum {
+        public TimeWrapper time = new TimeWrapper(0);
         public int playType;
         public string audio;
     }

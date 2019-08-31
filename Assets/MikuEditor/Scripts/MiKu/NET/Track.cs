@@ -238,14 +238,14 @@ namespace MiKu.NET {
     }
 
 
-    public struct LongNote {
-        public TimeWrapper startTime;
+    public class LongNote {
+        public TimeWrapper startTime = new TimeWrapper(0);
         public EditorNote note;
         public EditorNote mirroredNote;
         public GameObject gameObject;
         public GameObject mirroredObject;
-        public TimeWrapper duration;
-        public TimeWrapper lastSegment;
+        public TimeWrapper duration = new TimeWrapper(0);
+        public TimeWrapper lastSegment = new TimeWrapper(0);
         public List<GameObject> segments;
         public List<int> segmentAxis;
     }
@@ -291,9 +291,9 @@ namespace MiKu.NET {
         }
     }
 
-    public struct ClipBoardStruct {
-        public TimeWrapper startTime;
-        public TimeWrapper lenght;
+    public class ClipBoardStruct {
+        public TimeWrapper startTime = new TimeWrapper(0);
+        public TimeWrapper lenght = new TimeWrapper(0);
         public Dictionary<TimeWrapper, List<EditorNote>> notes;
         public List<TimeWrapper> effects;
         public List<TimeWrapper> jumps;
@@ -5470,7 +5470,7 @@ namespace MiKu.NET {
             List<Rail> rails = GetCurrentRailListByDifficulty();
 
             GameObject targetToDelete;
-            TimeWrapper lookUpTime;
+            TimeWrapper lookUpTime = 0f;
 
             List<TimeWrapper> keys_tofilter = workingTrack.Keys.ToList();
             List<TimeWrapper> effects_tofilter, jumps_tofilter, crouchs_tofilter, lights_tofilter;

@@ -758,9 +758,9 @@ namespace MiKu.NET {
         public static int railCounter = 0;
 
         public int railId;
-        public TimeWrapper startTime;
-        public TimeWrapper endTime;
-        public TimeWrapper duration;
+        public TimeWrapper startTime = new TimeWrapper(0);
+        public TimeWrapper endTime = new TimeWrapper(0);
+        public TimeWrapper duration = new TimeWrapper(0);
 
         public EditorNote.NoteHandType noteType;
 
