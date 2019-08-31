@@ -1676,19 +1676,19 @@ namespace MiKu.NET {
             }
 
             // Save Action
-            if(Input.GetKeyDown(KeyCode.S)) {
+            if(Input.GetKeyDown(KeyCode.S)  && !PromtWindowOpen) {
                 if(isCTRLDown && !IsPlaying) {
                     DoSaveAction();
                 }
             }
 
-            if(Input.GetKeyDown(KeyCode.T)) {
+            if(Input.GetKeyDown(KeyCode.T) && !PromtWindowOpen) {
                 StepMode = GetNextStepMode(StepMode);
                 InternalBPM bpm = GetBPMForStepMode(StepMode);
                 DrawTrackXSLines(bpm, true);
             }
 
-            if(Input.GetKeyDown(KeyCode.L)) {
+            if(Input.GetKeyDown(KeyCode.L) && !PromtWindowOpen) {
                 PerformScrollStepBackwards(CurrentTime, ScrollMode.Objects);
             }
 
@@ -1981,7 +1981,7 @@ namespace MiKu.NET {
                 keyHoldTime = 0.0f;
             }
             // break/unbreak note of selected color at current position
-            if(Input.GetKeyDown(KeyCode.B)) {
+            if(Input.GetKeyDown(KeyCode.B) && !PromtWindowOpen) {
                 if(!isALTDown && !isCTRLDown && !isSHIFTDown) {
                     // detect a rail at the current time
                     // check that it has an edge note here
@@ -1991,10 +1991,10 @@ namespace MiKu.NET {
                 }
             }
 
-            if(Input.GetKeyDown(KeyCode.O)) {
+            if(Input.GetKeyDown(KeyCode.O) && !PromtWindowOpen) {
                 TogglePreviousScrollMode();
             }
-            if(Input.GetKeyDown(KeyCode.P)) {
+            if(Input.GetKeyDown(KeyCode.P) && !PromtWindowOpen) {
                 ToggleNextScrollMode();
             }
             // Copy and Paste actions
@@ -2145,11 +2145,11 @@ namespace MiKu.NET {
                 }
             }
 
-            if(Input.GetKeyDown(KeyCode.P)) {
+            if(Input.GetKeyDown(KeyCode.P) && !PromtWindowOpen) {
                 HighlightNotes();
             }
 
-            if(Input.GetKeyDown(KeyCode.N) && isPlaying) {
+            if(Input.GetKeyDown(KeyCode.N) && isPlaying && !PromtWindowOpen) {
                 AddPlaceholderToChart(SnapToStep(_currentPlayTime,StepSnapStrategy.Closest));
             }
 
@@ -3960,7 +3960,7 @@ namespace MiKu.NET {
                     Miku_JumpToTime.SetPickersValue(_currentTime.FloatValue);
                 } else if(currentPromt == PromtType.AddBookmarkAction) {
                     m_BookmarkWindowAnimator.Play("Panel In");
-                    m_BookmarkInput.text = string.Format("Bookmark-{0}", CurrentTime);
+                    m_BookmarkInput.text = string.Format("Bookmark-{0}", CurrentTime.FloatValue);
                     StartCoroutine(SetFieldFocus(m_BookmarkInput));
                 } else if(currentPromt == PromtType.JumpActionBookmark) {
                     m_BookmarkJumpWindowAnimator.Play("Panel In");
@@ -6902,7 +6902,7 @@ namespace MiKu.NET {
             if(workingBookmarks != null) {
                 EditorBookmark currentBookmark = workingBookmarks.Find(x => x.time >= CurrentTime 
                     && x.time <= CurrentTime );
-                if(currentBookmark.time >= 0 && currentBookmark.name != null) {
+                if(currentBookmark != null && currentBookmark.time >= 0 && currentBookmark.name != null) {
                     workingBookmarks.Remove(currentBookmark);
                     GameObject bookmarkGO = GameObject.Find(s_instance.GetBookmarkIdFormated(CurrentTime));
                     if(bookmarkGO != null) {
@@ -6999,7 +6999,7 @@ namespace MiKu.NET {
             if(workingElementHorz != null) {
                 EditorSlide currentSlide = workingElementHorz.Find(x => x.time == CurrentTime);
                 string CurrentTag = String.Empty;
-                if(currentSlide.initialized) {
+                if(currentSlide != null && currentSlide.initialized) {
                     CurrentTag = s_instance.GetSlideTagByType(currentSlide.slideType);
                     //if(!isOverwrite) {                                    
                     workingElementHorz.Remove(currentSlide);
@@ -8506,7 +8506,7 @@ namespace MiKu.NET {
             } else if(workingList is List<EditorSlide>) {
                 List<EditorSlide> endList = workingList as List<EditorSlide>;
                 EditorSlide index = endList.Find(x => x.time == ms && x.slideType == GetSlideTypeByTag(MoveTAG));
-                if(!index.initialized) {
+                if(index == null || !index.initialized) {
                     return;
                 }
                 endList.Remove(index);
