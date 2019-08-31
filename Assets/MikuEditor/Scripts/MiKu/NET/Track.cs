@@ -83,11 +83,11 @@ namespace MiKu.NET {
 
         public int CompareTo(object obj) {
             TimeWrapper objectAsTimeWrapper = obj as TimeWrapper;
-            if(this == objectAsTimeWrapper)
+            if(this.GetHashCode() == objectAsTimeWrapper.GetHashCode())
                 return 0;
-            if(this < objectAsTimeWrapper)
+            if(this.FloatValue < objectAsTimeWrapper.FloatValue)
                 return -1;
-            if(this > objectAsTimeWrapper)
+            if(this.FloatValue > objectAsTimeWrapper.FloatValue)
                 return 1;
             return -1;
         }
