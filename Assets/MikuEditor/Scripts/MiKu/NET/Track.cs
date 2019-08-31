@@ -1396,6 +1396,7 @@ namespace MiKu.NET {
         private void PerformScrollStepForwards(TimeWrapper time, ScrollMode scrollMode) {
             bool finishedMove = false;
             TimeWrapper nextTime = 0;
+            StorePreviousTime();
             switch(scrollMode) {
                 case ScrollMode.Steps:
                     //StepMode = CurrentStepMode.Primary;
@@ -1428,6 +1429,7 @@ namespace MiKu.NET {
         private void PerformScrollStepBackwards(TimeWrapper time, ScrollMode scrollMode) {
             bool finishedMove = false;
             TimeWrapper previousTime = 0;
+            StorePreviousTime();
             switch(scrollMode) {
                 case ScrollMode.Steps:
                     //StepMode = CurrentStepMode.Primary;
@@ -6320,7 +6322,7 @@ namespace MiKu.NET {
                         }
 
                         // we're being explicitly told that a new rail should be created at this point
-                        if(s_instance.isCTRLDown && !s_instance.isALTDown && s_instance.isSHIFTDown) {
+                        if(s_instance.isCTRLDown && !s_instance.isALTDown && !s_instance.isSHIFTDown) {
                             // potential problems:
                             // 1) need to break an existing rail
                             // 2) need to make sure extend doesn't happen
