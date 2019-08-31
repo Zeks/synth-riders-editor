@@ -210,8 +210,8 @@ public class GridManager : MonoBehaviour
     void HiglightLine(GameObject lineObject) {
         LineRenderer rend = lineObject.GetComponent<LineRenderer>();
         rend.sharedMaterial = gridLineHighligted;
-        rend.startWidth = 0.03f;
-        rend.endWidth = 0.03f;
+        rend.startWidth = 0.02f;
+        rend.endWidth = 0.02f;
     }
 
     public void HighlightLinesForPointList(List<Vector2> pointList) {

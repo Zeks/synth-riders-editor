@@ -246,9 +246,9 @@ namespace MiKu.NET {
         public List<int> segmentAxis;
     }
 
-    public struct SelectionArea {
-        public TimeWrapper startTime;
-        public TimeWrapper endTime;
+    public class SelectionArea {
+        public TimeWrapper startTime = -1f;
+        public TimeWrapper endTime = -1f;
     }
 
     public struct ClipBoardStruct {
@@ -914,6 +914,8 @@ namespace MiKu.NET {
         // Is the editor Current Playing the Track
         private bool isPlaying = false;
 
+        private bool showPlacementLines = true;
+
         // Current chart meta data
         private EditorChart currentChart;
 
@@ -1378,7 +1380,8 @@ namespace MiKu.NET {
             }
             DrawTrackXSLines(GetBPMForCurrentStepMode());
             gridManager.ResetLinesMaterial();
-            gridManager.HighlightLinesForPointList(FetchObjectPositionsAtCurrentTime(CurrentTime));
+            if(showPlacementLines)
+                gridManager.HighlightLinesForPointList(FetchObjectPositionsAtCurrentTime(CurrentTime));
         }
         private void PerformScrollStepBackwards(TimeWrapper time, ScrollMode scrollMode) {
             bool finishedMove = false;
@@ -1409,7 +1412,8 @@ namespace MiKu.NET {
             }
             DrawTrackXSLines(GetBPMForCurrentStepMode());
             gridManager.ResetLinesMaterial();
-            gridManager.HighlightLinesForPointList(FetchObjectPositionsAtCurrentTime(CurrentTime));
+            if(showPlacementLines)
+                gridManager.HighlightLinesForPointList(FetchObjectPositionsAtCurrentTime(CurrentTime));
         }
 
         private int GetNextScrollModeId(ScrollMode mode) {
@@ -1560,6 +1564,10 @@ namespace MiKu.NET {
                     DoClearNotePositions();
                 } else if(!IsPlaying) {
                     CloseSpecialSection();
+                    if(CurrentSelection.startTime.FloatValue < -0.5f) {
+                        CurrentSelection.startTime = CurrentTime;
+                        CurrentSelection.endTime = CurrentTime;
+                    }
                     DeleteNotesAtTheCurrentTime();
                 }
             }
@@ -1820,7 +1828,8 @@ namespace MiKu.NET {
                 if(cameraMoved) {
                     
                     gridManager.ResetLinesMaterial();
-                    gridManager.HighlightLinesForPointList(FetchObjectPositionsAtCurrentTime(CurrentTime));
+                    if(showPlacementLines)
+                        gridManager.HighlightLinesForPointList(FetchObjectPositionsAtCurrentTime(CurrentTime));
                 }
 
             } else if(Input.GetAxis("Mouse ScrollWheel") < 0f && !IsPlaying && !PromtWindowOpen) // backwards
@@ -1846,7 +1855,8 @@ namespace MiKu.NET {
                 }
                 if(cameraMoved) {
                     gridManager.ResetLinesMaterial();
-                    gridManager.HighlightLinesForPointList(FetchObjectPositionsAtCurrentTime(CurrentTime));
+                    if(showPlacementLines)
+                        gridManager.HighlightLinesForPointList(FetchObjectPositionsAtCurrentTime(CurrentTime));
                 }
             }
 
@@ -1862,7 +1872,8 @@ namespace MiKu.NET {
                 } else if(isALTDown) {
                     gridManager.ChangeGridSize();
                     gridManager.ResetLinesMaterial();
-                    gridManager.HighlightLinesForPointList(FetchObjectPositionsAtCurrentTime(CurrentTime));
+                    if(showPlacementLines)
+                        gridManager.HighlightLinesForPointList(FetchObjectPositionsAtCurrentTime(CurrentTime));
                 } else {
                     m_VolumeSlider.value += 0.1f;
                 }
@@ -1882,7 +1893,8 @@ namespace MiKu.NET {
                 } else if(isALTDown) {
                     gridManager.ChangeGridSize(false);
                     gridManager.ResetLinesMaterial();
-                    gridManager.HighlightLinesForPointList(FetchObjectPositionsAtCurrentTime(CurrentTime));
+                    if(showPlacementLines)
+                        gridManager.HighlightLinesForPointList(FetchObjectPositionsAtCurrentTime(CurrentTime));
                 } else {
                     m_VolumeSlider.value -= 0.1f;
                 }
@@ -3134,7 +3146,8 @@ namespace MiKu.NET {
             if(IsPlaying) {
                 lastHitNoteZ = -1;
                 Stop(returnToStart);
-                s_instance.gridManager.HighlightLinesForPointList(s_instance.FetchObjectPositionsAtCurrentTime(CurrentTime));
+                if(showPlacementLines)
+                    s_instance.gridManager.HighlightLinesForPointList(s_instance.FetchObjectPositionsAtCurrentTime(CurrentTime));
             } else Play();
         }
 
@@ -3214,6 +3227,18 @@ namespace MiKu.NET {
                 m_GridGuide.SetActive(!m_GridGuide.activeSelf);
                 gridWasOn = m_GridGuide.activeSelf;
             }
+        }
+
+        /// <summary>
+        /// Turn On/Off the placement lines on the grid
+        /// </summary>
+        public void TogglePlacementLines() {
+            if(isBusy) return;
+            showPlacementLines = !showPlacementLines;
+            if(showPlacementLines)
+                gridManager.HighlightLinesForPointList(FetchObjectPositionsAtCurrentTime(CurrentTime));
+            else
+                gridManager.ResetLinesMaterial();
         }
 
         /// <summary>
@@ -5376,8 +5401,8 @@ namespace MiKu.NET {
 
 
 
-
-            if(CurrentSelection.endTime > CurrentSelection.startTime) {
+            bool deletingRange = CurrentSelection.endTime > CurrentSelection.startTime;
+            if(deletingRange) {
                 keys_tofilter = keys_tofilter.Where(time => time >= CurrentSelection.startTime
                     && time <= CurrentSelection.endTime).ToList();
 
@@ -5412,7 +5437,14 @@ namespace MiKu.NET {
                 slides_tofilter = slides.Where(s => s.time == CurrentTime).ToList();
 
                 lights_tofilter = lights.Where(time => time == CurrentTime).ToList();
-                rails = RailHelper.GetListOfRailsInRange(rails, CurrentSelection.startTime, CurrentSelection.startTime, RailHelper.RailRangeBehaviour.Allow, RailHelper.RailFetchBehaviour.HasEdgesAtCurrentTime);
+                rails = RailHelper.GetListOfRailsInRange(rails, CurrentSelection.startTime, CurrentSelection.startTime, RailHelper.RailRangeBehaviour.Allow, RailHelper.RailFetchBehaviour.HasPointsAtCurrentTime);
+            }
+
+            foreach(Rail rail in rails.OrEmptyIfNull()) {
+                var notes = rail.GetNotesForRange(CurrentSelection.startTime, CurrentSelection.endTime);
+                foreach(RailNoteWrapper note in notes) {
+                    rail.RemoveNote(note.thisNote.noteId);
+                }
             }
 
             for(int j = 0; j < keys_tofilter.Count; ++j) {
@@ -5504,9 +5536,7 @@ namespace MiKu.NET {
                 }
             }
 
-            foreach(Rail rail in rails.OrEmptyIfNull()) {
-                RailHelper.DestroyRail(rail);
-            }
+            
 
             // LogMessage(keys_tofilter.Count+" Keys deleted");
             keys_tofilter.Clear();
@@ -5516,7 +5546,11 @@ namespace MiKu.NET {
             slides_tofilter.Clear();
             lights_tofilter.Clear();
             ClearSelectionMarker();
+            CurrentSelection.startTime= -1f;
+            CurrentSelection.endTime= -1f;
             gridManager.ResetLinesMaterial();
+            if(showPlacementLines)
+                gridManager.HighlightLinesForPointList(FetchObjectPositionsAtCurrentTime(CurrentTime));
             isBusy = false;
         }
 
@@ -6483,7 +6517,8 @@ namespace MiKu.NET {
                 }
             } finally {
                 s_instance.gridManager.ResetLinesMaterial();
-                s_instance.gridManager.HighlightLinesForPointList(s_instance.FetchObjectPositionsAtCurrentTime(CurrentTime));
+                if(Track.s_instance.showPlacementLines)
+                    s_instance.gridManager.HighlightLinesForPointList(s_instance.FetchObjectPositionsAtCurrentTime(CurrentTime));
             }
         }
 
@@ -8462,10 +8497,15 @@ namespace MiKu.NET {
         }
 
         private void ToggleSelectionArea(bool isOFF = false) {
+            if(isOFF)
+                CurrentSelection.endTime = CurrentTime;
+            else
+                CurrentSelection.startTime = CurrentTime;
+
             if(isOFF) {
                 ToggleWorkingStateAlertOff();
             } else {
-                CurrentSelection.startTime = CurrentTime;
+                
                 ToggleWorkingStateAlertOn(StringVault.Info_UserOnSelectionMode);
             }
 

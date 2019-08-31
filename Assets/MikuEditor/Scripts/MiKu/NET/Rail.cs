@@ -531,6 +531,15 @@ namespace MiKu.NET {
             return notesByTime[first];
         }
 
+
+        public List<RailNoteWrapper> GetNotesForRange(TimeWrapper rangeStart, TimeWrapper rangeEnd) {
+            List<RailNoteWrapper> notes = notesByTime.Values.ToList();
+            List<RailNoteWrapper> list = notes.Where(x => x.thisNote.TimePoint >= rangeStart && x.thisNote.TimePoint <= rangeEnd).ToList();
+            list.OrderBy(x => x.thisNote.TimePoint);
+            return list;
+        }
+
+
         public Rail ConvertTheTailIntoNewRail(RailNoteWrapper note, bool removeInitialNote = true) {
             if(note == null)
                 return null;
