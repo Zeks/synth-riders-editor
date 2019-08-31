@@ -41,8 +41,6 @@ namespace MiKu.NET {
             {
                 Hash = (int)(Math.Round(value/Divisor, 0, MidpointRounding.AwayFromZero));
                 _pureHash=Hash;
-                if(Hash%2 != 0)
-                    Hash+=1;
                 _value = value;
             }
         }
@@ -105,7 +103,7 @@ namespace MiKu.NET {
         }
 
         public bool Equals(TimeWrapper f1, TimeWrapper f2) {
-            return GetPreciseInt(f1) == GetPreciseInt(f2);
+            return Math.Abs(GetPreciseInt(f1) - GetPreciseInt(f2)) <= 2;
         }
 
         public int GetHashCode(TimeWrapper f) {
@@ -115,11 +113,11 @@ namespace MiKu.NET {
             return GetPreciseInt(this).GetHashCode();
         }
         public static bool EqualsTo(TimeWrapper f1, TimeWrapper f2) {
-            //int value1 = GetPreciseInt(f1);
-            //int value2 = GetPreciseInt(f2);
+            int value1 = GetPreciseInt(f1);
+            int value2 = GetPreciseInt(f2);
             //Trace.WriteLine("Comparing times: " + f1.FloatValue + " and " + f2.FloatValue);
             //Trace.WriteLine("Comparing integers: " + value1 + " and " + value2);
-            return GetPreciseInt(f1) == GetPreciseInt(f2);
+            return Math.Abs(value1 - value2) <= 2;
         }
         public static bool operator ==(TimeWrapper a, TimeWrapper b) {
             if(System.Object.ReferenceEquals(a, null) && System.Object.ReferenceEquals(b, null))
@@ -1200,7 +1198,7 @@ namespace MiKu.NET {
 
         void OnEnable() {
             try {
-                UpdateDisplayTime(_currentTime);
+                UpdateDisplayTime(CurrentTime);
                 m_MetaNotesColider.SetActive(false);
 
                 gridWasOn = m_GridGuide.activeSelf;
@@ -3330,7 +3328,7 @@ namespace MiKu.NET {
 
                 CurrentClipBoard.rails = RailHelper.GetCopyOfRailsInRange(rails, CurrentSelection.startTime, CurrentSelection.endTime, RailHelper.RailRangeBehaviour.Skip);
             } else {
-                RefreshCurrentTime();
+                //RefreshCurrentTime();
 
                 keys_tofilter = keys_tofilter.Where(time => time == CurrentTime).ToList();
 
@@ -4142,15 +4140,12 @@ namespace MiKu.NET {
             int multiplier = 64/bpm.IncreaseFactor;
             float realStepsFloat = _currentTime.FloatValue/(K * bpm.Value);
             int realStepsInt = (int)realStepsFloat;
-            float previousPoint = realStepsFloat*K*bpm.Value;
-            float nextPoint = (realStepsFloat+1)*K*bpm.Value;
-            float timeDiff = nextPoint - _currentTime.FloatValue;
             float fraction = Math.Abs((realStepsInt+1)*K*bpm.Value - _currentTime.FloatValue)/(K*bpm.Value) ;
             if(fraction > 0.1)
-                _currentTime.FloatValue=(realStepsInt+1)*K*bpm.Value;
+                CurrentTime=(realStepsInt+1)*K*bpm.Value;
             else
-                _currentTime.FloatValue=(realStepsInt+2)*K*bpm.Value;
-            _currentTime.FloatValue = Mathf.Min(_currentTime.FloatValue, (TM - 1) * K);
+                CurrentTime=(realStepsInt+2)*K*bpm.Value;
+            CurrentTime = Mathf.Min(_currentTime.FloatValue, (TM - 1) * K);
             return MStoUnit(_currentTime.FloatValue);
         }
 
@@ -4165,16 +4160,13 @@ namespace MiKu.NET {
             int multiplier = 64/bpm.IncreaseFactor;
             float realStepsFloat = _currentTime.FloatValue/(K * bpm.Value);
             int realStepsInt = (int)realStepsFloat;
-            float previousPoint = realStepsFloat*K*bpm.Value;
-            float timeDiff = _currentTime.FloatValue-previousPoint;
             float fraction = Math.Abs(realStepsInt*K*bpm.Value-_currentTime.FloatValue)/(K*bpm.Value);
             bool diffLessThan0 = (realStepsInt*K*bpm.Value-_currentTime.FloatValue) < 0;
             if(diffLessThan0 && fraction > 0.1)
-                _currentTime.FloatValue=(realStepsInt)*K*bpm.Value;
-            else 
-                _currentTime.FloatValue=(realStepsInt-1)*K*bpm.Value;
-            // if(Math.Abs(realStepsFloat - realStepsInt)/(K*bpm.Value) < 0.1)
-            _currentTime.FloatValue = Mathf.Max(_currentTime.FloatValue, 0);
+                CurrentTime=(realStepsInt)*K*bpm.Value;
+            else
+                CurrentTime=(realStepsInt-1)*K*bpm.Value;
+            CurrentTime = Mathf.Max(_currentTime.FloatValue, 0);
             return MStoUnit(_currentTime.FloatValue);
         }
 
@@ -4359,13 +4351,13 @@ namespace MiKu.NET {
                 if(playStopMode == PlayStopMode.StepBack) {
                     float _CK = (K * GetBPMForCurrentStepMode().Value);
                     if((_currentPlayTime.FloatValue % _CK) / _CK >= 0.5f) {
-                        _currentTime = GetCloseStepMeasure(_currentPlayTime);
+                        CurrentTime = GetCloseStepMeasure(_currentPlayTime);
                     } else {
-                        _currentTime = GetCloseStepMeasure(_currentPlayTime, false);
+                        CurrentTime = GetCloseStepMeasure(_currentPlayTime, false);
                     }
                 }
                 else
-                    _currentTime = _currentPlayTime;
+                    CurrentTime = _currentPlayTime;
             }
             
             _currentPlayTime = 0;
@@ -5409,7 +5401,7 @@ namespace MiKu.NET {
                 rails = RailHelper.GetListOfRailsInRange(rails, CurrentSelection.startTime, CurrentSelection.endTime, RailHelper.RailRangeBehaviour.Allow);
 
             } else {
-                RefreshCurrentTime();
+                //RefreshCurrentTime();
 
                 keys_tofilter = keys_tofilter.Where(time => time == CurrentTime).ToList();
 
@@ -6735,7 +6727,7 @@ namespace MiKu.NET {
         /// </summary>
         public static void JumpToTime(TimeWrapper time) {
             time = Mathf.Min(time.FloatValue, s_instance.TrackDuration * MS);
-            s_instance._currentTime = s_instance.GetCloseStepMeasure(time, false);
+            Track.CurrentTime = s_instance.GetCloseStepMeasure(time, false);
             int slicesPerStep = new TimeWrapper(s_instance.K * s_instance.GetBPMForCurrentStepMode().Value).Hash;
             if(s_instance._currentTime.Hash%slicesPerStep != 0) {
                 if(s_instance._currentTime.Hash > s_instance._currentTime.Hash%slicesPerStep)

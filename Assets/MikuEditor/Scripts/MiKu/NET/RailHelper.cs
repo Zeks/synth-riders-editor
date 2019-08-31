@@ -581,9 +581,11 @@ namespace MiKu.NET {
         }
 
         public static List<Rail> GetListOfRailsInRange(List<Rail> rails, TimeWrapper rangeStart, TimeWrapper rangeEnd, RailRangeBehaviour rangeFetchType, RailFetchBehaviour pointFetchType = RailFetchBehaviour.All) {
+            Trace.WriteLine("Trying to find a rail with start time: " + rangeStart.FloatValue + "end time: " + rangeEnd.FloatValue);
             List<Rail> fetchedRails = new List<Rail>();
             bool pointFetch = rangeStart == rangeEnd;
             foreach(Rail rail in rails.OrEmptyIfNull()) {
+                Trace.WriteLine("Trying rail: " + rail.railId + "start time: " + rail.startTime.FloatValue + "end time: " + rail.endTime.FloatValue);
                 if(rail.startTime >= rangeStart && rail.endTime <= rangeEnd) {
                     if(pointFetch && pointFetchType == RailFetchBehaviour.HasPointsAtCurrentTime && !rail.HasNoteAtTime(rangeStart))
                         continue;
