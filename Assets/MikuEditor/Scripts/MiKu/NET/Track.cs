@@ -1266,6 +1266,8 @@ namespace MiKu.NET {
                 CurrentClipBoard.slides = new List<EditorSlide>();
                 CurrentClipBoard.lights = new List<TimeWrapper>();
                 CurrentClipBoard.rails = new List<Rail>();
+                CurrentClipBoard.startTime = new TimeWrapper(0);
+                CurrentClipBoard.lenght = new TimeWrapper(0);
 
                 if(m_selectionMarker != null) {
                     selectionStartPos = m_selectionMarker.GetPosition(0);
@@ -1525,6 +1527,7 @@ namespace MiKu.NET {
                 if(!PromtWindowOpen && !isPlaying) {
                     isSHIFTDown = true;
                     SetSelectionStart(CurrentTime);
+                    SetSelectionEnd(CurrentTime);
                     UpdateSelectionMarker();
                     //ToggleSelectionArea();
                 }
@@ -2900,7 +2903,7 @@ namespace MiKu.NET {
             float increment = (isIncrease) ? incrementFactor : -incrementFactor;
             PlaySpeed += increment;
 
-            PlaySpeed = Mathf.Clamp(PlaySpeed, 0.5f, 2.5f);
+            PlaySpeed = Mathf.Clamp(PlaySpeed, 0.25f, 2.5f);
             UpdatePlaybackSpeed();
             UpdateDisplayPlaybackSpeed();
         }
