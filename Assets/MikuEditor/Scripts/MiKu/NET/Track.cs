@@ -253,6 +253,16 @@ namespace MiKu.NET {
     public class SelectionArea {
         public TimeWrapper startTime = -1f;
         public TimeWrapper endTime = -1f;
+        public void ResetSelection() {
+            startTime = -1;
+            endTime = -1;
+        }
+        public void ResetSelectionIfPoint() {
+            if(startTime == endTime) { 
+                startTime = -1;
+                endTime = -1;
+            }
+        }
     }
 
     public struct ClipBoardStruct {
@@ -1583,6 +1593,9 @@ namespace MiKu.NET {
                     CloseSpecialSection();
                     ReturnToStartTime();
                     DrawTrackXSLines(GetBPMForCurrentStepMode());
+                    gridManager.ResetLinesMaterial();
+                    if(showPlacementLines)
+                        gridManager.HighlightLinesForPointList(FetchObjectPositionsAtCurrentTime(CurrentTime));
                 }
             }
 
@@ -1592,6 +1605,9 @@ namespace MiKu.NET {
                     CloseSpecialSection();
                     GoToEndTime();
                     DrawTrackXSLines(GetBPMForCurrentStepMode());
+                    gridManager.ResetLinesMaterial();
+                    if(showPlacementLines)
+                        gridManager.HighlightLinesForPointList(FetchObjectPositionsAtCurrentTime(CurrentTime));
                 }
             }
 
@@ -1811,11 +1827,13 @@ namespace MiKu.NET {
             if(Input.GetAxis("Mouse ScrollWheel") > 0f && !IsPlaying && !PromtWindowOpen) // forward
             {
                 bool cameraMoved = false;
+                bool resetSelectionIfNeeded = true;
                 if(!isCTRLDown && !isALTDown || currentScrollMode != ScrollMode.Steps) {
                     PerformScrollStepForwards(CurrentTime, currentScrollMode);
                     return;
                 } else if(isCTRLDown && !isALTDown) {
                     ChangeStepMeasure(true, bpmPrimary);
+                    resetSelectionIfNeeded = false;
                 }
                 if(isALTDown) {
                     cameraMoved = true;
@@ -1835,14 +1853,19 @@ namespace MiKu.NET {
                     if(showPlacementLines)
                         gridManager.HighlightLinesForPointList(FetchObjectPositionsAtCurrentTime(CurrentTime));
                 }
+                if(resetSelectionIfNeeded) {
+                    CurrentSelection.ResetSelectionIfPoint();
+                }
 
             } else if(Input.GetAxis("Mouse ScrollWheel") < 0f && !IsPlaying && !PromtWindowOpen) // backwards
               {
                 bool cameraMoved = false;
+                bool resetSelectionIfNeeded = true;
                 if(!isCTRLDown && !isALTDown || currentScrollMode != ScrollMode.Steps) {
                     PerformScrollStepBackwards(CurrentTime, currentScrollMode);
                     return;
                 } else if(isCTRLDown && !isALTDown) {
+                    resetSelectionIfNeeded = false;
                     ChangeStepMeasure(false, bpmPrimary);
                 }
                 if(isALTDown) {
@@ -1861,6 +1884,9 @@ namespace MiKu.NET {
                     gridManager.ResetLinesMaterial();
                     if(showPlacementLines)
                         gridManager.HighlightLinesForPointList(FetchObjectPositionsAtCurrentTime(CurrentTime));
+                }
+                if(resetSelectionIfNeeded) {
+                    CurrentSelection.ResetSelectionIfPoint();
                 }
             }
 
@@ -3010,6 +3036,9 @@ namespace MiKu.NET {
                     break;
                 case PromtType.JumpActionTime:
                     Miku_JumpToTime.GoToTime();
+                    gridManager.ResetLinesMaterial();
+                    if(showPlacementLines)
+                        gridManager.HighlightLinesForPointList(FetchObjectPositionsAtCurrentTime(CurrentTime));
                     break;
                 case PromtType.EditActionBPM:
                     if(m_BPMInput.text != string.Empty) {
