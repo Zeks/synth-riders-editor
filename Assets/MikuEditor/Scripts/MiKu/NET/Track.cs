@@ -156,11 +156,15 @@ namespace MiKu.NET {
         public static bool operator <(TimeWrapper a, TimeWrapper b) {
             if(System.Object.ReferenceEquals(a, null) || System.Object.ReferenceEquals(b, null))
                 return false;
+            if(a == b)
+                return false;
             return a.FloatValue < b.FloatValue;
         }
 
         public static bool operator >(TimeWrapper a, TimeWrapper b) {
             if(System.Object.ReferenceEquals(a, null) || System.Object.ReferenceEquals(b, null))
+                return false;
+            if(a == b)
                 return false;
             return a.FloatValue > b.FloatValue;
         }
