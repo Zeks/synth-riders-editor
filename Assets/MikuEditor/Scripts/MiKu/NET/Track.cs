@@ -475,7 +475,7 @@ namespace MiKu.NET {
 
         private const string SLIDE_LEFT_DIAG_TAG = "SlideLeftDiag";
 
-        public const float MIN_TIME_OVERLAY_CHECK = 5;
+        //public const float MIN_TIME_OVERLAY_CHECK = 5;
 
         public const float MIN_NOTE_START = 2;
 
@@ -5207,14 +5207,13 @@ namespace MiKu.NET {
         }
 
         void RefreshCurrentTime() {
-            TimeWrapper timeRangeDuplicatesStart = CurrentTime.FloatValue - MIN_TIME_OVERLAY_CHECK;
-            TimeWrapper timeRangeDuplicatesEnd = CurrentTime.FloatValue + MIN_TIME_OVERLAY_CHECK;
+            
             Dictionary<TimeWrapper, List<EditorNote>> workingTrack = s_instance.GetCurrentTrackDifficulty();
 
             if(workingTrack.Count > 0) {
                 List<TimeWrapper> keys_tofilter = workingTrack.Keys.ToList();
-                keys_tofilter = keys_tofilter.Where(time => time >= timeRangeDuplicatesStart
-                    && time <= timeRangeDuplicatesEnd).ToList();
+                keys_tofilter = keys_tofilter.Where(time => time >= CurrentTime
+                    && time <= CurrentTime).ToList();
 
                 if(keys_tofilter.Count > 0) {
                     StorePreviousTime();
@@ -5227,8 +5226,8 @@ namespace MiKu.NET {
             List<TimeWrapper> workingEffects = GetCurrentEffectDifficulty();
             if(workingEffects.Count > 0) {
                 List<TimeWrapper> effects_tofilter;
-                effects_tofilter = workingEffects.Where(time => time >= timeRangeDuplicatesStart
-                        && time <= timeRangeDuplicatesEnd).ToList();
+                effects_tofilter = workingEffects.Where(time => time >= CurrentTime
+                        && time <= CurrentTime).ToList();
 
                 if(effects_tofilter.Count > 0) {
                     StorePreviousTime();
@@ -5241,8 +5240,8 @@ namespace MiKu.NET {
             List<TimeWrapper> jumps = GetCurrentMovementListByDifficulty(true);
             if(jumps.Count > 0) {
                 List<TimeWrapper> jumps_tofilter;
-                jumps_tofilter = jumps.Where(time => time >= timeRangeDuplicatesStart
-                        && time <= timeRangeDuplicatesEnd).ToList();
+                jumps_tofilter = jumps.Where(time => time >= CurrentTime
+                        && time <= CurrentTime).ToList();
 
                 if(jumps_tofilter.Count > 0) {
                     StorePreviousTime();
@@ -5254,8 +5253,8 @@ namespace MiKu.NET {
             List<TimeWrapper> crouchs = GetCurrentMovementListByDifficulty(false);
             if(crouchs.Count > 0) {
                 List<TimeWrapper> crouchs_tofilter;
-                crouchs_tofilter = crouchs.Where(time => time >= (timeRangeDuplicatesStart.FloatValue + 3)
-                        && time <= (timeRangeDuplicatesEnd.FloatValue + 3)).ToList();
+                crouchs_tofilter = crouchs.Where(time => time >= (CurrentTime.FloatValue + 3)
+                        && time <= (CurrentTime.FloatValue + 3)).ToList();
 
                 if(crouchs_tofilter.Count > 0) {
                     StorePreviousTime();
@@ -5268,8 +5267,8 @@ namespace MiKu.NET {
             List<EditorSlide> slides = GetCurrentMovementListByDifficulty();
             if(slides.Count > 0) {
                 List<EditorSlide> slides_tofilter;
-                slides_tofilter = slides.Where(s => s.time >= (timeRangeDuplicatesStart.FloatValue + 3)
-                        && s.time <= (timeRangeDuplicatesEnd.FloatValue + 3)).ToList();
+                slides_tofilter = slides.Where(s => s.time >= (CurrentTime.FloatValue + 3)
+                        && s.time <= (CurrentTime.FloatValue + 3)).ToList();
 
                 if(slides_tofilter.Count > 0) {
                     StorePreviousTime();
@@ -5317,11 +5316,10 @@ namespace MiKu.NET {
 
                 Dictionary<TimeWrapper, List<EditorNote>> workingTrack = s_instance.GetCurrentTrackDifficulty();
 
-                TimeWrapper timeRangeDuplicatesStart = CurrentTime.FloatValue - MIN_TIME_OVERLAY_CHECK;
-                TimeWrapper timeRangeDuplicatesEnd = CurrentTime.FloatValue + MIN_TIME_OVERLAY_CHECK;
+                
                 List<TimeWrapper> keys_tofilter = workingTrack.Keys.ToList();
-                keys_tofilter = keys_tofilter.Where(time => time >= timeRangeDuplicatesStart
-                            && time <= timeRangeDuplicatesEnd).ToList();
+                keys_tofilter = keys_tofilter.Where(time => time >= CurrentTime
+                            && time <= CurrentTime).ToList();
 
                 if(keys_tofilter.Count > 0) {
                     int totalFilteredTime = keys_tofilter.Count;
@@ -5518,6 +5516,7 @@ namespace MiKu.NET {
             slides_tofilter.Clear();
             lights_tofilter.Clear();
             ClearSelectionMarker();
+            gridManager.ResetLinesMaterial();
             isBusy = false;
         }
 
@@ -6024,11 +6023,11 @@ namespace MiKu.NET {
                     // We need to check the track difficulty selected
                     if(workingTrack != null) {
                         // ball section, rail notes need to be handled differently
-                        float timeRangeDuplicatesStart = CurrentTime.FloatValue - MIN_TIME_OVERLAY_CHECK;
-                        float timeRangeDuplicatesEnd = CurrentTime.FloatValue + MIN_TIME_OVERLAY_CHECK;
+                        //float timeRangeDuplicatesStart = CurrentTime.FloatValue - MIN_TIME_OVERLAY_CHECK;
+                        //float timeRangeDuplicatesEnd = CurrentTime.FloatValue + MIN_TIME_OVERLAY_CHECK;
                         List<TimeWrapper> keys_tofilter = workingTrack.Keys.ToList();
-                        keys_tofilter = keys_tofilter.Where(time => time >= timeRangeDuplicatesStart
-                                && time <= timeRangeDuplicatesEnd).ToList();
+                        keys_tofilter = keys_tofilter.Where(time => time >= CurrentTime
+                                && time <= CurrentTime).ToList();
                         bool hasNotesWithinDeltaTime = keys_tofilter.Count != 0;
 
                         if(s_instance.isALTDown) {
@@ -6162,8 +6161,6 @@ namespace MiKu.NET {
                     // check to see if there's an opposing rail note here
                     // if there is adjust the time to match
                     // if there is not just move the current rail note and reinstantiate the rail
-                    TimeWrapper timeRangeDuplicatesStart = CurrentTime - MIN_TIME_OVERLAY_CHECK;
-                    TimeWrapper timeRangeDuplicatesEnd = CurrentTime + MIN_TIME_OVERLAY_CHECK;
                     List<Rail> rails = s_instance.GetCurrentRailListByDifficulty();
                     rails.Sort((x, y) => x.startTime.CompareTo(y.startTime));
 
@@ -6183,12 +6180,12 @@ namespace MiKu.NET {
                         if(testedRail.noteType != s_instance.selectedNoteType)
                             continue;
 
-                        if(testedRail.startTime > timeRangeDuplicatesEnd) {
+                        if(testedRail.startTime > CurrentTime) {
                             Trace.WriteLine("DISCARDING Rail: " + testedRail.railId + " starts at: " + testedRail.startTime + " which is too late");
                             continue;
                         }
 
-                        if(testedRail.endTime < timeRangeDuplicatesStart) {
+                        if(testedRail.endTime < CurrentTime) {
                             Trace.WriteLine("DISCARDING Rail: " + testedRail.railId + " ends at: " + testedRail.endTime + " which is too early");
                             continue;
                         }
@@ -6800,8 +6797,8 @@ namespace MiKu.NET {
             // We need to check the effect difficulty selected
             List<EditorBookmark> workingBookmarks = CurrentChart.Bookmarks.BookmarksList;
             if(workingBookmarks != null) {
-                EditorBookmark currentBookmark = workingBookmarks.Find(x => x.time >= CurrentTime - MIN_TIME_OVERLAY_CHECK
-                    && x.time <= CurrentTime + MIN_TIME_OVERLAY_CHECK);
+                EditorBookmark currentBookmark = workingBookmarks.Find(x => x.time >= CurrentTime 
+                    && x.time <= CurrentTime );
                 if(currentBookmark.time >= 0 && currentBookmark.name != null) {
                     workingBookmarks.Remove(currentBookmark);
                     GameObject bookmarkGO = GameObject.Find(s_instance.GetBookmarkIdFormated(CurrentTime));

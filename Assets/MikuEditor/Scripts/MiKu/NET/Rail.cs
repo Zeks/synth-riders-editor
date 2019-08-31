@@ -83,14 +83,11 @@ namespace MiKu.NET {
         public bool HasNoteAtTime(TimeWrapper time) {
             Trace.WriteLine("Detecting if there is a note at: " + time  + "Rail spans from:"  + startTime + " to " + endTime);
 
-            TimeWrapper timeRangeDuplicatesStart = time.FloatValue - Track.MIN_TIME_OVERLAY_CHECK;
-            TimeWrapper timeRangeDuplicatesEnd = time.FloatValue + Track.MIN_TIME_OVERLAY_CHECK;
-
             List<TimeWrapper> times = notesByTime.Keys.ToList();
             Trace.WriteLine("Rail already has notes at: " + times);
 
-            times = times.Where(testedTIme => testedTIme >= timeRangeDuplicatesStart
-                    && testedTIme <= timeRangeDuplicatesEnd).ToList();
+            times = times.Where(testedTIme => testedTIme >= time
+                    && testedTIme <= time).ToList();
 
             Trace.WriteLine("Returning note count of: " + times.Count);
             return times.Count > 0;
@@ -99,14 +96,11 @@ namespace MiKu.NET {
         public bool HasEdgeNoteAtTime(TimeWrapper time) {
             Trace.WriteLine("Detecting if there is an edge note at: " + time  + "Rail spans from:"  + startTime + " to " + endTime);
 
-            TimeWrapper timeRangeDuplicatesStart = time - Track.MIN_TIME_OVERLAY_CHECK;
-            TimeWrapper timeRangeDuplicatesEnd = time + Track.MIN_TIME_OVERLAY_CHECK;
-
             List<TimeWrapper> times = notesByTime.Keys.ToList();
             Trace.WriteLine("Rail already has notes at: " + times);
 
-            times = times.Where(testedTIme => testedTIme >= timeRangeDuplicatesStart
-                    && testedTIme <= timeRangeDuplicatesEnd).ToList();
+            times = times.Where(testedTIme => testedTIme >= time
+                    && testedTIme <= time).ToList();
 
             Trace.WriteLine("Returning note count of: " + times.Count);
             return times.Count > 0 && notesByTime[times[0]] == Leader || notesByTime[times[0]] == GetLastNote();
@@ -115,14 +109,12 @@ namespace MiKu.NET {
         public EditorNote GetNoteAtPosition(TimeWrapper time) {
             Trace.WriteLine("Asked for note at time: " + time);
             // need to get the closest forward match
-            TimeWrapper timeRangeDuplicatesStart = time.FloatValue - Track.MIN_TIME_OVERLAY_CHECK;
-            TimeWrapper timeRangeDuplicatesEnd = time.FloatValue + Track.MIN_TIME_OVERLAY_CHECK;
 
             List<TimeWrapper> times = notesByTime.Keys.ToList();
             times.Sort();
 
-            times = times.Where(testedTIme => testedTIme >= timeRangeDuplicatesStart
-                    && testedTIme <= timeRangeDuplicatesEnd).ToList();
+            times = times.Where(testedTIme => testedTIme >= time
+                    && testedTIme <= time).ToList();
             times.Sort();
 
             Trace.WriteLine("Rail has notes at: " + times);
@@ -140,14 +132,12 @@ namespace MiKu.NET {
         public void MoveNoteAtTimeToPosition(TimeWrapper time, float x, float y) {
             Trace.WriteLine("Asked to move note at: " + time + " to x: " + x + " y:" + y);
             // need to get the closest forward match
-            TimeWrapper timeRangeDuplicatesStart = time - Track.MIN_TIME_OVERLAY_CHECK;
-            TimeWrapper timeRangeDuplicatesEnd = time + Track.MIN_TIME_OVERLAY_CHECK;
-
+            
             List<TimeWrapper> times = notesByTime.Keys.ToList();
             times.Sort();
 
-            times = times.Where(testedTIme => testedTIme >= timeRangeDuplicatesStart
-                    && testedTIme <= timeRangeDuplicatesEnd).ToList();
+            times = times.Where(testedTIme => testedTIme >= time
+                    && testedTIme <= time).ToList();
             times.Sort();
 
             Trace.WriteLine("Rail has notes at: " + times);

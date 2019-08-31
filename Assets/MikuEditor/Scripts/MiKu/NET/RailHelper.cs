@@ -376,8 +376,7 @@ namespace MiKu.NET {
         }
 
         public static bool CanPlaceSelectedRailTypeHere(TimeWrapper time, Vector2 clickedPoint, EditorNote.NoteHandType handType) {
-            TimeWrapper timeRangeDuplicatesStart = time - Track.MIN_TIME_OVERLAY_CHECK;
-            TimeWrapper timeRangeDuplicatesEnd = time + Track.MIN_TIME_OVERLAY_CHECK;
+            
             List<Rail> rails = Track.s_instance.GetCurrentRailListByDifficulty();
 
             bool isInvalidPlacementByRail = false;
@@ -387,12 +386,12 @@ namespace MiKu.NET {
                 if(testedRail.scheduleForDeletion)
                     continue;
 
-                if(testedRail.startTime > timeRangeDuplicatesEnd) {
+                if(testedRail.startTime > time) {
                     Trace.WriteLine("DISCARDING Rail: " + testedRail.railId + " starts at: " + testedRail.startTime + " which is too late");
                     continue;
                 }
 
-                if(testedRail.endTime < timeRangeDuplicatesStart) {
+                if(testedRail.endTime < time) {
                     Trace.WriteLine("DISCARDING Rail: " + testedRail.railId + " ends at: " + testedRail.endTime + " which is too early");
                     continue;
                 }
