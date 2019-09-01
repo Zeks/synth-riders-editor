@@ -762,7 +762,7 @@ namespace MiKu.NET {
         private Vector3 spectrumDefaultPos;
         private int MiddleButtonSelectorType = 0;
         private bool canAutoSave = true;
-        private bool doScrollSound = true;
+        private int doScrollSound = 0;
 
         private bool isOnMirrorMode = false;
         private bool xAxisInverse = true;
@@ -964,8 +964,19 @@ namespace MiKu.NET {
 
             if( vertAxis < 0 && keyHoldTime > nextKeyHold && !PromtWindowOpen && !isCTRLDown && !isALTDown) {
                 nextKeyHold = keyHoldTime + keyHoldDelta;
-                MoveCamera(true, GetPrevStepPoint());
-                DrawTrackXSLines();
+
+                if(!isPlaying) {
+                    MoveCamera(true, GetPrevStepPoint());
+                    DrawTrackXSLines();
+                    PlayStepPreview();
+                } else {
+                    TogglePlay();                    
+                    MoveCamera(true, GetPrevStepPoint());
+                    DrawTrackXSLines();
+                    TogglePlay();
+                }
+                
+
                 nextKeyHold = nextKeyHold - keyHoldTime;
                 keyHoldTime = 0.0f;
             }
@@ -973,8 +984,18 @@ namespace MiKu.NET {
             // Input.GetKey(KeyCode.UpArrow)
             if( vertAxis > 0 && keyHoldTime > nextKeyHold && !PromtWindowOpen && !isCTRLDown && !isALTDown) {				
                 nextKeyHold = keyHoldTime + keyHoldDelta;
-                MoveCamera(true, GetNextStepPoint());
-                DrawTrackXSLines();
+
+                if(!isPlaying) {
+                    MoveCamera(true, GetNextStepPoint());
+                    DrawTrackXSLines();
+                    PlayStepPreview();
+                } else {
+                    TogglePlay();
+                    MoveCamera(true, GetNextStepPoint());
+                    DrawTrackXSLines();
+                    TogglePlay();
+                }
+                
                 nextKeyHold = nextKeyHold - keyHoldTime;
                 keyHoldTime = 0.0f;				
             }
@@ -2921,12 +2942,22 @@ namespace MiKu.NET {
         /// Toggle the Scroll sound On/Off
         ///</summary>
         public void ToggleScrollSound() {
-            doScrollSound = !doScrollSound;
+            doScrollSound++;
+            if(doScrollSound >= 3) {
+                doScrollSound = 0;
+            } 
+
+            string audioType = "Audio Preview";
+            if(doScrollSound == 1) {
+                audioType = "TICK";
+            } else if(doScrollSound == 2) {
+                audioType = "Off";
+            }
 
             Miku_DialogManager.ShowDialog(Miku_DialogManager.DialogType.Info,
                 string.Format(
                     StringVault.Info_ScrollSound,
-                    (doScrollSound) ? "On" : "Off"
+                    audioType
                 )
             );
         }
@@ -3638,10 +3669,6 @@ namespace MiKu.NET {
             if(manual) {
                 zDest = moveTo;
                 UpdateDisplayTime(_currentTime);
-
-                if(_currentTime > 0 && doScrollSound) {
-                    PlaySFX(m_StepSound);
-                }
                 currentHighlightCheck = 0;
             } else {
                 //_currentPlayTime += Time.unscaledDeltaTime * MS;
@@ -6353,6 +6380,20 @@ namespace MiKu.NET {
         }
 
         /// <summary>
+        /// Play the preview of the audioc clip on step while the song is paused
+        /// </summary>
+        void PlayStepPreview() {
+            if(doScrollSound == 1) {
+                PlaySFX(m_StepSound);
+            } else if(doScrollSound == 0) {
+                currentTimeSecs = (StartOffset > 0) ? Mathf.Max(0, (_currentTime / MS) - (StartOffset / MS) ) : (_currentTime / MS);
+                previewAud.volume = audioSource.volume;
+                previewAud.time = currentTimeSecs;
+                previewAud.Play();
+            }            
+        }
+
+        /// <summary>
         /// Play the passed audioclip
         /// </summary>
         void PlaySFX(AudioClip soundToPlay, bool isMetronome = false) {
@@ -6713,7 +6754,7 @@ namespace MiKu.NET {
             m_CameraMoverScript.turnSpeed = PlayerPrefs.GetFloat(ROTATION_PREF_KEY, 1.5f);
             MiddleButtonSelectorType = PlayerPrefs.GetInt(MIDDLE_BUTTON_SEL_KEY, 0);
             canAutoSave = ( PlayerPrefs.GetInt(AUTOSAVE_KEY, 1) > 0) ? true : false;
-            doScrollSound = ( PlayerPrefs.GetInt(SCROLLSOUND_KEY, 1) > 0) ? true : false;
+            doScrollSound = PlayerPrefs.GetInt(SCROLLSOUND_KEY, 1);
             gridManager.SeparationSize = (PlayerPrefs.GetFloat(GRIDSIZE_KEY, 0.1365f));
             gridManager.DrawGridLines();
         }
@@ -6728,7 +6769,7 @@ namespace MiKu.NET {
             PlayerPrefs.SetFloat(ROTATION_PREF_KEY, m_CameraMoverScript.turnSpeed);
             PlayerPrefs.SetInt(MIDDLE_BUTTON_SEL_KEY, MiddleButtonSelectorType);
             PlayerPrefs.SetInt(AUTOSAVE_KEY, (canAutoSave) ? 1 : 0);
-            PlayerPrefs.SetInt(SCROLLSOUND_KEY, (doScrollSound) ? 1 : 0);
+            PlayerPrefs.SetInt(SCROLLSOUND_KEY, doScrollSound);
             PlayerPrefs.SetFloat(GRIDSIZE_KEY, gridManager.SeparationSize);
         }
 
