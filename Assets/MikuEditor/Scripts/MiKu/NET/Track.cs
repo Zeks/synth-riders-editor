@@ -533,6 +533,10 @@ namespace MiKu.NET {
         [SerializeField]
         private AudioClip m_MetronomeSound;
 
+        [SerializeField]
+        [Tooltip("Audio source for the preview audio that plays when scrolling in the timeline.")]
+        private AudioSource previewAud;
+
         [Space(20)]
         [Header("Stats Window")]	
         [SerializeField]
@@ -774,6 +778,13 @@ namespace MiKu.NET {
         private float currentHighlightCheck = 0;
         private bool highlightChecked = false;
         private CursorLockMode currentLockeMode;
+
+        //Changes how long the preview audio is whenever you scroll forwards/backwards.
+        public float previewDuration = 0.2f;
+
+        //Represents the current time in seconds (AKA the audioSource.time) that we are into the song. Used when scrolling while paused.
+        private float currentTimeSecs = 0f;
+        
 
         // Use this for initialization
         void Awake () {	
@@ -1192,24 +1203,76 @@ namespace MiKu.NET {
             if(Input.GetButtonDown("Metronome") && !PromtWindowOpen) {
                 ToggleMetronome();
             }
+            
 
             // Mouse Scroll
-            if (Input.GetAxis("Mouse ScrollWheel") > 0f && !IsPlaying && !PromtWindowOpen) // forward
+            if (Input.GetAxis("Mouse ScrollWheel") > 0f && !PromtWindowOpen) // forward
             {
-                if(!isCTRLDown && !isALTDown) {
-                    MoveCamera(true, GetNextStepPoint());
-                    DrawTrackXSLines();
-                } else if(isCTRLDown) {
-                    ChangeStepMeasure(true);
-                }				
+
+                if (IsPlaying) {
+                    TogglePlay();
+
+                    if(!isCTRLDown && !isALTDown) {
+                        MoveCamera(true, GetNextStepPoint());
+                        DrawTrackXSLines();
+                    } else if(isCTRLDown) {
+                        ChangeStepMeasure(true);
+                    }
+
+                    TogglePlay();
+
+                //Song is paused
+                } else {
+
+                    if(!isCTRLDown && !isALTDown) {
+                        MoveCamera(true, GetNextStepPoint());
+                        
+                        DrawTrackXSLines();
+
+                        currentTimeSecs = (StartOffset > 0) ? Mathf.Max(0, (_currentTime / MS) - (StartOffset / MS) ) : (_currentTime / MS);
+
+                        previewAud.volume = audioSource.volume;
+                        previewAud.time = currentTimeSecs;
+                        previewAud.Play();
+                    } else if(isCTRLDown) {
+                        ChangeStepMeasure(true);
+                    }
+
+
+                }
+
+                			
             }
-            else if (Input.GetAxis("Mouse ScrollWheel") < 0f && !IsPlaying && !PromtWindowOpen) // backwards
+            else if (Input.GetAxis("Mouse ScrollWheel") < 0f && !PromtWindowOpen) // backwards
             {
-                if(!isCTRLDown && !isALTDown) {
-                    MoveCamera(true, GetPrevStepPoint());
-                    DrawTrackXSLines();
-                } else if(isCTRLDown){
-                    ChangeStepMeasure(false);
+                if (IsPlaying) {
+                    TogglePlay();
+
+                    if(!isCTRLDown && !isALTDown) {
+                        MoveCamera(true, GetPrevStepPoint());
+                        DrawTrackXSLines();
+                        
+                    } else if(isCTRLDown) {
+                        ChangeStepMeasure(true);
+                    }
+
+                    TogglePlay();
+
+                } else {
+
+                    if(!isCTRLDown && !isALTDown) {
+                        MoveCamera(true, GetPrevStepPoint());
+                        DrawTrackXSLines();
+
+                        currentTimeSecs = (StartOffset > 0) ? Mathf.Max(0, (_currentTime / MS) - (StartOffset / MS) ) : (_currentTime / MS);
+
+                        previewAud.volume = audioSource.volume;
+                        previewAud.time = currentTimeSecs;
+                        previewAud.Play();
+
+                    } else if(isCTRLDown){
+                        ChangeStepMeasure(false);
+                    }
                 }
             }
 
@@ -1372,6 +1435,7 @@ namespace MiKu.NET {
 
             // #endregionInput.GetKeyDown(KeyCode.PageUp)
             if( Input.GetButtonDown("Advance UP") && !PromtWindowOpen) {
+                Debug.Log("Scroll up");
                 if(!IsPlaying) {
                     float ms = MeasureToTime((TimeToMeasure(CurrentTime) + 1));
                     if(ms <= TrackDuration * MS) {
@@ -1449,7 +1513,15 @@ namespace MiKu.NET {
                 && !PromtWindowOpen
                 && !isPlaying) {
                 SaveChartAction();
-            }			
+            }
+
+
+            //If enough time has passed since the preview audio started playing, we need to stop it.
+            if (previewAud.time > (currentTimeSecs + previewDuration)) {
+                previewAud.Pause();
+                previewAud.time = 0;
+            }
+
         }
 
         void FixedUpdate() {
@@ -1667,6 +1739,7 @@ namespace MiKu.NET {
                 songClip = loadedClip;
                 StartOffset = CurrentChart.Offset;					
                 audioSource.clip = songClip;
+                previewAud.clip = songClip;
 
                 UpdateTrackDuration();					
                 // m_BPMSlider.value = BPM;
@@ -3504,11 +3577,13 @@ namespace MiKu.NET {
         /// </summary>
         void Stop(bool backToPreviousPoint = false) {
             audioSource.time = 0;
+            previewAud.time = 0;
             //audioSource.timeSamples = 0;
             
 
             if(StartOffset > 0) StopCoroutine(StartAudioSourceDelay());
             audioSource.Stop();
+            previewAud.Stop();
             
             /* if(m_metronome != null) {
                 if(isMetronomeActive) m_metronome.Stop();
