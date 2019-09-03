@@ -40,7 +40,8 @@ namespace MiKu.NET {
             set
             {
                 Hash = (int)(Math.Round(value/Divisor, 0, MidpointRounding.AwayFromZero));
-                _pureHash=Hash;
+                //Hash=(Hash%2==0) ? Hash : (Hash - 1);
+                _pureHash =Hash;
                 _value = value;
             }
         }
@@ -103,7 +104,7 @@ namespace MiKu.NET {
         }
 
         public bool Equals(TimeWrapper f1, TimeWrapper f2) {
-            return Math.Abs(GetPreciseInt(f1) - GetPreciseInt(f2)) <= 2;
+            return GetPreciseInt(f1) == GetPreciseInt(f2);
         }
 
         public int GetHashCode(TimeWrapper f) {
@@ -117,7 +118,7 @@ namespace MiKu.NET {
             int value2 = GetPreciseInt(f2);
             //Trace.WriteLine("Comparing times: " + f1.FloatValue + " and " + f2.FloatValue);
             //Trace.WriteLine("Comparing integers: " + value1 + " and " + value2);
-            return Math.Abs(value1 - value2) <= 2;
+            return value1 == value2;
         }
         public static bool operator ==(TimeWrapper a, TimeWrapper b) {
             if(System.Object.ReferenceEquals(a, null) && System.Object.ReferenceEquals(b, null))
@@ -1156,7 +1157,7 @@ namespace MiKu.NET {
 
             if(!workingTrack.ContainsKey(time)) {
                 Trace.WriteLine("Added");
-                workingTrack.Add(time, new List<EditorNote>());
+                workingTrack.Add(time.FloatValue, new List<EditorNote>());
             } else {
                 Trace.WriteLine("Already had this time");
             }
@@ -1284,31 +1285,31 @@ namespace MiKu.NET {
             HashSet<TimeWrapper> setOfTImes = new HashSet<TimeWrapper>();
             List<TimeWrapper> noteTimes = Track.s_instance.GetCurrentTrackDifficulty().Keys.ToList();
             foreach(TimeWrapper time in noteTimes.OrEmptyIfNull()) {
-                setOfTImes.Add(time);
+                setOfTImes.Add(time.FloatValue);
             }
             List<Rail> rails = Track.s_instance.GetCurrentRailListByDifficulty();
             if(collectRailSegments) {
                 foreach(Rail rail in rails.OrEmptyIfNull()) {
                     foreach(TimeWrapper time in rail.notesByTime.Keys.ToList().OrEmptyIfNull()) {
-                        setOfTImes.Add(time);
+                        setOfTImes.Add(time.FloatValue);
                     }
                 }
             } else {
                 foreach(Rail rail in rails.OrEmptyIfNull()) {
-                    setOfTImes.Add(rail.startTime);
-                    setOfTImes.Add(rail.endTime);
+                    setOfTImes.Add(rail.startTime.FloatValue);
+                    setOfTImes.Add(rail.endTime.FloatValue);
                 }
             }
 
 
             List<TimeWrapper> lights = Track.s_instance.GetCurrentLightsByDifficulty();
             foreach(TimeWrapper time in lights.OrEmptyIfNull()) {
-                setOfTImes.Add(time);
+                setOfTImes.Add(time.FloatValue);
             }
 
             List<EditorSlide> slides = Track.s_instance.GetCurrentMovementListByDifficulty();
             foreach(EditorSlide slide in slides.OrEmptyIfNull()) {
-                setOfTImes.Add(slide.time);
+                setOfTImes.Add(slide.time.FloatValue);
             }
 
             return setOfTImes;
@@ -1395,7 +1396,7 @@ namespace MiKu.NET {
 
         private void PerformScrollStepForwards(TimeWrapper time, ScrollMode scrollMode) {
             bool finishedMove = false;
-            TimeWrapper nextTime = 0;
+            TimeWrapper nextTime = new TimeWrapper();
             StorePreviousTime();
             switch(scrollMode) {
                 case ScrollMode.Steps:
@@ -3568,7 +3569,7 @@ namespace MiKu.NET {
                     }
 
                     if(!workingTrack.ContainsKey(newTime))
-                        workingTrack.Add(newTime, copyList);
+                        workingTrack.Add(newTime.FloatValue, copyList);
                     else
                         workingTrack[newTime].AddRange(copyList);
 
@@ -6053,7 +6054,7 @@ namespace MiKu.NET {
                 Trace.WriteLine("Current time:" + time);
                 Trace.WriteLine("Track time:" + workingTrack.First());
             }
-
+            Trace.WriteLine("//////////////// STARTING SEARCH /////////////////");
             if(workingTrack.ContainsKey(time)) {
 
 
@@ -6074,7 +6075,10 @@ namespace MiKu.NET {
                 //}
                 //hashes.Reverse();
                 //times.Reverse();
-                //hashNewTime = hashNewTime;
+                //Trace.WriteLine("Clicked time hash is: " + time.Hash);
+                //foreach(int hash in hashes) {
+                //    Trace.WriteLine("Tested time hash is: " + hash);
+                //}
             }
 
             return list;
@@ -6177,7 +6181,7 @@ namespace MiKu.NET {
                         if(!hasNotesWithinDeltaTime && !isIncorrectPlacement) {
                             if(!s_instance.isSHIFTDown) {
                                 Trace.WriteLine("Adding new time to track: " + CurrentTime);
-                                workingTrack.Add(CurrentTime, new List<EditorNote>());
+                                workingTrack.Add(CurrentTime.FloatValue, new List<EditorNote>());
                                 AddTimeToSFXList(CurrentTime);
                             } else {
                                 Miku_DialogManager.ShowDialog(Miku_DialogManager.DialogType.Alert, StringVault.Alert_NoRailToRecolorOrDeleteAtThisPoint);
@@ -6618,13 +6622,13 @@ namespace MiKu.NET {
         /// <param name="_ms">Millesconds of the current position to use on the formating</param>
         public static void AddTimeToSFXList(TimeWrapper _ms) {
             if(!s_instance.hitSFXSource.Contains(_ms)) {
-                s_instance.hitSFXSource.Add(_ms);
+                s_instance.hitSFXSource.Add(_ms.FloatValue);
             }
         }
 
         public static void RemoveTimeFromSFXList(TimeWrapper _ms) {
             if(s_instance.hitSFXSource.Contains(_ms)) {
-                s_instance.hitSFXSource.Remove(_ms);
+                s_instance.hitSFXSource.Remove(_ms.FloatValue);
             }
         }
 
@@ -6883,8 +6887,8 @@ namespace MiKu.NET {
                             return;
                         }
                     }
-                    workingEffects.Add(CurrentTime);
-                    s_instance.AddEffectGameObjectToScene(CurrentTime);
+                    workingEffects.Add(CurrentTime.FloatValue);
+                    s_instance.AddEffectGameObjectToScene(CurrentTime.FloatValue);
 
                     if(!isOverwrite) {
                         Miku_DialogManager.ShowDialog(Miku_DialogManager.DialogType.Info, StringVault.Info_FlashOn);
@@ -6990,8 +6994,8 @@ namespace MiKu.NET {
 
                     s_instance.RemoveMovementSectionFromChart(MoveTAG, CurrentTime);
 
-                    workingElementVert.Add(CurrentTime);
-                    s_instance.AddMovementGameObjectToScene(CurrentTime, MoveTAG);
+                    workingElementVert.Add(CurrentTime.FloatValue);
+                    s_instance.AddMovementGameObjectToScene(CurrentTime.FloatValue, MoveTAG);
 
                     if(!isOverwrite) {
                         Miku_DialogManager.ShowDialog(Miku_DialogManager.DialogType.Info, onText);
@@ -7043,7 +7047,7 @@ namespace MiKu.NET {
                     }
 
                     workingElementHorz.Add(slide);
-                    s_instance.AddMovementGameObjectToScene(CurrentTime, MoveTAG);
+                    s_instance.AddMovementGameObjectToScene(CurrentTime.FloatValue, MoveTAG);
                     if(!isOverwrite) {
                         Miku_DialogManager.ShowDialog(Miku_DialogManager.DialogType.Info, onText);
                     }
@@ -7083,8 +7087,8 @@ namespace MiKu.NET {
                             return;
                         }
                     }
-                    lights.Add(CurrentTime);
-                    s_instance.AddLightGameObjectToScene(CurrentTime);
+                    lights.Add(CurrentTime.FloatValue);
+                    s_instance.AddLightGameObjectToScene(CurrentTime.FloatValue);
 
                     if(!isOverwrite) {
                         Miku_DialogManager.ShowDialog(
@@ -7391,7 +7395,7 @@ namespace MiKu.NET {
 
                         // Add update note to new list
                         //Trace.WriteLine("Appending to new list:" + "Old time: " + kvp.Key.FloatValue + " New Time: " + newTime.FloatValue);
-                        Track.AddTimeToSFXList(newTime);
+                        Track.AddTimeToSFXList(newTime.FloatValue);
                         updateData.Add(newTime, updateList);
                     }
 
@@ -7416,7 +7420,7 @@ namespace MiKu.NET {
                                 newPos);
                             effectGO.name = GetEffectIdFormated(newTime);
 
-                            updatedEffects.Add(newTime);
+                            updatedEffects.Add(newTime.FloatValue);
                         }
 
                     }
@@ -7468,7 +7472,7 @@ namespace MiKu.NET {
                                 newPos);
                             moveSectGO.name = GetMovementIdFormated(newTime, JUMP_TAG);
 
-                            updatedJumps.Add(newTime);
+                            updatedJumps.Add(newTime.FloatValue);
                         }
                     }
 
@@ -7491,7 +7495,7 @@ namespace MiKu.NET {
                                 newPos);
                             moveSectGO.name = GetMovementIdFormated(newTime, CROUCH_TAG);
 
-                            updatedCrouchs.Add(newTime);
+                            updatedCrouchs.Add(newTime.FloatValue);
                         }
                     }
 
@@ -7540,7 +7544,7 @@ namespace MiKu.NET {
                                 newPos);
                             effectGO.name = GetLightIdFormated(newTime);
 
-                            updatedLights.Add(newTime);
+                            updatedLights.Add(newTime.FloatValue);
                         }
 
                     }

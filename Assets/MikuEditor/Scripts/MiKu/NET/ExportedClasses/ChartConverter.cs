@@ -151,6 +151,36 @@ namespace MiKu.NET.Charting {
 
         }
 
+        public TimeWrapper GetNextStepPoint(float kbpm, TimeWrapper time) {
+            float realStepsFloat = time.FloatValue/kbpm;
+            int realStepsInt = (int)realStepsFloat;
+            float fraction = Math.Abs((realStepsInt+1)*kbpm - time.FloatValue)/kbpm;
+            if(fraction > 0.1)
+                time=(realStepsInt+1)*kbpm;
+            else
+                time=(realStepsInt+2)*kbpm;
+            return time;
+        }
+
+        /// <summary>
+        /// Return the prev point to displace the stage
+        /// </summary>
+        /// <remarks>
+        /// Based on the values of <see cref="K"/> and <see cref="MBPM"/>
+        /// </remarks>
+        /// <returns>Returns <typeparamref name="float"/></returns>
+        public TimeWrapper GetPrevStepPoint(float kbpm, TimeWrapper time) {
+            float realStepsFloat = time.FloatValue/kbpm;
+            int realStepsInt = (int)realStepsFloat;
+            float fraction = Math.Abs(realStepsInt*kbpm-time.FloatValue)/(kbpm);
+            bool diffLessThan0 = (realStepsInt*kbpm-time.FloatValue) < 0;
+            if(diffLessThan0 && fraction > 0.1)
+                time=(realStepsInt)*kbpm;
+            else
+                time=(realStepsInt-1)*kbpm;
+            return time;
+        }
+
         // Fully passes the Game's single difficulty note data to Editor's note data
         void PassGameNoteDataToEditor(float bpm, Dictionary<float, List<Note>> gameDictionary, Dictionary<TimeWrapper, List<EditorNote>> editorDictionary, List<Rail> listOfRails) {
             if(gameDictionary == null)
@@ -162,8 +192,25 @@ namespace MiKu.NET.Charting {
                 
 
                 foreach(var gameNote in entry.Value.OrEmptyIfNull()) {
+                    TimeWrapper key = entry.Key;
+                    float K = (1000 * 60)/bpm;
+                    float step = 1/64f;
+
+                    // this makes sure the editor will not skip the hash note is supposed to be positioned at on step
+                    // if it does - it's bound to the next step it WILL visit
+                    TimeWrapper nextPoint = GetNextStepPoint(K*step, key);
+                    TimeWrapper prevPoint = GetPrevStepPoint(K*step, key);
+                    TimeWrapper repeat = GetNextStepPoint(K*step, prevPoint);
+                    if(repeat != key && key.Hash != nextPoint.Hash && key.Hash != prevPoint.Hash)
+                        key = key - prevPoint >= nextPoint - key ? nextPoint : prevPoint;
+                        //key = nextPoint;
+
+                    //var divisor = (bpm/60f)/64f;
+                    //float divided = key/divisor;
+                    //TimeWrapper testedTime = new TimeWrapper(key);
+
                     EditorNote exportNote = new EditorNote(bpm,
-                        new UnityEngine.Vector3 { x = gameNote.Position[0], y = gameNote.Position[1], z = Track.MStoUnit(entry.Key) }, entry.Key,
+                        new UnityEngine.Vector3 { x = gameNote.Position[0], y = gameNote.Position[1], z = Track.MStoUnit(key) }, key.FloatValue,
                          gameNote.ComboId, ConvertGameNoteTypeToEditorNoteType(gameNote.Type));
                     // if we have segments this means we need to create a rail from them
                     // preferably NOT note by note and WITHOUT instantiation
@@ -180,14 +227,14 @@ namespace MiKu.NET.Charting {
                     }
 
                     if(exportNote.Segments == null || exportNote.Segments.Length == 0) {
-                        if(!editorDictionary.ContainsKey(new TimeWrapper(entry.Key)))
-                            editorDictionary.Add(entry.Key, new List<EditorNote>());
-                        editorDictionary[entry.Key].Add(exportNote);
-                        bool contains = editorDictionary.ContainsKey(entry.Key);
-                        contains = editorDictionary.ContainsKey(entry.Key);
+                        if(!editorDictionary.ContainsKey(new TimeWrapper(key.FloatValue)))
+                            editorDictionary.Add(key, new List<EditorNote>());
+                        editorDictionary[key].Add(exportNote);
+                        bool contains = editorDictionary.ContainsKey(key);
+                        contains = editorDictionary.ContainsKey(key);
                     } else {
                         // if there are segments, note belongs to a rail
-                        Rail rail = RailHelper.CreateRailFromSegments(bpm, entry.Key, exportNote);
+                        Rail rail = RailHelper.CreateRailFromSegments(bpm, key, exportNote);
                         listOfRails.Add(rail);
                     }
                 }

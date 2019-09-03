@@ -126,10 +126,14 @@ namespace MiKu.NET.Charting {
             {
                 return timePoint;
             }
+            set
+            {
+                timePoint = value.FloatValue; ;
+            }
         }
 
         public void SetTime(TimeWrapper time, float bpm) {
-            timePoint = time;
+            timePoint = time.FloatValue;
         }
 
 
