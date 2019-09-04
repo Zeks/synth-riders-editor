@@ -96,21 +96,28 @@ namespace MiKu.NET.Charting {
         }
 
         // Fully passes the Editor's single difficulty note data to game's note data
-        void PassEditorNoteDataToGame(Dictionary<TimeWrapper, List<EditorNote>> editorValue, Dictionary<float, List<Note>> exportValue) {
-            if(editorValue == null)
+        void PassEditorNoteDataToGame(Dictionary<TimeWrapper, List<EditorNote>> editorDictionary, Dictionary<float, List<Note>> exportValue) {
+            if(editorDictionary == null)
                 return;
             if(exportValue == null) {
                 exportValue = new Dictionary<float, List<Note>>();
             }
-            foreach(KeyValuePair<TimeWrapper, List<EditorNote>> entry in editorValue.OrEmptyIfNull()) {
-                if(!exportValue.ContainsKey(entry.Key.FloatValue))
-                    exportValue.Add(entry.Key.FloatValue, new List<Note>());
+
+            List<TimeWrapper> keys = editorDictionary.Keys.ToList();
+            if(keys == null)
+                return;
+            keys.Sort();
+
+            foreach(TimeWrapper key in keys.OrEmptyIfNull()) {
+                if(!exportValue.ContainsKey(key.FloatValue))
+                    exportValue.Add(key.FloatValue, new List<Note>());
+                List<EditorNote> listAtCurrentTime = editorDictionary[key];
                 // will need to create note's name in the format that game understands
-                foreach(var editorNote in entry.Value.OrEmptyIfNull()) {
+                foreach(var editorNote in listAtCurrentTime.OrEmptyIfNull()) {
                     Note exportNote = new Note(new UnityEngine.Vector3 { x = editorNote.Position[0], y = editorNote.Position[1], z = Track.MStoUnit(editorNote.TimePoint) },
                         editorNote.name, editorNote.ComboId, ConvertEditorNoteTypeToGameNoteType(editorNote.HandType));
                     exportNote.Segments = editorNote.Segments;
-                    exportValue[entry.Key.FloatValue].Add(exportNote);
+                    exportValue[key.FloatValue].Add(exportNote);
                 }
             }
         }
@@ -123,7 +130,7 @@ namespace MiKu.NET.Charting {
                 exportValue = new Dictionary<float, List<Note>>();
             }
             foreach(Rail rail in rails.OrEmptyIfNull()) {
-                EditorNote leaderNote = rail.Leader.thisNote;
+                EditorNote leaderNote = rail.Leader.thisNote; // !!!
                 if(!exportValue.ContainsKey(leaderNote.TimePoint.FloatValue)) {
                     exportValue.Add(leaderNote.TimePoint.FloatValue, new List<Note>());
                 }

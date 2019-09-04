@@ -293,6 +293,9 @@ namespace MiKu.NET {
     }
 
     public class ClipBoardStruct {
+        ~ClipBoardStruct() {
+            Trace.WriteLine("clipboard going out of scope");
+        }
         public TimeWrapper startTime = new TimeWrapper(0);
         public TimeWrapper lenght = new TimeWrapper(0);
         public Dictionary<TimeWrapper, List<EditorNote>> notes;
@@ -1094,7 +1097,7 @@ namespace MiKu.NET {
         private Vector3 selectionStartPos;
         private Vector3 selectionEndPos;
 
-        private ClipBoardStruct CurrentClipBoard;
+        private static ClipBoardStruct CurrentClipBoard;
 
         private uint SideBarsStatus = 0;
         private bool bookmarksLoaded = false;
@@ -1259,16 +1262,18 @@ namespace MiKu.NET {
                 //CurrentLongNote = new LongNote();            
                 CurrentSelection = new SelectionArea();
                 //
-                CurrentClipBoard = new ClipBoardStruct();
-                CurrentClipBoard.notes = new Dictionary<TimeWrapper, List<EditorNote>>(new TimeWrapper());
-                CurrentClipBoard.effects = new List<TimeWrapper>();
-                CurrentClipBoard.jumps = new List<TimeWrapper>();
-                CurrentClipBoard.crouchs = new List<TimeWrapper>();
-                CurrentClipBoard.slides = new List<EditorSlide>();
-                CurrentClipBoard.lights = new List<TimeWrapper>();
-                CurrentClipBoard.rails = new List<Rail>();
-                CurrentClipBoard.startTime = new TimeWrapper(0);
-                CurrentClipBoard.lenght = new TimeWrapper(0);
+                if(CurrentClipBoard == null) {
+                    CurrentClipBoard = new ClipBoardStruct();
+                    CurrentClipBoard.notes = new Dictionary<TimeWrapper, List<EditorNote>>(new TimeWrapper());
+                    CurrentClipBoard.effects = new List<TimeWrapper>();
+                    CurrentClipBoard.jumps = new List<TimeWrapper>();
+                    CurrentClipBoard.crouchs = new List<TimeWrapper>();
+                    CurrentClipBoard.slides = new List<EditorSlide>();
+                    CurrentClipBoard.lights = new List<TimeWrapper>();
+                    CurrentClipBoard.rails = new List<Rail>();
+                    CurrentClipBoard.startTime = new TimeWrapper(0);
+                    CurrentClipBoard.lenght = new TimeWrapper(0);
+                }
 
                 if(m_selectionMarker != null) {
                     selectionStartPos = m_selectionMarker.GetPosition(0);
@@ -1863,7 +1868,7 @@ namespace MiKu.NET {
             {
                 bool cameraMoved = false;
                 bool resetSelectionIfNeeded = true;
-                if(!isCTRLDown && !isALTDown || currentScrollMode != ScrollMode.Steps) {
+                if(!isCTRLDown && !isALTDown) {
                     PerformScrollStepForwards(CurrentTime, currentScrollMode);
                     if(isSHIFTDown) {
                         CurrentSelection.EndTime = CurrentTime;
@@ -1871,6 +1876,7 @@ namespace MiKu.NET {
                     }
                     return;
                 } else if(isCTRLDown && !isALTDown) {
+                    //currentScrollMode = ScrollMode.Steps;
                     ChangeStepMeasure(true, bpmPrimary);
                     resetSelectionIfNeeded = false;
                 }
@@ -1904,7 +1910,7 @@ namespace MiKu.NET {
               {
                 bool cameraMoved = false;
                 bool resetSelectionIfNeeded = true;
-                if(!isCTRLDown && !isALTDown || currentScrollMode != ScrollMode.Steps) {
+                if(!isCTRLDown && !isALTDown) {
                     PerformScrollStepBackwards(CurrentTime, currentScrollMode);
                     if(isSHIFTDown) {
                         CurrentSelection.EndTime = CurrentTime;
@@ -1913,6 +1919,7 @@ namespace MiKu.NET {
                     return;
                 } else if(isCTRLDown && !isALTDown) {
                     resetSelectionIfNeeded = false;
+                    //currentScrollMode = ScrollMode.Steps;
                     ChangeStepMeasure(false, bpmPrimary);
                 }
                 if(isALTDown) {
@@ -2272,9 +2279,9 @@ namespace MiKu.NET {
                 // reading the currently available data from converter into the Track
                 // the result needs to be assigned to Track later
                 ChartConverter converter = new ChartConverter();
-                BPM = Serializer.ChartData.BPM;
+                
                 if(Serializer.ChartData != null) {
-                    
+                    BPM = Serializer.ChartData.BPM;
                     converter.ConvertGameChartToEditorChart(Serializer.ChartData);
                 }
 
@@ -2618,7 +2625,7 @@ namespace MiKu.NET {
                     result = nextSnap;
             }
 
-            return result;
+            return result.FloatValue;
         }
 
         void EndSpectralAnalyzer() {
@@ -3540,28 +3547,11 @@ namespace MiKu.NET {
 
                         EditorNote copyNote = new EditorNote(
                             new Vector3(currNote.Position[0], currNote.Position[1], newPos),
-                            currNote.TimePoint.FloatValue,
+                            newTime.FloatValue,
                             currNote.ComboId,
                             currNote.HandType,
                             currNote.Direction
                         );
-
-                        if(currNote.Segments != null && currNote.Segments.GetLength(0) > 0) {
-                            float[,] copySegments = new float[currNote.Segments.GetLength(0), 3];
-                            for(int x = 0; x < currNote.Segments.GetLength(0); ++x) {
-                                Vector3 segmentPos = transform.InverseTransformPoint(
-                                        currNote.Segments[x, 0],
-                                        currNote.Segments[x, 1],
-                                        currNote.Segments[x, 2]
-                                );
-
-                                TimeWrapper tms = UnitToMS(segmentPos.z);
-                                copySegments[x, 0] = currNote.Segments[x, 0];
-                                copySegments[x, 1] = currNote.Segments[x, 1];
-                                copySegments[x, 2] = MStoUnit(tms + (backUpTime - CurrentClipBoard.startTime));
-                            }
-                            copyNote.Segments = copySegments;
-                        }
 
                         AddNoteGameObjectToScene(copyNote);
                         copyList.Add(copyNote);
@@ -4102,7 +4092,7 @@ namespace MiKu.NET {
         /// <summary>
         /// <param name="forceClear">If true, the lines will be forcefull redrawed</param>
         void DrawTrackXSLines(InternalBPM bpm, bool forceClear = false) {
-            TimeWrapper usedTime = isPlaying ? _currentPlayTime : _currentTime;
+            TimeWrapper usedTime = isPlaying ? _currentPlayTime.FloatValue : _currentTime.FloatValue;
             if(bpm.Value < 1) {
                 float newXSSection = 0;
                 float _CK = (K * bpm.Value);
@@ -4315,7 +4305,7 @@ namespace MiKu.NET {
             /*float targetSample = (StartOffset > 0) ? Mathf.Max(0, (_currentTime / MS) - (StartOffset / MS) ) : (_currentTime / MS);
             targetSample = (CurrentChart.AudioFrecuency * CurrentChart.AudioChannels) * (_currentTime + targetSample);
             audioSource.timeSamples = (int)targetSample;*/
-            _currentPlayTime = _currentTime;
+            _currentPlayTime = _currentTime.FloatValue;
 
             m_NotesDropArea.SetActive(false);
             m_MetaNotesColider.SetActive(true);
@@ -4457,13 +4447,13 @@ namespace MiKu.NET {
                 if(playStopMode == PlayStopMode.StepBack) {
                     float _CK = (K * GetBPMForCurrentStepMode().Value);
                     if((_currentPlayTime.FloatValue % _CK) / _CK >= 0.5f) {
-                        CurrentTime = GetCloseStepMeasure(_currentPlayTime);
+                        CurrentTime = GetCloseStepMeasure(_currentPlayTime).FloatValue;
                     } else {
-                        CurrentTime = GetCloseStepMeasure(_currentPlayTime, false);
+                        CurrentTime = GetCloseStepMeasure(_currentPlayTime, false).FloatValue;
                     }
                 }
                 else
-                    CurrentTime = _currentPlayTime;
+                    CurrentTime = _currentPlayTime.FloatValue;
             }
             
             _currentPlayTime = 0;
@@ -4512,7 +4502,7 @@ namespace MiKu.NET {
             } else {
                 //_currentPlayTime += Time.unscaledDeltaTime * MS;
                 if(audioSource.isPlaying && syncnhWithAudio)
-                    _currentPlayTime = ((audioSource.timeSamples / (float)audioSource.clip.frequency) * MS) + StartOffset;
+                    _currentPlayTime.FloatValue = ((audioSource.timeSamples / (float)audioSource.clip.frequency) * MS) + StartOffset.FloatValue;
                 else {
                     _currentPlayTime.FloatValue += (Time.smoothDeltaTime * MS) * PlaySpeed;
                 }
@@ -6229,7 +6219,7 @@ namespace MiKu.NET {
                     }
 
                     if(s_instance.isALTDown) {
-                        Rail rail = RailHelper.ClosestRailButNotAtThisPoint(CurrentTime, new Vector2(noteFromNoteArea.transform.position.x, noteFromNoteArea.transform.position.y));
+                        Rail rail = RailHelper.ClosestRailButNotAtThisPoint(CurrentTime, new Vector2(noteFromNoteArea.transform.position.x, noteFromNoteArea.transform.position.y), s_instance.selectedNoteType);
                         if(rail != null) {
                             EditorNote note = rail.GetNoteAtPosition(CurrentTime);
                             float xDiff = Math.Abs(noteFromNoteArea.transform.position.x - note.Position[0]);
@@ -6327,6 +6317,10 @@ namespace MiKu.NET {
 
                         // we're being explicitly told that a new rail should be created at this point
                         if(s_instance.isCTRLDown && !s_instance.isALTDown && !s_instance.isSHIFTDown) {
+                            if(matches.Count == 2) {
+                                //ctril clicking on the join of two rails does nothing
+                                return;
+                            }
                             // potential problems:
                             // 1) need to break an existing rail
                             // 2) need to make sure extend doesn't happen
@@ -6336,6 +6330,8 @@ namespace MiKu.NET {
 
                             // extension should be prioritized over creation here
                             // therefore we need to find a rail we can extend
+
+
                             if(matchedRail != null) {
                                 // we need to check if we're at a head note, tail note or middle note
                                 EditorNote railNote = matchedRail.GetNoteAtPosition(CurrentTime);
@@ -8721,7 +8717,7 @@ namespace MiKu.NET {
         {
             get
             {
-                return startOffset;
+                return (startOffset == null) ? new TimeWrapper(0) : startOffset;
             }
 
             set
