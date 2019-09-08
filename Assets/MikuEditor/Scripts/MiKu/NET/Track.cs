@@ -379,6 +379,7 @@ namespace MiKu.NET {
             }
         }
     }
+    
 
 
 
@@ -411,6 +412,7 @@ namespace MiKu.NET {
             Forwards
         }
 
+   
         public enum PromtType {
             // No action
             NoAction,
@@ -1860,7 +1862,11 @@ namespace MiKu.NET {
             // Toggle Metronome
             // Input.GetKeyDown(KeyCode.M) Metronome
             if(Input.GetButtonDown("Metronome") && !PromtWindowOpen) {
-                ToggleMetronome();
+                if(isSHIFTDown)
+                    ToggleMetronome();
+                else {
+                    MirrorNotesAtTime(CurrentTime.FloatValue, Track.NoteMirrorStrategy.DiagonalLeftMirror);
+                }
             }
 
             // Mouse Scroll
@@ -2000,6 +2006,8 @@ namespace MiKu.NET {
                     RailHelper.BreakTheRailAtCurrentTime(CurrentTime, railsAtCurrentTIme, s_instance.selectedNoteType, s_instance.selectedUsageType, Track.IsOnMirrorMode);
                 }
             }
+
+            
 
             if(Input.GetKeyDown(KeyCode.O) && !PromtWindowOpen) {
                 TogglePreviousScrollMode();
@@ -2164,7 +2172,8 @@ namespace MiKu.NET {
             }
 
 
-            
+
+
 
             // Directional Notes
 
@@ -6073,7 +6082,45 @@ namespace MiKu.NET {
 
             return list;
         }
+        public enum NoteMirrorStrategy {
+            HorizontalMirror,
+            VerticalMirror,
+            DiagonalRightMirror,
+            DiagonalLeftMirror,
+        }
 
+        public float isLeft(Vector2 a, Vector2 b, Vector2 c) {
+            return (b.x - a.x)*(c.y - a.y) - (b.y - a.y)*(c.x - a.x);
+        }
+
+        public void MirrorNotesAtTime(float time, Track.NoteMirrorStrategy mirrorStrategy) {
+            var notesDict = GetCurrentTrackDifficulty();
+            if(notesDict.ContainsKey(time)) {
+                List<EditorNote> notesAtCurrentTime = notesDict[time];
+                foreach(EditorNote note in notesAtCurrentTime.OrEmptyIfNull()) {
+                    if(note.GameObject != null)
+                        GameObject.DestroyImmediate(note.GameObject);
+
+                    note.HandType = GetOppositeColor(note.HandType);
+                    AddNoteGameObjectToScene(note);
+                    gridManager.ResetLinesMaterial();
+                    if(showPlacementLines)
+                        gridManager.HighlightLinesForPointList(FetchObjectPositionsAtCurrentTime(CurrentTime));
+                }
+            } 
+
+            List<Rail> railsAtCurrentTime = RailHelper.GetListOfRailsInRange(s_instance.GetCurrentRailListByDifficulty(), time, time, RailHelper.RailRangeBehaviour.Allow);
+            foreach(Rail rail in railsAtCurrentTime.OrEmptyIfNull()) {
+                rail.noteType = GetOppositeColor(rail.noteType);
+                foreach(RailNoteWrapper note in rail.notesByID.Values.OrEmptyIfNull()) {
+                    if(note != null) {
+                        note.thisNote.HandType = GetOppositeColor(note.thisNote.HandType);
+                    }
+                }
+                RailHelper.ReinstantiateRail(rail);
+                RailHelper.ReinstantiateRailSegmentObjects(rail);
+            }
+        }
 
         /// <summary>
         /// Add note to chart
@@ -6144,11 +6191,7 @@ namespace MiKu.NET {
                             // if there is no note at this time point we place one 
                             // if there is a note fo this color, we move it here
                             EditorNote potentialMovedNote = GetSimpleNoteAtTime(CurrentTime, s_instance.selectedNoteType);
-                            if(potentialMovedNote == null) {
-                                // alt should only move notes, not instantiate them
-                                Miku_DialogManager.ShowDialog(Miku_DialogManager.DialogType.Alert, StringVault.Alert_NothingToMoveAtThisPoint);
-                                return;
-                            } else {
+                            if(potentialMovedNote != null) {
                                 // we move the note to the clicked position
                                 // first we remove the note's gameobject to remove it from the track
                                 DestroyImmediate(potentialMovedNote.GameObject);
@@ -6162,8 +6205,8 @@ namespace MiKu.NET {
                                 potentialMovedNote.Position[0]+=xDiff;
                                 potentialMovedNote.Position[1]+=yDiff;
                                 s_instance.AddNoteGameObjectToScene(potentialMovedNote);
+                                return;
                             }
-                            return;
                         }
 
 

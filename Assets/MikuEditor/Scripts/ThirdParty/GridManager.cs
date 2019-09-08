@@ -84,6 +84,29 @@ public class GridManager : MonoBehaviour
         return result;
     }
 
+    public struct GridPositionDataInt {
+        public GridPositionDataInt(int xCount, int yCount, int xSize, int ySize, float separationSize) {
+            this.xCount = xCount;
+            this.yCount = yCount;
+            this.xSize = xSize;
+            this.ySize = ySize;
+            this.separationSize = separationSize;
+        }
+        public int xCount;
+        public int yCount;
+        public int xSize;
+        public int ySize;
+        public float separationSize;
+    }
+
+    public GridPositionDataInt GetIntegerGridPosition(Vector3 position) {
+        int xCount = Mathf.RoundToInt(position.x / SeparationSize);
+        int yCount = Mathf.RoundToInt(position.y / SeparationSize);
+
+        return new GridPositionDataInt(xCount, yCount, sizeX,sizeY,separationSize);
+    }
+
+
     public enum GridShiftBehaviour {
         Horizonal = 0,
         Vertical = 1,
