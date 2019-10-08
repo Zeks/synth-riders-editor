@@ -855,7 +855,7 @@ namespace MiKu.NET {
         private bool gridIsActive = false;
 
         // holds the current origin and setting for drawing step lines
-        private StepLineData stepLineDrawData;
+        private StepLineData stepLineDrawData = new StepLineData();
 
         // metronome
         private bool isMetronomeActive = false;
