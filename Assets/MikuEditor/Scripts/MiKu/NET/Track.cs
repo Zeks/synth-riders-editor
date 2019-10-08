@@ -76,6 +76,20 @@ namespace MiKu.NET {
     public class StepLineData {
         public float currentStepLineDrawStartingPosition = -1;
         public float currentBeatIncreasePerStep;
+        public List<GameObject> stepLineObjects;
+
+        /// <summary>
+        /// Clear the already drawed extra thin lines
+        /// </summary>
+        public void ClearStepLines() {
+            if(stepLineObjects.Count <= 0) return;
+
+            for(int i = 0; i < stepLineObjects.Count; i++) {
+                GameObject.DestroyImmediate(stepLineObjects[i]);
+            }
+
+            stepLineObjects.Clear();
+        }
     }
 
     public class SelectionArea {
@@ -359,7 +373,7 @@ namespace MiKu.NET {
         private Transform m_NoNotesElementHolder;
 
         [SerializeField]
-        private Transform m_SpectrumHolder;
+        public Transform m_SpectrumHolder;
 
         [SerializeField]
         private GameObject m_MetaNotesColider;
@@ -492,13 +506,13 @@ namespace MiKu.NET {
 
         [Header("Spectrum Settings")]
         [SerializeField]
-        float heightMultiplier = 0.8f;
+        public float heightMultiplier = 0.8f;
 
         [SerializeField]
-        private GameObject m_NormalPointMarker;
+        public GameObject m_NormalPointMarker;
 
         [SerializeField]
-        private GameObject m_PeakPointMarker;
+        public GameObject m_PeakPointMarker;
 
         [Header("UI Elements")]
         [SerializeField]
@@ -771,7 +785,10 @@ namespace MiKu.NET {
 
         // To save currently drawed lines for ease of acces
         private List<GameObject> beatLineObjects;
-        private List<GameObject> stepLineObjects;
+        // For the ease of disabling/enabling notes when arrive the base
+        private List<GameObject> disabledNotes;
+        // For the ease of resizing of notes when to close of the front camera
+        private List<GameObject> resizedNotes;
 
         // whether to highlight the lines that contain objects with green color
         private bool showPlacementLines = true;
@@ -829,8 +846,7 @@ namespace MiKu.NET {
         private bool promtWindowOpen = false;
         private bool helpWindowOpen = false;
 
-        // For the ease of disabling/enabling notes when arrive the base
-        private List<GameObject> disabledNotes;
+        
 
         // For the refresh of the selected marker when changed
         private NotesArea notesArea;
@@ -838,7 +854,8 @@ namespace MiKu.NET {
         private bool markerWasUpdated = false;
         private bool gridIsActive = false;
 
-        private StepLineData stepLineData;
+        // holds the current origin and setting for drawing step lines
+        private StepLineData stepLineDrawData;
 
         // metronome
         private bool isMetronomeActive = false;
@@ -846,10 +863,8 @@ namespace MiKu.NET {
 
         public int TotalNotes { get; set; }
         public int TotalDisplayedNotes { get; set; }
-
-        // For the ease of resizing of notes when to close of the front camera
-        private List<GameObject> resizedNotes;
-
+        
+        // whether to turn off grid on play
         private bool turnOffGridOnPlay = false;
 
         // For the specials
@@ -861,30 +876,18 @@ namespace MiKu.NET {
         private float lastHitNoteZ = -1;
 
         private Stack<TimeWrapper> effectsStacks;
-
         private List<TimeWrapper> hitSFXSource;
         private Queue<TimeWrapper> hitSFXQueue;
 
-        private float lastSaveTime = 0;
-
-        // For the Spectrum Analizer
-        int spc_numChannels;
-        int spc_numTotalSamples;
-        int spc_sampleRate;
-        float spc_clipLength;
-        float[] spc_multiChannelSamples;
-        SpectralFluxAnalyzer preProcessedSpectralFluxAnalyzer;
-        bool threadFinished = false;
-        bool treadWithError = false;
-        Thread analyzerThread;
-
-        private const string spc_cacheFolder = "/SpectrumData/";
-        private const string spc_ext = ".spectrum";
+        // holds the time interval since the map was last saved
+        private float timeSinceLastSave = 0;
 
         // String Builders
         StringBuilder forwardTimeSB;
         StringBuilder backwardTimeSB;
         TimeSpan forwardTimeSpan;
+
+        Spectrum audioSpectrum = new Spectrum();
 
         int CurrentVsync = 0;
         Transform plotTempInstance;
@@ -920,8 +923,6 @@ namespace MiKu.NET {
 
         private int middleButtonNoteTarget = 0;
 
-        private bool isSpectrumGenerated = false;
-        private Vector3 spectrumDefaultPos;
         private int MiddleButtonSelectorType = 0;
         private bool canAutoSave = true;
         private bool doScrollSound = true;
@@ -994,7 +995,7 @@ namespace MiKu.NET {
             Trace.AutoFlush = true;
             // Initilization of the Game Object to use for the line drawing
             beatLineObjects = new List<GameObject>();
-            stepLineObjects = new List<GameObject>();
+            stepLineDrawData.stepLineObjects = new List<GameObject>();
 
             generatedLeftLine = GameObject.Instantiate(m_SideLines, Vector3.zero,
                  Quaternion.identity, gameObject.transform);
@@ -1313,7 +1314,7 @@ namespace MiKu.NET {
         void Update() {
             if(isBusy || !IsInitilazed) { return; }
 
-            lastSaveTime += Time.deltaTime;
+            timeSinceLastSave += Time.deltaTime;
 
             keyHoldTime = keyHoldTime + Time.deltaTime;
 
@@ -2008,7 +2009,7 @@ namespace MiKu.NET {
                 notesArea.RefreshSelectedObject();
             }
 
-            if(lastSaveTime >= AUTO_SAVE_TIME_CHECK_SECS
+            if(timeSinceLastSave >= AUTO_SAVE_TIME_CHECK_SECS
                 && canAutoSave
                 && !PromtWindowOpen
                 && !isPlaying) {
@@ -2026,9 +2027,9 @@ namespace MiKu.NET {
         }
 
         void LateUpdate() {
-            if(threadFinished) {
-                threadFinished = false;
-                EndSpectralAnalyzer();
+            if(audioSpectrum.threadFinished) {
+                audioSpectrum.threadFinished = false;
+                audioSpectrum.EndSpectralAnalyzer(CurrentChart.AudioName, frequencyData);
             }
 
             if(IsPlaying) {
@@ -2281,7 +2282,7 @@ namespace MiKu.NET {
                 SetStatWindowData();
                 IsInitilazed = true;
 
-                BeginSpectralAnalyzer();
+                audioSpectrum.BeginSpectralAnalyzer(CurrentChart.AudioName, audioSource, frequencyData);
                 LoadEditorUserPrefs();
                 InitMetronome();
 
@@ -2293,51 +2294,6 @@ namespace MiKu.NET {
                 trackInfo.coverImage = CurrentChart.Artwork;
                 trackInfo.audioFile = CurrentChart.AudioName;
                 trackInfo.supportedDifficulties = new string[6] { string.Empty, string.Empty, string.Empty, string.Empty, string.Empty, string.Empty };
-            }
-        }
-
-        #region Spectrum Analyzer
-        void BeginSpectralAnalyzer() {
-            if(preProcessedSpectralFluxAnalyzer == null) {
-                if(IsSpectrumCached()) {
-                    try {
-                        using(FileStream file = File.OpenRead(SpectrumCachePath + Serializer.CleanInput(CurrentChart.AudioName + spc_ext))) {
-                            System.Runtime.Serialization.Formatters.Binary.BinaryFormatter bf = new System.Runtime.Serialization.Formatters.Binary.BinaryFormatter();
-                            preProcessedSpectralFluxAnalyzer = (SpectralFluxAnalyzer)bf.Deserialize(file);
-                        }
-
-                        EndSpectralAnalyzer();
-                        LogMessage("Spectrum loaded from cached");
-                    } catch(Exception ex) {
-                        Miku_DialogManager.ShowDialog(Miku_DialogManager.DialogType.Alert,
-                            "Error while dezerializing Spectrum " + ex.ToString()
-                        );
-                        LogMessage(ex.ToString(), true);
-                    }
-
-                } else {
-                    preProcessedSpectralFluxAnalyzer = new SpectralFluxAnalyzer();
-
-                    // Need all audio samples.  If in stereo, samples will return with left and right channels interweaved
-                    // [L,R,L,R,L,R]
-                    spc_multiChannelSamples = new float[audioSource.clip.samples * audioSource.clip.channels];
-                    spc_numChannels = audioSource.clip.channels;
-                    spc_numTotalSamples = audioSource.clip.samples;
-                    spc_clipLength = audioSource.clip.length;
-
-                    // We are not evaluating the audio as it is being played by Unity, so we need the clip's sampling rate
-                    spc_sampleRate = audioSource.clip.frequency;
-
-                    audioSource.clip.GetData(spc_multiChannelSamples, 0);
-                    LogMessage("GetData done");
-
-                    analyzerThread = new Thread(this.getFullSpectrumThreaded);
-
-                    LogMessage("Starting Background Thread");
-                    analyzerThread.Start();
-
-                    ToggleWorkingStateAlertOn(StringVault.Info_SpectrumLoading);
-                }
             }
         }
 
@@ -2423,194 +2379,7 @@ namespace MiKu.NET {
             return result.FloatValue;
         }
 
-        void EndSpectralAnalyzer() {
-            if(treadWithError) {
-                LogMessage("Specturm could not be created", true);
-                ToggleWorkingStateAlertOff();
-                return;
-            }
-
-            List<SpectralFluxInfo> flux = preProcessedSpectralFluxAnalyzer.spectralFluxSamples;
-            Vector3 targetTransform = Vector3.zero;
-            Vector3 targetScale = Vector3.one;
-
-            Transform childTransform;
-            for(int i = 0; i < flux.Count; ++i) {
-                SpectralFluxInfo spcInfo = flux[i];
-                if(spcInfo.spectralFlux > 0) {
-                    plotTempInstance = Instantiate(
-                        (spcInfo.isPeak) ? m_PeakPointMarker : m_NormalPointMarker
-                    ).transform;
-                    targetTransform.x = plotTempInstance.position.x;
-                    targetTransform.y = plotTempInstance.position.y;
-                    targetTransform.z = MStoUnit((spcInfo.time * msInSecond)); //+StartOffset);
-                    if(spcInfo.isPeak)
-                        frequencyData.peakTimes.Add(spcInfo.time * msInSecond);
-                    else
-                        frequencyData.barTimes.Add(spcInfo.time * msInSecond);
-                    plotTempInstance.position = targetTransform;
-                    plotTempInstance.parent = m_SpectrumHolder;
-
-                    childTransform = plotTempInstance.Find("Point - Model");
-                    if(childTransform != null) {
-                        targetScale = childTransform.localScale;
-                        targetScale.y = spcInfo.spectralFlux * heightMultiplier;
-                        childTransform.localScale = targetScale;
-                    }
-
-                    childTransform = plotTempInstance.Find("Point - Model Top");
-                    if(childTransform != null) {
-                        targetScale = childTransform.localScale;
-                        targetScale.x = spcInfo.spectralFlux * heightMultiplier;
-                        childTransform.localScale = targetScale;
-                    }
-
-                    //plotTempInstance.localScale = targetScale; 
-                }
-
-                /* if(spcInfo.spectralFlux > 0) {
-                    LogMessage ("Time is "+spcInfo.time+" at index "+i+" flux: "+(spcInfo.spectralFlux * 0.01f));
-                    return;
-                } */
-            }
-
-            ToggleWorkingStateAlertOff();
-            isSpectrumGenerated = true;
-            UpdateSpectrumOffset();
-
-            if(!IsSpectrumCached()) {
-                try {
-                    using(FileStream file = File.Create(SpectrumCachePath + Serializer.CleanInput(CurrentChart.AudioName + spc_ext))) {
-                        System.Runtime.Serialization.Formatters.Binary.BinaryFormatter bf = new System.Runtime.Serialization.Formatters.Binary.BinaryFormatter();
-                        bf.Serialize(file, preProcessedSpectralFluxAnalyzer);
-                    }
-                } catch {
-                    LogMessage("There was a error while creating the specturm file", true);
-                }
-            }
-        }
-
-        public int getIndexFromTime(float curTime) {
-            float lengthPerSample = spc_clipLength / (float)spc_numTotalSamples;
-
-            return Mathf.FloorToInt(curTime / lengthPerSample);
-        }
-
-        public float getTimeFromIndex(int index) {
-            return ((1f / (float)spc_sampleRate) * index);
-        }
-
-        public void getFullSpectrumThreaded() {
-            try {
-                // We only need to retain the samples for combined channels over the time domain
-                float[] preProcessedSamples = new float[spc_numTotalSamples];
-
-                int numProcessed = 0;
-                float combinedChannelAverage = 0f;
-                for(int i = 0; i < spc_multiChannelSamples.Length; i++) {
-                    combinedChannelAverage += spc_multiChannelSamples[i];
-
-                    // Each time we have processed all channels samples for a point in time, we will store the average of the channels combined
-                    if((i + 1) % spc_numChannels == 0) {
-                        preProcessedSamples[numProcessed] = combinedChannelAverage / spc_numChannels;
-                        numProcessed++;
-                        combinedChannelAverage = 0f;
-                    }
-                }
-
-                UnityEngine.Debug.Log("Combine Channels done");
-                UnityEngine.Debug.Log(preProcessedSamples.Length.ToString());
-
-                // Once we have our audio sample data prepared, we can execute an FFT to return the spectrum data over the time domain
-                int spectrumSampleSize = 1024;
-                int iterations = preProcessedSamples.Length / spectrumSampleSize;
-
-                FFT fft = new FFT();
-                fft.Initialize((UInt32)spectrumSampleSize);
-
-                UnityEngine.Debug.Log(string.Format("Processing {0} time domain samples for FFT", iterations));
-                double[] sampleChunk = new double[spectrumSampleSize];
-                for(int i = 0; i < iterations; i++) {
-                    // Grab the current 1024 chunk of audio sample data
-                    Array.Copy(preProcessedSamples, i * spectrumSampleSize, sampleChunk, 0, spectrumSampleSize);
-
-                    // Apply our chosen FFT Window
-                    double[] windowCoefs = DSP.Window.Coefficients(DSP.Window.Type.Hanning, (uint)spectrumSampleSize);
-                    double[] scaledSpectrumChunk = DSP.Math.Multiply(sampleChunk, windowCoefs);
-                    double scaleFactor = DSP.Window.ScaleFactor.Signal(windowCoefs);
-
-                    // Perform the FFT and convert output (complex numbers) to Magnitude
-                    Complex[] fftSpectrum = fft.Execute(scaledSpectrumChunk);
-                    double[] scaledFFTSpectrum = DSPLib.DSP.ConvertComplex.ToMagnitude(fftSpectrum);
-                    scaledFFTSpectrum = DSP.Math.Multiply(scaledFFTSpectrum, scaleFactor);
-
-                    // These 1024 magnitude values correspond (roughly) to a single point in the audio timeline
-                    float curSongTime = getTimeFromIndex(i) * spectrumSampleSize;
-
-                    // Send our magnitude data off to our Spectral Flux Analyzer to be analyzed for peaks
-                    preProcessedSpectralFluxAnalyzer.analyzeSpectrum(Array.ConvertAll(scaledFFTSpectrum, x => (float)x), curSongTime);
-                }
-
-                UnityEngine.Debug.Log("Spectrum Analysis done");
-                UnityEngine.Debug.Log("Background Thread Completed");
-
-                threadFinished = true;
-            } catch(Exception e) {
-                threadFinished = true;
-                treadWithError = true;
-                // Catch exceptions here since the background thread won't always surface the exception to the main thread
-                UnityEngine.Debug.LogError(e.ToString());
-                Serializer.WriteToLogFile("getFullSpectrumThreaded Error");
-                Serializer.WriteToLogFile(e.ToString());
-            }
-        }
-
-        private string SpectrumCachePath
-        {
-            get
-            {
-                /*if(Application.isEditor) {
-                    return Application.dataPath+"/../"+save_path;
-                } else {
-                    return Application.persistentDataPath+save_path;
-                }   */
-                return Application.dataPath + "/../" + spc_cacheFolder;
-            }
-        }
-
-        private bool IsSpectrumCached() {
-            if(!Directory.Exists(SpectrumCachePath)) {
-                DirectoryInfo dir = Directory.CreateDirectory(SpectrumCachePath);
-                dir.Attributes |= FileAttributes.Hidden;
-
-                return false;
-            }
-
-            if(File.Exists(SpectrumCachePath + Serializer.CleanInput(CurrentChart.AudioName + spc_ext))) {
-                return true;
-            }
-
-            return false;
-        }
-
-        private void UpdateSpectrumOffset() {
-            if(isSpectrumGenerated) {
-                if(spectrumDefaultPos == null) {
-                    spectrumDefaultPos = new Vector3(
-                        m_SpectrumHolder.transform.position.x,
-                        m_SpectrumHolder.transform.position.y,
-                        0
-                    );
-                }
-
-                m_SpectrumHolder.transform.position = new Vector3(
-                    spectrumDefaultPos.x,
-                    spectrumDefaultPos.y,
-                    spectrumDefaultPos.z + MStoUnit(StartOffset)
-                );
-            }
-        }
-        #endregion
+        
 
 
         #region Public buttons actions
@@ -3079,7 +2848,7 @@ namespace MiKu.NET {
                 Miku_DialogManager.ShowDialog(Miku_DialogManager.DialogType.Alert, StringVault.Info_FileSaved);
             }
 
-            lastSaveTime = 0;
+            timeSinceLastSave = 0;
         }
 
         private void ExportToJSON() {
@@ -3879,11 +3648,11 @@ namespace MiKu.NET {
                     stepLineDrawStartingPosition = currentTime.FloatValue; //+ ( K - (_currentTime%K ) );            
                 }
 
-                if(stepLineData.currentStepLineDrawStartingPosition != stepLineDrawStartingPosition || stepLineData.currentBeatIncreasePerStep != stepHolder.BeatIncreasePerStep || forceClear) {
-                    ClearStepLines();
+                if(stepLineDrawData.currentStepLineDrawStartingPosition != stepLineDrawStartingPosition || stepLineDrawData.currentBeatIncreasePerStep != stepHolder.BeatIncreasePerStep || forceClear) {
+                    stepLineDrawData.ClearStepLines();
 
-                    stepLineData.currentStepLineDrawStartingPosition = stepLineDrawStartingPosition;
-                    stepLineData.currentBeatIncreasePerStep = stepHolder.BeatIncreasePerStep;
+                    stepLineDrawData.currentStepLineDrawStartingPosition = stepLineDrawStartingPosition;
+                    stepLineDrawData.currentBeatIncreasePerStep = stepHolder.BeatIncreasePerStep;
                     float startTime = stepLineDrawStartingPosition - 2*_msPerBeat;
 
                     float ypos = 0;
@@ -3903,14 +3672,14 @@ namespace MiKu.NET {
                         float endWidth = stepLineRenderer.endWidth;
                         stepLineRenderer.startWidth = 0.03f;
                         stepLineRenderer.endWidth = 0.03f;
-                        stepLineObjects.Add(cyrrentStepLineObject);
+                        stepLineDrawData.stepLineObjects.Add(cyrrentStepLineObject);
 
                         stepLineRenderer.SetPosition(0, new Vector3(_trackHorizontalBounds.x, ypos, GetLineEndPoint(startTime)));
                         stepLineRenderer.SetPosition(1, new Vector3(_trackHorizontalBounds.y, ypos, GetLineEndPoint(startTime)));
                     }
                 }
             } else {
-                ClearStepLines();
+                stepLineDrawData.ClearStepLines();
             }
         }
 
@@ -3927,18 +3696,7 @@ namespace MiKu.NET {
             beatLineObjects.Clear();
         }
 
-        /// <summary>
-        /// Clear the already drawed extra thin lines
-        /// </summary>
-        void ClearStepLines() {
-            if(stepLineObjects.Count <= 0) return;
-
-            for(int i = 0; i < stepLineObjects.Count; i++) {
-                DestroyImmediate(stepLineObjects[i]);
-            }
-
-            stepLineObjects.Clear();
-        }
+ 
 
         /// <summary>
         /// Instance the number game object for the beat
@@ -4340,7 +4098,7 @@ namespace MiKu.NET {
                 t.Seconds.ToString(),
                 t.Milliseconds.ToString()));
 
-            UpdateSpectrumOffset();
+            audioSpectrum.UpdateSpectrumOffset();
             SetStatWindowData();
         }
 
@@ -5273,7 +5031,7 @@ namespace MiKu.NET {
         /// </summary>
         void UpdateAutoSaveAction() {
             canAutoSave = !canAutoSave;
-            lastSaveTime = 0;
+            timeSinceLastSave = 0;
 
             Miku_DialogManager.ShowDialog(Miku_DialogManager.DialogType.Alert,
                 string.Format(
@@ -6742,7 +6500,7 @@ namespace MiKu.NET {
         }
 
         public static bool NeedSaveAction() {
-            return (s_instance.lastSaveTime > SAVE_TIME_CHECK_SECS);
+            return (s_instance.timeSinceLastSave > SAVE_TIME_CHECK_SECS);
         }
         #endregion
 
@@ -7796,7 +7554,7 @@ namespace MiKu.NET {
         /// Show the info window that notifie the user of the current working section
         /// </summary>
         /// <param name="message">The message to show</param>
-        void ToggleWorkingStateAlertOn(string message) {
+        public void ToggleWorkingStateAlertOn(string message) {
             if(!m_StateInfoObject.activeSelf) {
                 m_StateInfoObject.SetActive(false);
                 m_StateInfoText.SetText(message);
@@ -7817,7 +7575,7 @@ namespace MiKu.NET {
         /// <summary>
         /// Hide the info window that notifie the user of the current working section
         /// </summary>
-        void ToggleWorkingStateAlertOff() {
+        public void ToggleWorkingStateAlertOff() {
             if(m_StateInfoObject.activeSelf) {
                 m_StateInfoObject.SetActive(false);
             }
@@ -8198,8 +7956,8 @@ namespace MiKu.NET {
         /// </summary>
         private void DoAbortThread() {
             try {
-                if(analyzerThread != null && analyzerThread.ThreadState == System.Threading.ThreadState.Running) {
-                    analyzerThread.Abort();
+                if(audioSpectrum.analyzerThread != null && audioSpectrum.analyzerThread.ThreadState == System.Threading.ThreadState.Running) {
+                    audioSpectrum.analyzerThread.Abort();
                 }
             } catch(Exception ex) {
                 LogMessage(ex.ToString(), true);
