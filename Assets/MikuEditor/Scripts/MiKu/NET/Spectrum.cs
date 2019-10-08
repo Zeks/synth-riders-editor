@@ -43,7 +43,7 @@ namespace MiKu.NET {
             }
             return result;
         }
-        public static TimeWrapper SnapToBar(FrequencyData data, TimeWrapper StartOffset, TimeWrapper time, Track.PlacerClickSnapMode mode = Track.PlacerClickSnapMode.MinorBar) {
+        public static TimeWrapper SnapToBar(FrequencyData data, float StartOffset, TimeWrapper time, Track.PlacerClickSnapMode mode = Track.PlacerClickSnapMode.MinorBar) {
             TimeWrapper result = 0;
             if(mode == Track.PlacerClickSnapMode.MinorBar) {
                 data.barTimes.Sort();

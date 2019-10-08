@@ -273,7 +273,8 @@ namespace MiKu.NET {
             EditOffset,
             MouseSentitivity,
             CustomDifficultyEdit,
-            TagEdition
+            TagEdition,
+            EditGridOffset,
         }
 
         #region Constanst
@@ -569,6 +570,9 @@ namespace MiKu.NET {
         private InputField m_OffsetInput;
 
         [SerializeField]
+        private InputField m_GridOffsetInput;
+
+        [SerializeField]
         private InputField m_BookmarkInput;
 
         [SerializeField]
@@ -590,6 +594,9 @@ namespace MiKu.NET {
 
         [SerializeField]
         private TextMeshProUGUI m_OffsetDisplay;
+
+        [SerializeField]
+        private TextMeshProUGUI m_GridOffsetDisplay;
 
         [SerializeField]
         private TextMeshProUGUI m_PlaySpeedDisplay;
@@ -642,6 +649,9 @@ namespace MiKu.NET {
 
         [SerializeField]
         private Animator m_ManualOffsetWindowAnimator;
+
+        [SerializeField]
+        private Animator m_ManualGridOffsetWindowAnimator;
 
         [SerializeField]
         private Animator m_BookmarkWindowAnimator;
@@ -760,6 +770,8 @@ namespace MiKu.NET {
 
         // Milliseconds per Beat
         private float _msPerBeat;
+
+        private float _gridOffset;
 
         // step mode to use to for the track movement
         private StepDataHolder.CurrentStepMode _stepMode = StepDataHolder.CurrentStepMode.Primary;
@@ -2028,17 +2040,21 @@ namespace MiKu.NET {
                 HighlightNotes();
             }
 
-            if(Input.GetKeyDown(KeyCode.N) && isPlaying && !PromtWindowOpen) {
-                AddPlaceholderToChart(SnapToStep(_currentPlayTime, StepSnapStrategy.Closest));
+            if(Input.GetKeyDown(KeyCode.N) && !PromtWindowOpen) {
+                if(isPlaying)
+                    AddPlaceholderToChart(SnapToStep(_currentPlayTime, StepSnapStrategy.Closest));
+                else {
+                    AddPlaceholderToChart(CurrentTime);
+                }
             }
 
 
 
 
 
-            // Directional Notes
+                // Directional Notes
 
-            if(isSHIFTDown && !promtWindowOpen && !isPlaying) {
+                if(isSHIFTDown && !promtWindowOpen && !isPlaying) {
                 if(Input.GetKeyDown(KeyCode.D)) {
                     ToggleNoteDirectionMarker(EditorNote.NoteDirection.Right);
                 } else if(Input.GetKeyDown(KeyCode.C)) {
@@ -2122,7 +2138,7 @@ namespace MiKu.NET {
         void OnDrawGizmos() {
             if(s_instance == null) s_instance = this;
 
-            float offset = transform.position.z;
+            float offset = transform.position.z + MStoUnit(GridOffset);
             float ypos = transform.parent.position.y;
             CalculateConst();
             Gizmos.color = Color.yellow;
@@ -2399,17 +2415,18 @@ namespace MiKu.NET {
 
             TimeWrapper result = 0;
 
-            TimeWrapper previousFullBeat = time.FloatValue  - (time.FloatValue % _msPerBeat);
-            bool atExactTime = time.FloatValue % _msPerBeat == 0;
+            TimeWrapper timeWithoutOffset = time.FloatValue - GridOffset;
+            TimeWrapper previousFullBeat = timeWithoutOffset.FloatValue  - (timeWithoutOffset.FloatValue % _msPerBeat);
+            bool atExactTime = timeWithoutOffset.FloatValue % _msPerBeat == 0;
 
             if(atExactTime)
                 return time;
 
-            TimeWrapper previousSnap = time;
-            TimeWrapper nextSnap = time;
+            TimeWrapper previousSnap = timeWithoutOffset;
+            TimeWrapper nextSnap = timeWithoutOffset;
             result = previousFullBeat;
             TimeWrapper previousStepTime = result;
-            while(result < time) {
+            while(result < timeWithoutOffset) {
                 previousStepTime=result;
                 result += _msPerBeat/GetDataForCurrentStepMode().stepsInBeat;
             }
@@ -2417,12 +2434,12 @@ namespace MiKu.NET {
 
             result = previousFullBeat;
             TimeWrapper tempTime = previousFullBeat;
-            while(tempTime < time) {
+            while(tempTime < timeWithoutOffset) {
                 tempTime += _msPerBeat/GetDataForCurrentStepMode().stepsInBeat;
             }
             nextSnap = tempTime;
 
-            TimeWrapper adjustedTime = time - 40;
+            TimeWrapper adjustedTime = timeWithoutOffset - 40;
             TimeWrapper diffLeft = adjustedTime - previousSnap;
             TimeWrapper diffRight = nextSnap - adjustedTime;
 
@@ -2437,7 +2454,7 @@ namespace MiKu.NET {
                     result = nextSnap;
             }
 
-            return result.FloatValue;
+            return result.FloatValue + GridOffset;
         }
 
 
@@ -2455,13 +2472,16 @@ namespace MiKu.NET {
             lastBPM = BPM;
             lastMsPerBeat = _msPerBeat;
             BPM = _bpm;
+
+            CalculateConst();
+
             m_BPMDisplay.SetText(BPM.ToString());
             DrawTrackLines();
             DrawTrackStepLines(GetDataForCurrentStepMode(), true);
             UpdateNotePositions(lastBPM, lastMsPerBeat != _msPerBeat);
-            PreviousTime = 0;
-            CurrentTime = 0;
-            MoveCamera(true, CurrentTime);
+            //PreviousTime = 0;
+            //CurrentTime = 0;
+            //MoveCamera(true, CurrentTime);
             InitMetronome();
         }
 
@@ -2478,6 +2498,22 @@ namespace MiKu.NET {
             UpdateTrackDuration();
             UpdateDisplayStartOffset(StartOffset);
         }
+
+        /// <summary>
+        /// Change <see cname="GridOffset" /> by one Unit
+        /// </summary>
+        /// <param name="isIncrease">if true increase <see cname="StartOffset" /> otherwise decrease it</param>
+        public void ChangeGridOffset(bool isIncrease) {
+            int incrementFactor = (isCTRLDown) ? 1 : 100;
+            int increment = (isIncrease) ? incrementFactor : -incrementFactor;
+            GridOffset += increment;
+
+            GridOffset = Mathf.Max(0, GridOffset);
+            UpdateDisplayGridOffset(GridOffset);
+            DrawTrackLines();
+            DrawTrackStepLines(GetDataForCurrentStepMode(), true);
+        }
+
         /// <summary>
         /// Change the how large if the step that we are advancing on the measure
         /// </summary>
@@ -2733,6 +2769,16 @@ namespace MiKu.NET {
         }
 
         /// <summary>
+        /// Show promt for manually edit BPM/Offset
+        /// </summary>
+        public void DoEditGridOffsetManual() {
+            currentPromt = PromtType.EditGridOffset;
+            m_GridOffsetInput.text = GridOffset.ToString();
+            StartCoroutine(SetFieldFocus(m_GridOffsetInput));
+            ShowPromtWindow(string.Empty);
+        }
+
+        /// <summary>
         /// Toggle the admin mode of the selected chart
         /// </summary>
         public void ToggleAdminMode() {
@@ -2813,8 +2859,7 @@ namespace MiKu.NET {
                 case PromtType.AddBookmarkAction:
                     List<EditorBookmark> bookmarks = CurrentChart.Bookmarks.BookmarksList;
                     if(bookmarks != null) {
-                        EditorBookmark book = new EditorBookmark();
-                        book.time = CurrentTime;
+                        EditorBookmark book = new EditorBookmark(CurrentTime);
                         book.name = m_BookmarkInput.text;
                         bookmarks.Add(book);
                         s_instance.AddBookmarkGameObjectToScene(book.time, book.name);
@@ -2841,6 +2886,17 @@ namespace MiKu.NET {
                         if(targetOffset >= 0 && targetOffset != StartOffset) {
                             StartOffset = targetOffset;
                             UpdateDisplayStartOffset(StartOffset);
+                        }
+                    }
+                    break;
+                case PromtType.EditGridOffset:
+                    if(m_GridOffsetInput.text != string.Empty) {
+                        float targetOffset = float.Parse(m_GridOffsetInput.text);
+                        if(targetOffset >= 0 && targetOffset != GridOffset) {
+                            GridOffset = targetOffset;
+                            UpdateDisplayGridOffset(StartOffset);
+                            DrawTrackLines();
+                            DrawTrackStepLines(GetDataForCurrentStepMode(), true);
                         }
                     }
                     break;
@@ -2912,6 +2968,9 @@ namespace MiKu.NET {
                 } else if(currentPromt == PromtType.EditOffset) {
                     m_ManualOffsetWindowAnimator.Play("Panel Out");
                     m_OffsetInput.DeactivateInputField();
+                } else if(currentPromt == PromtType.EditGridOffset) {
+                    m_ManualGridOffsetWindowAnimator.Play("Panel Out");
+                    m_GridOffsetInput.DeactivateInputField();
                 } else if(currentPromt == PromtType.MouseSentitivity) {
                     m_MouseSentitivityAnimator.Play("Panel Out");
                     m_PanningInput.DeactivateInputField();
@@ -3746,7 +3805,7 @@ namespace MiKu.NET {
             ClearLines();
             // DrawTrackXSLines();
 
-            float offset = transform.position.z;
+            float offset = transform.position.z + MStoUnit(GridOffset);
             float ypos = transform.parent.position.y;
 
             LineRenderer lr = GetLineRenderer(generatedLeftLine);
@@ -3791,10 +3850,11 @@ namespace MiKu.NET {
         /// <param name="forceClear">If true, the lines will be forcefull redrawed</param>
         void DrawTrackStepLines(StepDataHolder stepHolder, bool forceClear = false) {
             TimeWrapper currentTime = isPlaying ? _currentPlayTime.FloatValue : _currentTime.FloatValue;
+            TimeWrapper timeWithoutOffset = currentTime - GridOffset;
             if(stepHolder.BeatIncreasePerStep < 1) {
                 float stepLineDrawStartingPosition = 0;
-                if((currentTime.FloatValue % _msPerBeat) > 0) {
-                    stepLineDrawStartingPosition = currentTime.FloatValue - (currentTime.FloatValue % _msPerBeat);
+                if(Math.Abs(timeWithoutOffset.FloatValue % _msPerBeat) > 0.01) {
+                    stepLineDrawStartingPosition = timeWithoutOffset.FloatValue - (timeWithoutOffset.FloatValue % _msPerBeat) + GridOffset;
                 } else {
                     stepLineDrawStartingPosition = currentTime.FloatValue; //+ ( K - (_currentTime%K ) );            
                 }
@@ -3810,20 +3870,20 @@ namespace MiKu.NET {
 
                     for(int j = 0; j < stepHolder.stepsInBeat * 4; ++j) {
                         startTime += _msPerBeat * stepHolder.BeatIncreasePerStep;
-                        GameObject cyrrentStepLineObject = GameObject.Instantiate(m_ThinLineXS,
+                        GameObject currentStepLineObject = GameObject.Instantiate(m_ThinLineXS,
                             Vector3.zero, Quaternion.identity, gameObject.transform);
-                        cyrrentStepLineObject.name = "[Generated Beat Line XS]";
+                        currentStepLineObject.name = "[Generated Beat Line XS]";
 
 
 
-                        cyrrentStepLineObject.transform.localPosition = new Vector3(0, 0, cyrrentStepLineObject.transform.localPosition.z);
+                        currentStepLineObject.transform.localPosition = new Vector3(0, 0, currentStepLineObject.transform.localPosition.z);
 
-                        LineRenderer stepLineRenderer = GetLineRenderer(cyrrentStepLineObject);
+                        LineRenderer stepLineRenderer = GetLineRenderer(currentStepLineObject);
                         float startWidth = stepLineRenderer.startWidth; // 0.005
                         float endWidth = stepLineRenderer.endWidth;
                         stepLineRenderer.startWidth = 0.03f;
                         stepLineRenderer.endWidth = 0.03f;
-                        stepLineDrawData.stepLineObjects.Add(cyrrentStepLineObject);
+                        stepLineDrawData.stepLineObjects.Add(currentStepLineObject);
 
                         stepLineRenderer.SetPosition(0, new Vector3(_trackHorizontalBounds.x, ypos, GetLineEndPoint(startTime)));
                         stepLineRenderer.SetPosition(1, new Vector3(_trackHorizontalBounds.y, ypos, GetLineEndPoint(startTime)));
@@ -3916,14 +3976,14 @@ namespace MiKu.NET {
         /// <returns>Returns <typeparamref name="float"/></returns>
         float GetNextStepPoint(StepDataHolder stepHolder) {
             int multiplier = 64/stepHolder.stepsInBeat;
-            float realStepsFloat = _currentTime.FloatValue/(_msPerBeat * stepHolder.BeatIncreasePerStep);
-            int realStepsInt = (int)realStepsFloat;
+            float realStepsFloat = (_currentTime.FloatValue - GridOffset)/(_msPerBeat * stepHolder.BeatIncreasePerStep);
+            int realStepsInt = (int)Math.Round(realStepsFloat, 0, MidpointRounding.AwayFromZero);
             float fraction = Math.Abs((realStepsInt+1)*_msPerBeat*stepHolder.BeatIncreasePerStep - _currentTime.FloatValue)/(_msPerBeat*stepHolder.BeatIncreasePerStep);
             if(fraction > 0.1)
                 CurrentTime=(realStepsInt+1)*_msPerBeat*stepHolder.BeatIncreasePerStep;
             else
                 CurrentTime=(realStepsInt+2)*_msPerBeat*stepHolder.BeatIncreasePerStep;
-            CurrentTime = Mathf.Min(_currentTime.FloatValue, (_songLengthInBeats - 1) * _msPerBeat);
+            CurrentTime = Mathf.Min(_currentTime.FloatValue, (_songLengthInBeats - 1) * _msPerBeat) + GridOffset;
             return MStoUnit(_currentTime.FloatValue);
         }
 
@@ -3936,15 +3996,15 @@ namespace MiKu.NET {
         /// <returns>Returns <typeparamref name="float"/></returns>
         float GetPrevStepPoint(StepDataHolder stepHolder) {
             int multiplier = 64/stepHolder.stepsInBeat;
-            float realStepsFloat = _currentTime.FloatValue/(_msPerBeat * stepHolder.BeatIncreasePerStep);
-            int realStepsInt = (int)realStepsFloat;
+            float realStepsFloat = (_currentTime.FloatValue - GridOffset)/(_msPerBeat * stepHolder.BeatIncreasePerStep);
+            int realStepsInt = (int)Math.Round(realStepsFloat, 0, MidpointRounding.AwayFromZero);
             float fraction = Math.Abs(realStepsInt*_msPerBeat*stepHolder.BeatIncreasePerStep-_currentTime.FloatValue)/(_msPerBeat*stepHolder.BeatIncreasePerStep);
             bool diffLessThan0 = (realStepsInt*_msPerBeat*stepHolder.BeatIncreasePerStep-_currentTime.FloatValue) < 0;
             if(diffLessThan0 && fraction > 0.1)
                 CurrentTime=(realStepsInt)*_msPerBeat*stepHolder.BeatIncreasePerStep;
             else
                 CurrentTime=(realStepsInt-1)*_msPerBeat*stepHolder.BeatIncreasePerStep;
-            CurrentTime = Mathf.Max(_currentTime.FloatValue, 0);
+            CurrentTime = Mathf.Max(_currentTime.FloatValue, 0) + GridOffset;
             return MStoUnit(_currentTime.FloatValue);
         }
 
@@ -4219,6 +4279,20 @@ namespace MiKu.NET {
             );
 
             m_diplayTimeLeft.SetText(backwardTimeSB);
+        }
+
+        /// <summary>
+        /// Update the display of the Start Offset to a user friendly form
+        /// </summary>
+        /// <param name="_ms">Milliseconds to format</param>
+        void UpdateDisplayGridOffset(TimeWrapper _ms) {
+            TimeSpan t = TimeSpan.FromMilliseconds(_ms.FloatValue);
+
+            m_GridOffsetDisplay.SetText(string.Format("{0:D2}s.{1:D3}ms",
+                t.Seconds.ToString(),
+                t.Milliseconds.ToString()));
+
+            SetStatWindowData();
         }
 
         /// <summary>
@@ -6521,8 +6595,7 @@ namespace MiKu.NET {
                 } else {
                     s_instance.RemoveMovementSectionFromChart(MoveTAG, CurrentTime);
 
-                    EditorSlide slide = new EditorSlide();
-                    slide.time = CurrentTime;
+                    EditorSlide slide = new EditorSlide(CurrentTime);
                     slide.initialized = true;
 
                     switch(MoveTAG) {
@@ -6790,6 +6863,43 @@ namespace MiKu.NET {
             return 0; // default
         }
 
+        public TimeWrapper GetNextStepPoint(float kbpm, TimeWrapper time) {
+            float realStepsFloat = time.FloatValue/kbpm;
+            int realStepsInt = (int)realStepsFloat;
+            float fraction = Math.Abs((realStepsInt+1)*kbpm - time.FloatValue)/kbpm;
+            if(fraction > 0.1)
+                time=(realStepsInt+1)*kbpm;
+            else
+                time=(realStepsInt+2)*kbpm;
+            return time;
+        }
+        public TimeWrapper GetPrevStepPoint(float kbpm, TimeWrapper time) {
+            float realStepsFloat = time.FloatValue/kbpm;
+            int realStepsInt = (int)realStepsFloat;
+            float fraction = Math.Abs(realStepsInt*kbpm-time.FloatValue)/(kbpm);
+            bool diffLessThan0 = (realStepsInt*kbpm-time.FloatValue) < 0;
+            if(diffLessThan0 && fraction > 0.1)
+                time=(realStepsInt)*kbpm;
+            else
+                time=(realStepsInt-1)*kbpm;
+            return time;
+        }
+
+        // this will slightly shift the notes in time if it is necessary for them to be reachable by stepping 
+        TimeWrapper AdjustTimeForNewBPM(TimeWrapper time, float bpm) {
+            float msPerBeat = (1000 * 60)/bpm;
+            float step = 1/64f;
+
+            // this makes sure the editor will not skip the hash note is supposed to be positioned at on step
+            // if it does - it's bound to the next step it WILL visit
+            TimeWrapper nextPoint = GetNextStepPoint(msPerBeat*step, time);
+            TimeWrapper prevPoint = GetPrevStepPoint(msPerBeat*step, time);
+            TimeWrapper repeat = GetNextStepPoint(msPerBeat*step, prevPoint);
+            if(repeat != time && time.Hash != nextPoint.Hash && time.Hash != prevPoint.Hash)
+                time = time - prevPoint >= nextPoint - time ? nextPoint : prevPoint;
+
+            return time;
+        }
 
         /// <summary>
         /// Update the position on the Current Place notes when any of the const changes        
@@ -6801,127 +6911,48 @@ namespace MiKu.NET {
         void UpdateNotePositions(float fromBPM = 0, bool kWasChange = false) {
             isBusy = true;
 
-            hitSFXSource.Clear();
             try {
                 // Get the current working track
                 List<Rail> rails = GetCurrentRailListByDifficulty();
-                TimeWrapper newTime;
-                float newPos;
                 foreach(Rail rail in rails) {
-                    rail.DestroyLeaderGameObject();
+                    SortedDictionary<TimeWrapper, RailNoteWrapper> newNotesByTime = new SortedDictionary<TimeWrapper, RailNoteWrapper>();
                     foreach(RailNoteWrapper note in rail.notesByTime.Values) {
-                        rail.DestroyNoteObjectAndRemoveItFromTheRail(note.thisNote.noteId);
-                        newTime = UpdateTimeToNewBPM(note.thisNote.TimePoint, fromBPM);
-                        if(note == rail.Leader)
-                            AddTimeToSFXList(newTime);
-                        newPos = MStoUnit(newTime);
-                        note.thisNote.Position[2] = newPos;
+                        var adjustedTime = AdjustTimeForNewBPM(note.thisNote.InitialTimePoint, BPM);
+                        note.thisNote.TimePoint = adjustedTime;
+                        newNotesByTime.Add(adjustedTime, note);
                     }
-
-                    RailHelper.ReinstantiateRail(rail);
-                    RailHelper.ReinstantiateRailSegmentObjects(rail);
+                    rail.notesByTime = newNotesByTime;
                 }
 
 
                 Dictionary<TimeWrapper, List<EditorNote>> workingTrack = GetCurrentTrackDifficulty();
 
-
-
                 if(workingTrack != null && workingTrack.Count > 0) {
                     // New Dictionary on where the new data will be update
-                    Dictionary<TimeWrapper, List<EditorNote>> updateData = new Dictionary<TimeWrapper, List<EditorNote>>(new TimeWrapper());
+                    Dictionary<TimeWrapper, List<EditorNote>> updatedData = new Dictionary<TimeWrapper, List<EditorNote>>(new TimeWrapper());
 
                     // Iterate each entry on the Dictionary and get the note to update
                     foreach(KeyValuePair<TimeWrapper, List<EditorNote>> kvp in workingTrack.OrEmptyIfNull()) {
                         List<EditorNote> _notes = kvp.Value;
-                        List<EditorNote> updateList = new List<EditorNote>();
-
-                        // The new update time
-                        newTime = UpdateTimeToNewBPM(kvp.Key, fromBPM);
-
                         // Iterate each note and update its info
-                        for(int i = 0; i < _notes.Count; i++) {
-                            EditorNote n = _notes[i];
-
-                            // Get the new position using the new constants
-                            newPos = MStoUnit(newTime);
-                            // And update the value on the Dictionary
-                            n.Position = new float[3] { n.Position[0], n.Position[1], newPos };
-                            // And update the position of the GameObject
-                            GameObject noteGO = n.GameObject;
-                            noteGO.transform.position = new Vector3(
-                                noteGO.transform.position.x,
-                                noteGO.transform.position.y,
-                                newPos);
-
-                            // Update data
-                            //n.name = FormatNoteName(newTime, i, n.HandType);
-                            updateList.Add(n);
-                            noteGO.name = n.name;
-
-                            if(n.Segments != null && n.Segments.GetLength(0) > 0) {
-                                for(int j = 0; j < n.Segments.GetLength(0); ++j) {
-                                    Vector3 segmentPos = transform.InverseTransformPoint(
-                                            n.Segments[j, 0],
-                                            n.Segments[j, 1],
-                                            n.Segments[j, 2]
-                                    );
-
-                                    TimeWrapper tms = UnitToMS(segmentPos.z);
-                                    n.Segments[j, 2] = MStoUnit(UpdateTimeToNewBPM(tms, fromBPM));
-                                }
-
-                                AddNoteSegmentsObject(n, noteGO.transform.Find("LineArea"), true);
-                            }
-
-                            /* if(n.Segments != null && n.Segments.GetLength(0) > 0) {
-                                for(int j = 0; j < n.Segments.GetLength(0); ++j) {
-                                    Vector3 segmentPos = transform.InverseTransformPoint(
-                                            n.Segments[j, 0],
-                                            n.Segments[j, 1], 
-                                            n.Segments[j, 2]
-                                    );
-
-                                    float tms = UnitToMS(segmentPos.z);
-                                    n.Segments[j, 2] = MStoUnit(UpdateTimeToBPM(tms, fromBPM));
-                                }
-
-                                RenderLine(noteGO, n.Segments, true);
-                            } */
+                        var adjustedTime = AdjustTimeForNewBPM(kvp.Key, BPM);
+                        foreach(EditorNote note in _notes) {
+                            note.TimePoint = adjustedTime;
                         }
-
-                        // Add update note to new list
-                        //Trace.WriteLine("Appending to new list:" + "Old time: " + kvp.Key.FloatValue + " New Time: " + newTime.FloatValue);
-                        Track.AddTimeToSFXList(newTime.FloatValue);
-                        updateData.Add(newTime, updateList);
+                        updatedData.Add(adjustedTime, _notes);
                     }
-
                     // Finally Update the note data
                     workingTrack.Clear();
-                    UpdateCurrentTrackDifficulty(updateData);
+                    UpdateCurrentTrackDifficulty(updatedData);
                 }
 
                 List<TimeWrapper> workingEffects = GetCurrentEffectDifficulty();
                 if(workingEffects != null && workingEffects.Count > 0) {
                     List<TimeWrapper> updatedEffects = new List<TimeWrapper>();
                     for(int i = 0; i < workingEffects.Count; ++i) {
-                        // The new update time
-                        newTime = UpdateTimeToNewBPM(workingEffects[i], fromBPM);
-                        newPos = MStoUnit(newTime);
-
-                        GameObject effectGO = GameObject.Find(GetEffectIdFormated(workingEffects[i]));
-                        if(effectGO != null) {
-                            effectGO.transform.position = new Vector3(
-                                effectGO.transform.position.x,
-                                effectGO.transform.position.y,
-                                newPos);
-                            effectGO.name = GetEffectIdFormated(newTime);
-
-                            updatedEffects.Add(newTime.FloatValue);
-                        }
-
+                        var adjustedTime = AdjustTimeForNewBPM(workingEffects[i], BPM);
+                        updatedEffects.Add(adjustedTime);
                     }
-
                     workingEffects.Clear();
                     UpdateCurrentEffectDifficulty(updatedEffects);
                 }
@@ -6932,120 +6963,28 @@ namespace MiKu.NET {
                     EditorBookmark currBookmark;
                     for(int i = 0; i < bookmarks.Count; ++i) {
                         currBookmark = bookmarks[i];
-                        newTime = UpdateTimeToNewBPM(currBookmark.time, fromBPM);
-                        newPos = MStoUnit(newTime);
-
-                        GameObject bookmarkGO = GameObject.Find(GetBookmarkIdFormated(currBookmark.time));
-                        if(bookmarkGO != null) {
-                            bookmarkGO.transform.position = new Vector3(
-                                bookmarkGO.transform.position.x,
-                                bookmarkGO.transform.position.y,
-                                newPos);
-                            bookmarkGO.name = GetBookmarkIdFormated(newTime);
-                            //currBookmark.time = newTime;
-                            EditorBookmark copyBookmark = new EditorBookmark();
-                            copyBookmark.name = currBookmark.name;
-                            copyBookmark.time = newTime;
-                            updateBookmarks.Add(copyBookmark);
-                        }
+                        var adjustedTime = AdjustTimeForNewBPM(bookmarks[i].initialTime, BPM);
+                        currBookmark.time = adjustedTime;
+                        updateBookmarks.Add(currBookmark);
                     }
-
-                    bookmarks.Clear();
-                    UpdateCurrentEffectDifficulty(updateBookmarks, true);
-                }
-
-                List<TimeWrapper> jumps = GetCurrentMovementListByDifficulty(true);
-                if(jumps != null && jumps.Count > 0) {
-                    List<TimeWrapper> updatedJumps = new List<TimeWrapper>();
-                    for(int i = 0; i < jumps.Count; ++i) {
-                        newTime = UpdateTimeToNewBPM(jumps[i], fromBPM);
-                        newPos = MStoUnit(newTime);
-
-                        GameObject moveSectGO = GameObject.Find(GetMovementIdFormated(jumps[i], JUMP_TAG));
-                        if(moveSectGO != null) {
-                            moveSectGO.transform.position = new Vector3(
-                                moveSectGO.transform.position.x,
-                                moveSectGO.transform.position.y,
-                                newPos);
-                            moveSectGO.name = GetMovementIdFormated(newTime, JUMP_TAG);
-
-                            updatedJumps.Add(newTime.FloatValue);
-                        }
-                    }
-
-                    jumps.Clear();
-                    UpdateCurrentMovementDifficulty(updatedJumps, JUMP_TAG);
-                }
-
-                List<TimeWrapper> crouchs = GetCurrentMovementListByDifficulty(false);
-                if(crouchs != null && crouchs.Count > 0) {
-                    List<TimeWrapper> updatedCrouchs = new List<TimeWrapper>();
-                    for(int i = 0; i < crouchs.Count; ++i) {
-                        newTime = UpdateTimeToNewBPM(crouchs[i], fromBPM);
-                        newPos = MStoUnit(newTime);
-
-                        GameObject moveSectGO = GameObject.Find(GetMovementIdFormated(crouchs[i], CROUCH_TAG));
-                        if(moveSectGO != null) {
-                            moveSectGO.transform.position = new Vector3(
-                                moveSectGO.transform.position.x,
-                                moveSectGO.transform.position.y,
-                                newPos);
-                            moveSectGO.name = GetMovementIdFormated(newTime, CROUCH_TAG);
-
-                            updatedCrouchs.Add(newTime.FloatValue);
-                        }
-                    }
-
-                    crouchs.Clear();
-                    UpdateCurrentMovementDifficulty(updatedCrouchs, CROUCH_TAG);
                 }
 
                 List<EditorSlide> slides = GetCurrentMovementListByDifficulty();
                 if(slides != null && slides.Count > 0) {
-                    List<EditorSlide> updateSlides = new List<EditorSlide>();
                     for(int i = 0; i < slides.Count; ++i) {
                         EditorSlide currSlide = slides[i];
-                        newTime = UpdateTimeToNewBPM(slides[i].time, fromBPM);
-                        newPos = MStoUnit(newTime);
-
-                        GameObject moveSectGO = GameObject.Find(GetMovementIdFormated(currSlide.time, GetSlideTagByType(currSlide.slideType)));
-                        if(moveSectGO != null) {
-                            moveSectGO.transform.position = new Vector3(
-                                moveSectGO.transform.position.x,
-                                moveSectGO.transform.position.y,
-                                newPos);
-                            moveSectGO.name = GetMovementIdFormated(newTime, GetSlideTagByType(currSlide.slideType));
-
-                            currSlide.time = newTime;
-                            updateSlides.Add(currSlide);
-                        }
+                        var adjustedTime = AdjustTimeForNewBPM(slides[i].initialTime, BPM);
+                        currSlide.time = adjustedTime;
                     }
-
-                    slides.Clear();
-                    UpdateCurrentMovementDifficulty(updateSlides, SLIDE_CENTER_TAG);
                 }
 
                 List<TimeWrapper> lights = GetCurrentLightsByDifficulty();
                 if(lights != null && lights.Count > 0) {
                     List<TimeWrapper> updatedLights = new List<TimeWrapper>();
                     for(int i = 0; i < lights.Count; ++i) {
-                        // The new update time
-                        newTime = UpdateTimeToNewBPM(lights[i], fromBPM);
-                        newPos = MStoUnit(newTime);
-
-                        GameObject effectGO = GameObject.Find(GetLightIdFormated(lights[i]));
-                        if(effectGO != null) {
-                            effectGO.transform.position = new Vector3(
-                                effectGO.transform.position.x,
-                                effectGO.transform.position.y,
-                                newPos);
-                            effectGO.name = GetLightIdFormated(newTime);
-
-                            updatedLights.Add(newTime.FloatValue);
-                        }
-
+                        var adjustedTime = AdjustTimeForNewBPM(lights[i], BPM);
+                        updatedLights.Add(adjustedTime);
                     }
-
                     lights.Clear();
                     UpdateCurrentLightsDifficulty(updatedLights);
                 }
@@ -7057,12 +6996,8 @@ namespace MiKu.NET {
                 Serializer.WriteToLogFile(ex.ToString());
             }
 
-
-            ///_currentTime = UpdateTimeToBPM(_currentTime);
-            /*_currentTime = _currentTime - (K);
-            MoveCamera(true , MStoUnit(_currentTime));*/
-
-            //CurrentChart.BPM = BPM;
+            var adjustedCurrentTime = AdjustTimeForNewBPM(_currentTime, BPM);
+            _currentTime = adjustedCurrentTime;
             isBusy = false;
         }
 
@@ -8236,6 +8171,19 @@ namespace MiKu.NET {
             set
             {
                 startOffset = value;
+            }
+        }
+
+        public float GridOffset
+        {
+            get
+            {
+                return _gridOffset;
+            }
+
+            set
+            {
+                _gridOffset = value;
             }
         }
 

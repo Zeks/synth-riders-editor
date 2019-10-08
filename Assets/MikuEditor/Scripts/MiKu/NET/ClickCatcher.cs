@@ -20,7 +20,7 @@ namespace MiKu.NET {
 
         private void PlaceWithSnapToBars(TimeWrapper time, PointerEventData.InputButton button) {
             TimeWrapper convertedTime = 0;
-            convertedTime = FrequencyData.SnapToBar(Track.s_instance.frequencyData, Track.s_instance.StartOffset, time, Track.PlacerClickSnapMode.MajorBar);
+            convertedTime = FrequencyData.SnapToBar(Track.s_instance.frequencyData, Track.s_instance.StartOffset.FloatValue, time, Track.PlacerClickSnapMode.MajorBar);
             if(convertedTime == 0)
                 return;
 

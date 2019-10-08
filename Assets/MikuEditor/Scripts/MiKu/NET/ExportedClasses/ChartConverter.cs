@@ -90,7 +90,7 @@ namespace MiKu.NET.Charting {
             {
                 initialized = editorSlide.initialized,
                 slideType = (Note.NoteType)editorSlide.slideType,
-                time = editorSlide.time.FloatValue
+                time = editorSlide.initialTime.FloatValue
             };
             slides.Add(slide);
         }
@@ -109,15 +109,16 @@ namespace MiKu.NET.Charting {
             keys.Sort();
 
             foreach(TimeWrapper key in keys.OrEmptyIfNull()) {
-                if(!exportValue.ContainsKey(key.FloatValue))
-                    exportValue.Add(key.FloatValue, new List<Note>());
                 List<EditorNote> listAtCurrentTime = editorDictionary[key];
                 // will need to create note's name in the format that game understands
                 foreach(var editorNote in listAtCurrentTime.OrEmptyIfNull()) {
-                    Note exportNote = new Note(new UnityEngine.Vector3 { x = editorNote.Position[0], y = editorNote.Position[1], z = Track.MStoUnit(editorNote.TimePoint) },
+                    if(!exportValue.ContainsKey(editorNote.InitialTimePoint.FloatValue))
+                        exportValue.Add(editorNote.InitialTimePoint.FloatValue, new List<Note>());
+
+                    Note exportNote = new Note(new UnityEngine.Vector3 { x = editorNote.Position[0], y = editorNote.Position[1], z = Track.MStoUnit(editorNote.InitialTimePoint) },
                         editorNote.name, editorNote.ComboId, ConvertEditorNoteTypeToGameNoteType(editorNote.HandType));
                     exportNote.Segments = editorNote.Segments;
-                    exportValue[key.FloatValue].Add(exportNote);
+                    exportValue[editorNote.InitialTimePoint.FloatValue].Add(exportNote);
                 }
             }
         }
@@ -131,8 +132,8 @@ namespace MiKu.NET.Charting {
             }
             foreach(Rail rail in rails.OrEmptyIfNull()) {
                 EditorNote leaderNote = rail.Leader.thisNote; // !!!
-                if(!exportValue.ContainsKey(leaderNote.TimePoint.FloatValue)) {
-                    exportValue.Add(leaderNote.TimePoint.FloatValue, new List<Note>());
+                if(!exportValue.ContainsKey(leaderNote.InitialTimePoint.FloatValue)) {
+                    exportValue.Add(leaderNote.InitialTimePoint.FloatValue, new List<Note>());
                 }
                 // first we create a note to pass to the game, theb go over the rail assigning the segments
                 Vector3 pos = new Vector3(leaderNote.Position[0], leaderNote.Position[1], leaderNote.Position[2]);
@@ -200,14 +201,14 @@ namespace MiKu.NET.Charting {
 
                 foreach(var gameNote in entry.Value.OrEmptyIfNull()) {
                     TimeWrapper key = entry.Key;
-                    float K = (1000 * 60)/bpm;
+                    float msPerBeat = (1000 * 60)/bpm;
                     float step = 1/64f;
 
                     // this makes sure the editor will not skip the hash note is supposed to be positioned at on step
                     // if it does - it's bound to the next step it WILL visit
-                    TimeWrapper nextPoint = GetNextStepPoint(K*step, key);
-                    TimeWrapper prevPoint = GetPrevStepPoint(K*step, key);
-                    TimeWrapper repeat = GetNextStepPoint(K*step, prevPoint);
+                    TimeWrapper nextPoint = GetNextStepPoint(msPerBeat*step, key);
+                    TimeWrapper prevPoint = GetPrevStepPoint(msPerBeat*step, key);
+                    TimeWrapper repeat = GetNextStepPoint(msPerBeat*step, prevPoint);
                     if(repeat != key && key.Hash != nextPoint.Hash && key.Hash != prevPoint.Hash)
                         key = key - prevPoint >= nextPoint - key ? nextPoint : prevPoint;
                         //key = nextPoint;
@@ -639,7 +640,8 @@ namespace MiKu.NET.Charting {
             {
                 initialized = editorSlide.initialized,
                 slideType = (EditorNote.NoteHandType)editorSlide.slideType,
-                time = editorSlide.time
+                time = editorSlide.time,
+                initialTime = editorSlide.time
             };
             slides.Add(slide);
         }
@@ -703,7 +705,8 @@ namespace MiKu.NET.Charting {
                     EditorBookmark exportBookmark = new EditorBookmark
                     {
                         name = gameBookmark.name,
-                        time= gameBookmark.time
+                        time = gameBookmark.time,
+                        initialTime = gameBookmark.time
                     };
                     editorChart.Bookmarks.BookmarksList.Add(exportBookmark);
                 }

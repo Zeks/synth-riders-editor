@@ -63,8 +63,15 @@ namespace MiKu.NET.Charting {
         public bool nullNote = false;
 
         private static int noteCounter = 0;
-
+        // this is the current time the note is positioned at
+        // unless BPM changes happen, this is THE time for the note
+        // if bpm is changed, initialTimePoint is used for subsequent recalculations
         private TimeWrapper timePoint = new TimeWrapper(0);
+
+        // time might drift a tiny bit because of bpm changes
+        // this ensures each drift has the same origin point
+        // instead of error accumulating
+        private TimeWrapper initialTimePoint = new TimeWrapper(0);
 
         /// <value>
 		/// ID for cache use, when set the format used is Note_{value passed}
@@ -131,7 +138,17 @@ namespace MiKu.NET.Charting {
                 timePoint = value.FloatValue; ;
             }
         }
-
+        public TimeWrapper InitialTimePoint
+        {
+            get
+            {
+                return initialTimePoint;
+            }
+            set
+            {
+                initialTimePoint = value.FloatValue; ;
+            }
+        }
         public void SetTime(TimeWrapper time, float bpm) {
             timePoint = time.FloatValue;
         }
@@ -142,6 +159,7 @@ namespace MiKu.NET.Charting {
             name = noteId.ToString();
 
             timePoint = time;
+            InitialTimePoint = TimePoint;
             Console.WriteLine("Creating note at: " + time);
             ComboId = idCmb;
             HandType = t;
@@ -156,6 +174,7 @@ namespace MiKu.NET.Charting {
             name = noteId.ToString();
 
             timePoint = time;
+            InitialTimePoint = TimePoint;
             Console.WriteLine("Creating note at: " + time);
             ComboId = idCmb;
             HandType = t;
@@ -170,6 +189,7 @@ namespace MiKu.NET.Charting {
             name = noteId.ToString();
             Console.WriteLine("Creating note at: " + time);
             timePoint = time;
+            InitialTimePoint = TimePoint;
             HandType = handType;
             UsageType = usageType;
             Position = new float[3] { pos.x, pos.y, pos.z };
@@ -230,7 +250,7 @@ namespace MiKu.NET.Charting {
         /// <value>
         /// Notes for the easy dificulty
         /// </value>
-        public  List<Rail> Easy { get; set; }
+        public List<Rail> Easy { get; set; }
 
         /// <value>
         /// Notes for the normal dificulty
@@ -245,7 +265,7 @@ namespace MiKu.NET.Charting {
         /// <value>
         /// Notes for the expert dificulty
         /// </value>
-        public  List<Rail> Expert { get; set; }
+        public List<Rail> Expert { get; set; }
 
         /// <value>
         /// Notes for the Master dificulty
@@ -332,7 +352,14 @@ namespace MiKu.NET.Charting {
 
     [Serializable]
     public class EditorBookmark {
+        public EditorBookmark() { }
+        public EditorBookmark(TimeWrapper time) {
+            this.time = time;
+            this.initialTime = time;
+        }
+
         public TimeWrapper time = new TimeWrapper(0);
+        public TimeWrapper initialTime = new TimeWrapper(0);
         public string name;
     }
 
@@ -427,7 +454,13 @@ namespace MiKu.NET.Charting {
 
     [Serializable]
     public class EditorSlide {
+        public EditorSlide() { }
+        public EditorSlide(TimeWrapper time) {
+            this.time = time;
+            this.initialTime = time;
+        }
         public TimeWrapper time = new TimeWrapper(0);
+        public TimeWrapper initialTime = new TimeWrapper(0);
         public EditorNote.NoteHandType slideType;
 
         public bool initialized;
@@ -572,10 +605,10 @@ namespace MiKu.NET.Charting {
 		/// List of beats that made the Chart
 		/// </value>
         public EditorBeats Track { get; set; }
-        
+
         /// <value>
-		/// List of Rails that made the Chart
-		/// </value>
+        /// List of Rails that made the Chart
+        /// </value>
         public EditorRails Rails { get; set; }
 
         /// <value>
