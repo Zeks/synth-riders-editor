@@ -33,7 +33,7 @@ namespace MiKu.NET.Charting {
 
         public enum NoteUsageType {
             None,
-            Ball,
+            Note,
             Line,
             Breaker
         };
@@ -145,7 +145,7 @@ namespace MiKu.NET.Charting {
             Console.WriteLine("Creating note at: " + time);
             ComboId = idCmb;
             HandType = t;
-            UsageType = EditorNote.NoteUsageType.Ball;
+            UsageType = EditorNote.NoteUsageType.Note;
             Position = new float[3] { pos.x, pos.y, pos.z };
             Direction = d;
         }
@@ -159,7 +159,7 @@ namespace MiKu.NET.Charting {
             Console.WriteLine("Creating note at: " + time);
             ComboId = idCmb;
             HandType = t;
-            UsageType = EditorNote.NoteUsageType.Ball;
+            UsageType = EditorNote.NoteUsageType.Note;
             Position = new float[3] { pos.x, pos.y, pos.z };
             Direction = d;
         }
@@ -177,7 +177,7 @@ namespace MiKu.NET.Charting {
 
         public EditorNote() {
             noteId = noteCounter++;
-            UsageType = EditorNote.NoteUsageType.Ball;
+            UsageType = EditorNote.NoteUsageType.Note;
         }
         public void Log() {
             Trace.WriteLine("Note ID: " + noteId + "time: " + TimePoint + "position:"  + Position + " handtype:" + HandType+  " usagetype:" + UsageType +  " combo:" + ComboId);

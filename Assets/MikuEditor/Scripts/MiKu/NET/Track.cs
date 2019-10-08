@@ -19,7 +19,7 @@ using System.Diagnostics;
 
 namespace MiKu.NET {
 
-    
+
 
     /// <sumary>
     /// Small class for the representation of the Track info
@@ -72,6 +72,51 @@ namespace MiKu.NET {
         }
     }
 
+    public class FrequencyData {
+        public FrequencyData() {
+            peakTimes = new List<TimeWrapper>();
+            barTimes = new List<TimeWrapper>();
+        }
+        private TimeWrapper NextPeak(TimeWrapper time) {
+            TimeWrapper result = time;
+            peakTimes.Sort();
+            var temp = peakTimes.SkipWhile(t => t <= time);
+            if(temp.ToList().Count != 0) {
+                result = temp.First();
+            }
+            return result;
+        }
+        private TimeWrapper PreviousPeak(TimeWrapper time) {
+            TimeWrapper result = time;
+            peakTimes.Sort();
+            peakTimes.Reverse();
+            var temp = peakTimes.SkipWhile(t => t >= time);
+            if(temp.ToList().Count != 0) {
+                result = temp.First();
+            }
+            return result;
+        }
+        public static TimeWrapper SnapToBar(FrequencyData data, TimeWrapper StartOffset, TimeWrapper time, Track.PlacerClickSnapMode mode = Track.PlacerClickSnapMode.MinorBar) {
+            TimeWrapper result = 0;
+            if(mode == Track.PlacerClickSnapMode.MinorBar) {
+                data.barTimes.Sort();
+                data.barTimes.Reverse();
+                var temp = data.barTimes.SkipWhile(t => t + StartOffset > time);
+                result = temp.First() + StartOffset;
+            } else {
+                data.peakTimes.Sort();
+                data.peakTimes.Reverse();
+                var temp = data.peakTimes.SkipWhile(t => t + StartOffset > time);
+                if(temp.Count() > 0)
+                    result = temp.First() + StartOffset;
+                else
+                    result = 0;
+            }
+            return result;
+        }
+        public List<TimeWrapper> peakTimes;
+        public List<TimeWrapper> barTimes;
+    }
 
     public class LongNote {
         public TimeWrapper startTime = new TimeWrapper(0);
@@ -293,7 +338,7 @@ namespace MiKu.NET {
         // The Bottom Boundary of the grid
         private const float BOTTOM_GRID_BOUNDARY = -0.6054f;
 
-        // Min distance tow notes can get before they are considered as overlaping
+        // Min distance between notes before they are considered as overlaping
         private const float MIN_OVERLAP_DISTANCE = 0.15f;
 
         // Min duration on milliseconds that the line can have
@@ -309,16 +354,16 @@ namespace MiKu.NET {
         private const float MIN_NOTE_RESIZE = 0.1f;
 
         // Min interval on Milliseconds between each effect
-        private const float MIN_FLASH_INTERVAL = 1000f;
+        private const float MIN_FLASH_INTERVAL_MS = 1000f;
 
         // Max number of effects allowed
         private const int MAX_FLASH_ALLOWED = 80;
 
         // Min time to ask for save, on seconds
-        private const int SAVE_TIME_CHECK = 30;
+        private const int SAVE_TIME_CHECK_SECS = 30;
 
         // Min time to ask for Auto Save, on seconds
-        private const int AUTO_SAVE_TIME_CHECK = 300;
+        private const int AUTO_SAVE_TIME_CHECK_SECS = 300;
 
         // Tags for the movments sections
         private const string JUMP_TAG = "Jump";
@@ -337,7 +382,7 @@ namespace MiKu.NET {
 
         //public const float MIN_TIME_OVERLAY_CHECK = 5;
 
-        public const float MIN_NOTE_START = 2;
+        public const float ALLOW_NOTES_AFTER_SECS = 2;
 
         public const int MAX_TAG_ALLOWED = 10;
 
@@ -714,7 +759,7 @@ namespace MiKu.NET {
         public bool DirectionalNotesEnabled = true;
 
         // distance/time that will be drawed
-        private int _songLengthInSteps;
+        private int _songLengthInBeats;
 
         // BPM
         private float _bpm = 120;
@@ -751,18 +796,24 @@ namespace MiKu.NET {
         private StepDataHolder stepHolderSecondary = CreateStepData(StepDataHolder.CurrentStepMode.Secondary);
         private StepDataHolder stepHolderPrecise = CreateStepData(StepDataHolder.CurrentStepMode.Precise, 64);
 
-        private PlayStopMode playStopMode = PlayStopMode.StepBack;
-
-        // Current time advance the note selector
+        // current time the editor is at
         private TimeWrapper _currentTime = 0;
-        // Previous time 
+        // recorded before stepping to the next time
         private TimeWrapper _previousTime = 0;
 
-        private List<TimeWrapper> peakTimes;
-        private List<TimeWrapper> barTimes;
+        public FrequencyData frequencyData;
+
+        // Is the editor Current Playing the Track
+        private bool isPlaying = false;
+
+        // how fast the play is
+        private float playSpeed = 1f;
 
         // Current Play time
         private TimeWrapper _currentPlayTime = 0;
+        
+        // regulates if editor will step back to whole step when Play is stopped
+        private PlayStopMode playStopMode = PlayStopMode.StepBack;
 
         // Current multiplier for the number of lines drawed
         private int _currentMultiplier = 1;
@@ -771,12 +822,10 @@ namespace MiKu.NET {
         private Vector2 _trackHorizontalBounds = new Vector2(-1.2f, 1.2f);
 
         // To save currently drawed lines for ease of acces
-        private List<GameObject> drawedLines;
-        private List<GameObject> drawedXSLines;
+        private List<GameObject> beatLineObjects;
+        private List<GameObject> stepLineObjects;
 
-        // Is the editor Current Playing the Track
-        private bool isPlaying = false;
-
+        // whether to highlight the lines that contain objects with green color
         private bool showPlacementLines = true;
 
         // Current chart meta data
@@ -797,8 +846,6 @@ namespace MiKu.NET {
         // Offset before the song start playing
         private TimeWrapper startOffset = 0;
 
-        private float playSpeed = 1f;
-
         // Seconds of Lattency offset
         private float latencyOffset = 0f;
 
@@ -810,7 +857,7 @@ namespace MiKu.NET {
 
         // The current selected type of note marker
         private EditorNote.NoteHandType selectedNoteType = EditorNote.NoteHandType.LeftHanded;
-        private EditorNote.NoteUsageType selectedUsageType = EditorNote.NoteUsageType.Ball;
+        private EditorNote.NoteUsageType selectedUsageType = EditorNote.NoteUsageType.Note;
 
         // Has the chart been Initiliazed
         private bool isInitilazed = false;
@@ -820,6 +867,7 @@ namespace MiKu.NET {
         private float nextKeyHold = 0.5f;
         private float keyHoldTime = 0;
         private bool keyIsHold = false;
+
         public bool isCTRLDown = false;
         public bool isALTDown = false;
         public bool isSHIFTDown = false;
@@ -838,10 +886,13 @@ namespace MiKu.NET {
 
         // For the refresh of the selected marker when changed
         private NotesArea notesArea;
+        // set this to trigger an update of displayed note type in NoteArea on the next Update invocation
         private bool markerWasUpdated = false;
-        private bool gridWasOn = false;
+        private bool gridIsActive = false;
         private float currentXSLinesSection = -1;
         private float currentXSMPBM;
+
+        // metronome
         private bool isMetronomeActive = false;
         private bool wasMetronomePlayed = false;
 
@@ -994,8 +1045,8 @@ namespace MiKu.NET {
             newLaunch = false;
             Trace.AutoFlush = true;
             // Initilization of the Game Object to use for the line drawing
-            drawedLines = new List<GameObject>();
-            drawedXSLines = new List<GameObject>();
+            beatLineObjects = new List<GameObject>();
+            stepLineObjects = new List<GameObject>();
 
             generatedLeftLine = GameObject.Instantiate(m_SideLines, Vector3.zero,
                  Quaternion.identity, gameObject.transform);
@@ -1060,17 +1111,15 @@ namespace MiKu.NET {
                 UpdateDisplayTime(CurrentTime);
                 m_MetaNotesColider.SetActive(false);
 
-                gridWasOn = m_GridGuide.activeSelf;
+                gridIsActive = m_GridGuide.activeSelf;
                 // Toggle Grid on by default
-                if(!gridWasOn) ToggleGridGuide();
+                if(!gridIsActive)
+                    ToggleGridGuide();
 
                 // After Enabled we proced to Init the Chart Data
                 InitChart();
                 SwitchRenderCamera(0);
                 ToggleWorkingStateAlertOff();
-
-                peakTimes = new List<TimeWrapper>();
-                barTimes = new List<TimeWrapper>();
 
                 CurrentSelection = new SelectionArea();
                 //
@@ -1182,8 +1231,6 @@ namespace MiKu.NET {
             return foundTimes.First();
         }
 
-
-
         private TimeWrapper NextTimeForPolicy(TimeWrapper time, TimeFindPolicy timeFindPolicy) {
             return Track.FindNextTime(time, timeFindPolicy);
         }
@@ -1193,8 +1240,8 @@ namespace MiKu.NET {
 
         private TimeWrapper NextPeak(TimeWrapper time) {
             TimeWrapper result = time;
-            peakTimes.Sort();
-            var temp = peakTimes.SkipWhile(t => t <= time);
+            frequencyData.peakTimes.Sort();
+            var temp = frequencyData.peakTimes.SkipWhile(t => t <= time);
             if(temp.ToList().Count != 0) {
                 result = temp.First();
             }
@@ -1202,9 +1249,9 @@ namespace MiKu.NET {
         }
         private TimeWrapper PreviousPeak(TimeWrapper time) {
             TimeWrapper result = time;
-            peakTimes.Sort();
-            peakTimes.Reverse();
-            var temp = peakTimes.SkipWhile(t => t >= time);
+            frequencyData.peakTimes.Sort();
+            frequencyData.peakTimes.Reverse();
+            var temp = frequencyData.peakTimes.SkipWhile(t => t >= time);
             if(temp.ToList().Count != 0) {
                 result = temp.First();
             }
@@ -1239,7 +1286,7 @@ namespace MiKu.NET {
                 CurrentTime = nextTime;
                 MoveCamera(true, moveTarget);
             }
-            DrawTrackXSLines(GetDataForCurrentStepMode());
+            DrawTrackStepLines(GetDataForCurrentStepMode());
             gridManager.ResetLinesMaterial();
             if(showPlacementLines)
                 gridManager.HighlightLinesForPointList(FetchObjectPositionsAtCurrentTime(CurrentTime));
@@ -1272,7 +1319,7 @@ namespace MiKu.NET {
                 CurrentTime = previousTime;
                 MoveCamera(true, moveTarget);
             }
-            DrawTrackXSLines(GetDataForCurrentStepMode());
+            DrawTrackStepLines(GetDataForCurrentStepMode());
             gridManager.ResetLinesMaterial();
             if(showPlacementLines)
                 gridManager.HighlightLinesForPointList(FetchObjectPositionsAtCurrentTime(CurrentTime));
@@ -1408,7 +1455,7 @@ namespace MiKu.NET {
             if(vertAxis < 0 && keyHoldTime > nextKeyHold && !PromtWindowOpen && !isCTRLDown && !isALTDown) {
                 nextKeyHold = keyHoldTime + keyHoldDelta;
                 MoveCamera(true, GetPrevStepPoint(GetDataForCurrentStepMode()));
-                DrawTrackXSLines(GetDataForCurrentStepMode());
+                DrawTrackStepLines(GetDataForCurrentStepMode());
                 nextKeyHold = nextKeyHold - keyHoldTime;
                 keyHoldTime = 0.0f;
             }
@@ -1417,7 +1464,7 @@ namespace MiKu.NET {
             if(vertAxis > 0 && keyHoldTime > nextKeyHold && !PromtWindowOpen && !isCTRLDown && !isALTDown) {
                 nextKeyHold = keyHoldTime + keyHoldDelta;
                 MoveCamera(true, GetNextStepPoint(GetDataForCurrentStepMode()));
-                DrawTrackXSLines(GetDataForCurrentStepMode());
+                DrawTrackStepLines(GetDataForCurrentStepMode());
                 nextKeyHold = nextKeyHold - keyHoldTime;
                 keyHoldTime = 0.0f;
             }
@@ -1444,7 +1491,7 @@ namespace MiKu.NET {
                 if(isCTRLDown && !IsPlaying) {
                     CloseSpecialSection();
                     ReturnToStartTime();
-                    DrawTrackXSLines(GetDataForCurrentStepMode());
+                    DrawTrackStepLines(GetDataForCurrentStepMode());
                     gridManager.ResetLinesMaterial();
                     if(showPlacementLines)
                         gridManager.HighlightLinesForPointList(FetchObjectPositionsAtCurrentTime(CurrentTime));
@@ -1456,7 +1503,7 @@ namespace MiKu.NET {
                 if(isCTRLDown && !IsPlaying) {
                     CloseSpecialSection();
                     GoToEndTime();
-                    DrawTrackXSLines(GetDataForCurrentStepMode());
+                    DrawTrackStepLines(GetDataForCurrentStepMode());
                     gridManager.ResetLinesMaterial();
                     if(showPlacementLines)
                         gridManager.HighlightLinesForPointList(FetchObjectPositionsAtCurrentTime(CurrentTime));
@@ -1505,7 +1552,7 @@ namespace MiKu.NET {
             if(Input.GetKeyDown(KeyCode.T) && !PromtWindowOpen) {
                 StepMode = GetNextStepMode(StepMode);
                 StepDataHolder stepHolder = GetDataForStepMode(StepMode);
-                DrawTrackXSLines(stepHolder, true);
+                DrawTrackStepLines(stepHolder, true);
             }
 
             if(Input.GetKeyDown(KeyCode.L) && !PromtWindowOpen) {
@@ -1548,7 +1595,7 @@ namespace MiKu.NET {
                     } else {
                         SetNoteMarkerType(GetNoteMarkerTypeIndex(EditorNote.NoteHandType.LeftHanded));
                         markerWasUpdated = true;
-                        s_instance.selectedUsageType = EditorNote.NoteUsageType.Ball;
+                        s_instance.selectedUsageType = EditorNote.NoteUsageType.Note;
                         if(isALTDown) {
                             s_instance.selectedUsageType = EditorNote.NoteUsageType.Line;
                         }
@@ -1564,7 +1611,7 @@ namespace MiKu.NET {
                     } else {
                         SetNoteMarkerType(GetNoteMarkerTypeIndex(EditorNote.NoteHandType.RightHanded));
                         markerWasUpdated = true;
-                        s_instance.selectedUsageType = EditorNote.NoteUsageType.Ball;
+                        s_instance.selectedUsageType = EditorNote.NoteUsageType.Note;
                         if(isALTDown) {
                             s_instance.selectedUsageType = EditorNote.NoteUsageType.Line;
                         }
@@ -1580,7 +1627,7 @@ namespace MiKu.NET {
                     } else {
                         SetNoteMarkerType(GetNoteMarkerTypeIndex(EditorNote.NoteHandType.OneHandSpecial));
                         markerWasUpdated = true;
-                        s_instance.selectedUsageType = EditorNote.NoteUsageType.Ball;
+                        s_instance.selectedUsageType = EditorNote.NoteUsageType.Note;
                         if(isALTDown) {
                             s_instance.selectedUsageType = EditorNote.NoteUsageType.Line;
                         }
@@ -1596,7 +1643,7 @@ namespace MiKu.NET {
                     } else {
                         SetNoteMarkerType(GetNoteMarkerTypeIndex(EditorNote.NoteHandType.BothHandsSpecial));
                         markerWasUpdated = true;
-                        s_instance.selectedUsageType = EditorNote.NoteUsageType.Ball;
+                        s_instance.selectedUsageType = EditorNote.NoteUsageType.Note;
                         if(isALTDown) {
                             s_instance.selectedUsageType = EditorNote.NoteUsageType.Line;
                         }
@@ -1701,11 +1748,11 @@ namespace MiKu.NET {
                     if(isCTRLDown) {
                         MoveCamera(true, GetNextStepPoint(stepHolderPrecise));
                         StepMode = StepDataHolder.CurrentStepMode.Precise;
-                        DrawTrackXSLines(stepHolderPrecise);
+                        DrawTrackStepLines(stepHolderPrecise);
                     } else {
                         MoveCamera(true, GetNextStepPoint(stepHolderSecondary));
                         StepMode = StepDataHolder.CurrentStepMode.Secondary;
-                        DrawTrackXSLines(stepHolderSecondary);
+                        DrawTrackStepLines(stepHolderSecondary);
                     }
                 }
                 if(cameraMoved) {
@@ -1743,11 +1790,11 @@ namespace MiKu.NET {
                     if(isCTRLDown) {
                         MoveCamera(true, GetPrevStepPoint(stepHolderPrecise));
                         StepMode=StepDataHolder.CurrentStepMode.Precise;
-                        DrawTrackXSLines(stepHolderPrecise);
+                        DrawTrackStepLines(stepHolderPrecise);
                     } else {
                         StepMode=StepDataHolder.CurrentStepMode.Secondary;
                         MoveCamera(true, GetPrevStepPoint(stepHolderSecondary));
-                        DrawTrackXSLines(stepHolderSecondary);
+                        DrawTrackStepLines(stepHolderSecondary);
                     }
                 }
                 if(cameraMoved) {
@@ -1944,7 +1991,7 @@ namespace MiKu.NET {
                         StorePreviousTime();
                         CurrentTime = GetCloseStepMeasure(ms, false);
                         MoveCamera(true, MStoUnit(CurrentTime));
-                        DrawTrackXSLines(GetDataForCurrentStepMode());
+                        DrawTrackStepLines(GetDataForCurrentStepMode());
                     }
                 }
             }
@@ -1959,7 +2006,7 @@ namespace MiKu.NET {
                     StorePreviousTime();
                     CurrentTime = GetCloseStepMeasure(ms, false);
                     MoveCamera(true, MStoUnit(CurrentTime));
-                    DrawTrackXSLines(GetDataForCurrentStepMode());
+                    DrawTrackStepLines(GetDataForCurrentStepMode());
                 }
             }
 
@@ -2010,10 +2057,10 @@ namespace MiKu.NET {
 
             if(markerWasUpdated) {
                 markerWasUpdated = false;
-                notesArea.RefreshSelectedObjec();
+                notesArea.RefreshSelectedObject();
             }
 
-            if(lastSaveTime >= AUTO_SAVE_TIME_CHECK
+            if(lastSaveTime >= AUTO_SAVE_TIME_CHECK_SECS
                 && canAutoSave
                 && !PromtWindowOpen
                 && !isPlaying) {
@@ -2025,7 +2072,7 @@ namespace MiKu.NET {
             if(IsPlaying) {
                 if(_currentPlayTime >= TrackDuration * msInSecond) { Stop(); } else {
                     MoveCamera();
-                    DrawTrackXSLines(GetDataForCurrentStepMode());
+                    DrawTrackStepLines(GetDataForCurrentStepMode());
                 }
             }
         }
@@ -2071,11 +2118,11 @@ namespace MiKu.NET {
             CalculateConst();
             Gizmos.color = Color.yellow;
             Gizmos.DrawLine(new Vector3(_trackHorizontalBounds.x, ypos, offset),
-                new Vector3(_trackHorizontalBounds.x, ypos, GetLineEndPoint((_songLengthInSteps - 1) * _msPerBeat) + offset));
+                new Vector3(_trackHorizontalBounds.x, ypos, GetLineEndPoint((_songLengthInBeats - 1) * _msPerBeat) + offset));
             Gizmos.DrawLine(new Vector3(_trackHorizontalBounds.y, ypos, offset),
-                new Vector3(_trackHorizontalBounds.y, ypos, GetLineEndPoint((_songLengthInSteps - 1) * _msPerBeat) + offset));
+                new Vector3(_trackHorizontalBounds.y, ypos, GetLineEndPoint((_songLengthInBeats - 1) * _msPerBeat) + offset));
 
-            for(int i = 0; i < _songLengthInSteps; i++) {
+            for(int i = 0; i < _songLengthInBeats; i++) {
                 Gizmos.DrawLine(new Vector3(_trackHorizontalBounds.x, ypos, i * GetLineEndPoint(_msPerBeat)),
                     new Vector3(_trackHorizontalBounds.y, ypos, i * GetLineEndPoint(_msPerBeat)));
 
@@ -2383,25 +2430,6 @@ namespace MiKu.NET {
             MinorBar = 1,
         }
 
-        public TimeWrapper SnapToPeak(TimeWrapper time, PlacerClickSnapMode mode = PlacerClickSnapMode.MinorBar) {
-            TimeWrapper result = 0;
-            if(mode == PlacerClickSnapMode.MinorBar) {
-                barTimes.Sort();
-                barTimes.Reverse();
-                var temp = barTimes.SkipWhile(t => t + StartOffset > time);
-                result = temp.First() + StartOffset;
-            } else {
-                peakTimes.Sort();
-                peakTimes.Reverse();
-                var temp = peakTimes.SkipWhile(t => t + StartOffset > time);
-                if(temp.Count() > 0)
-                    result = temp.First() + StartOffset;
-                else
-                    result = 0;
-            }
-            return result;
-        }
-
         public TimeWrapper SnapToStep(TimeWrapper time, StepSnapStrategy strategy = StepSnapStrategy.Backwards) {
 
             TimeWrapper result = 0;
@@ -2469,9 +2497,9 @@ namespace MiKu.NET {
                     targetTransform.y = plotTempInstance.position.y;
                     targetTransform.z = MStoUnit((spcInfo.time * msInSecond)); //+StartOffset);
                     if(spcInfo.isPeak)
-                        peakTimes.Add(spcInfo.time * msInSecond);
+                        frequencyData.peakTimes.Add(spcInfo.time * msInSecond);
                     else
-                        barTimes.Add(spcInfo.time * msInSecond);
+                        frequencyData.barTimes.Add(spcInfo.time * msInSecond);
                     plotTempInstance.position = targetTransform;
                     plotTempInstance.parent = m_SpectrumHolder;
 
@@ -2651,7 +2679,7 @@ namespace MiKu.NET {
             BPM = _bpm;
             m_BPMDisplay.SetText(BPM.ToString());
             DrawTrackLines();
-            DrawTrackXSLines(GetDataForCurrentStepMode(), true);
+            DrawTrackStepLines(GetDataForCurrentStepMode(), true);
             UpdateNotePositions(lastBPM, lastMsPerBeat != _msPerBeat);
             PreviousTime = 0;
             CurrentTime = 0;
@@ -2707,7 +2735,7 @@ namespace MiKu.NET {
             if(bpm.StepMode == StepDataHolder.CurrentStepMode.Secondary)
                 m_SecondaryStepMeasureDisplay.SetText(string.Format("1/{0}", bpm.stepsInBeat));
             StepMode = bpm.StepMode;
-            DrawTrackXSLines(bpm);
+            DrawTrackStepLines(bpm);
         }
 
 
@@ -3127,12 +3155,14 @@ namespace MiKu.NET {
         /// </summary>
         /// <param name="forceOff">If true, the Guide will be allways turn off</param>
         public void ToggleGridGuide(bool forceOff = false) {
-            if(isBusy) return;
+            if(isBusy)
+                return;
 
-            if(forceOff) m_GridGuide.SetActive(false);
+            if(forceOff)
+                m_GridGuide.SetActive(false);
             else {
                 m_GridGuide.SetActive(!m_GridGuide.activeSelf);
-                gridWasOn = m_GridGuide.activeSelf;
+                gridIsActive = m_GridGuide.activeSelf;
             }
         }
 
@@ -3853,17 +3883,17 @@ namespace MiKu.NET {
 
             LineRenderer lr = GetLineRenderer(generatedLeftLine);
             lr.SetPosition(0, new Vector3(_trackHorizontalBounds.x, ypos, offset));
-            lr.SetPosition(1, new Vector3(_trackHorizontalBounds.x, ypos, GetLineEndPoint((_songLengthInSteps - 1) * _msPerBeat) + offset));
+            lr.SetPosition(1, new Vector3(_trackHorizontalBounds.x, ypos, GetLineEndPoint((_songLengthInBeats - 1) * _msPerBeat) + offset));
 
             LineRenderer rl = GetLineRenderer(generatedRightLine);
             rl.SetPosition(0, new Vector3(_trackHorizontalBounds.y, ypos, offset));
-            rl.SetPosition(1, new Vector3(_trackHorizontalBounds.y, ypos, GetLineEndPoint((_songLengthInSteps - 1) * _msPerBeat) + offset));
+            rl.SetPosition(1, new Vector3(_trackHorizontalBounds.y, ypos, GetLineEndPoint((_songLengthInBeats - 1) * _msPerBeat) + offset));
 
             uint currentBEAT = 0;
             uint beatNumberReal = 0;
             GameObject trackLine;
             LineRenderer trackRender;
-            for(int i = 0; i < _songLengthInSteps * _currentMultiplier; i++) {
+            for(int i = 0; i < _songLengthInBeats * _currentMultiplier; i++) {
                 float lineEndPosition = (i * GetLineEndPoint(_msPerBeat)) + offset;
                 if(currentBEAT % 4 == 0) {
                     trackLine = GameObject.Instantiate(m_ThickLine, Vector3.zero,
@@ -3878,7 +3908,7 @@ namespace MiKu.NET {
                 }
                 trackLine.name = "[Generated Beat Line]";
                 trackRender = GetLineRenderer(trackLine);
-                drawedLines.Add(trackLine);
+                beatLineObjects.Add(trackLine);
 
                 trackRender.SetPosition(0, new Vector3(_trackHorizontalBounds.x, ypos, lineEndPosition));
                 trackRender.SetPosition(1, new Vector3(_trackHorizontalBounds.y, ypos, lineEndPosition));
@@ -3891,11 +3921,11 @@ namespace MiKu.NET {
         /// Draw the track extra thin lines when the <see cref="MBPM"/> is increase
         /// <summary>
         /// <param name="forceClear">If true, the lines will be forcefull redrawed</param>
-        void DrawTrackXSLines(StepDataHolder bpm, bool forceClear = false) {
+        void DrawTrackStepLines(StepDataHolder stepHolder, bool forceClear = false) {
             TimeWrapper usedTime = isPlaying ? _currentPlayTime.FloatValue : _currentTime.FloatValue;
-            if(bpm.BeatIncreasePerStep < 1) {
+            if(stepHolder.BeatIncreasePerStep < 1) {
                 float newXSSection = 0;
-                float _CK = (_msPerBeat * bpm.BeatIncreasePerStep);
+                float _CK = (_msPerBeat * stepHolder.BeatIncreasePerStep);
                 // double xsKConst = (MS*MINUTE)/(double)BPM;
                 if((usedTime.FloatValue % _msPerBeat) > 0) {
                     newXSSection = usedTime.FloatValue - (usedTime.FloatValue % _msPerBeat);
@@ -3905,17 +3935,17 @@ namespace MiKu.NET {
 
                 //print(string.Format("{2} : {0} - {1}", currentXSLinesSection, newXSSection, _currentTime));
 
-                if(currentXSLinesSection != newXSSection || currentXSMPBM != bpm.BeatIncreasePerStep || forceClear) {
+                if(currentXSLinesSection != newXSSection || currentXSMPBM != stepHolder.BeatIncreasePerStep || forceClear) {
                     ClearXSLines();
 
                     currentXSLinesSection = newXSSection;
-                    currentXSMPBM = bpm.BeatIncreasePerStep;
-                    float startTime = currentXSLinesSection - 2*_msPerBeat;
+                    currentXSMPBM = stepHolder.BeatIncreasePerStep;
+                    float startTime = newXSSection - 2*_msPerBeat;
                     //float offset = transform.position.z;
                     float ypos = 0;
 
-                    for(int j = 0; j < bpm.stepsInBeat * 4; ++j) {
-                        startTime += _msPerBeat * bpm.BeatIncreasePerStep;
+                    for(int j = 0; j < stepHolder.stepsInBeat * 4; ++j) {
+                        startTime += _msPerBeat * stepHolder.BeatIncreasePerStep;
                         GameObject trackLineXS = GameObject.Instantiate(m_ThinLineXS,
                             Vector3.zero, Quaternion.identity, gameObject.transform);
                         trackLineXS.name = "[Generated Beat Line XS]";
@@ -3930,7 +3960,7 @@ namespace MiKu.NET {
                         float endWidth = trackRenderXS.endWidth;
                         trackRenderXS.startWidth = 0.03f;
                         trackRenderXS.endWidth = 0.03f;
-                        drawedXSLines.Add(trackLineXS);
+                        stepLineObjects.Add(trackLineXS);
 
                         trackRenderXS.SetPosition(0, new Vector3(_trackHorizontalBounds.x, ypos, GetLineEndPoint(startTime)));
                         trackRenderXS.SetPosition(1, new Vector3(_trackHorizontalBounds.y, ypos, GetLineEndPoint(startTime)));
@@ -3945,26 +3975,26 @@ namespace MiKu.NET {
         /// Clear the already drawed lines
         /// </summary>
         void ClearLines() {
-            if(drawedLines.Count <= 0) return;
+            if(beatLineObjects.Count <= 0) return;
 
-            for(int i = 0; i < drawedLines.Count; i++) {
-                Destroy(drawedLines[i]);
+            for(int i = 0; i < beatLineObjects.Count; i++) {
+                Destroy(beatLineObjects[i]);
             }
 
-            drawedLines.Clear();
+            beatLineObjects.Clear();
         }
 
         /// <summary>
         /// Clear the already drawed extra thin lines
         /// </summary>
         void ClearXSLines() {
-            if(drawedXSLines.Count <= 0) return;
+            if(stepLineObjects.Count <= 0) return;
 
-            for(int i = 0; i < drawedXSLines.Count; i++) {
-                DestroyImmediate(drawedXSLines[i]);
+            for(int i = 0; i < stepLineObjects.Count; i++) {
+                DestroyImmediate(stepLineObjects[i]);
             }
 
-            drawedXSLines.Clear();
+            stepLineObjects.Clear();
         }
 
         /// <summary>
@@ -3994,7 +4024,7 @@ namespace MiKu.NET {
         /// </summary>
         void CalculateConst() {
             _msPerBeat = (msInSecond * secondsInMinute) / BPM;
-            _songLengthInSteps = Mathf.RoundToInt(BPM * (TrackDuration / 60)) + 1;
+            _songLengthInBeats = Mathf.RoundToInt(BPM * (TrackDuration / 60)) + 1;
         }
 
         /// <summary>
@@ -4041,7 +4071,7 @@ namespace MiKu.NET {
                 CurrentTime=(realStepsInt+1)*_msPerBeat*stepHolder.BeatIncreasePerStep;
             else
                 CurrentTime=(realStepsInt+2)*_msPerBeat*stepHolder.BeatIncreasePerStep;
-            CurrentTime = Mathf.Min(_currentTime.FloatValue, (_songLengthInSteps - 1) * _msPerBeat);
+            CurrentTime = Mathf.Min(_currentTime.FloatValue, (_songLengthInBeats - 1) * _msPerBeat);
             return MStoUnit(_currentTime.FloatValue);
         }
 
@@ -4110,7 +4140,9 @@ namespace MiKu.NET {
             m_NotesDropArea.SetActive(false);
             m_MetaNotesColider.SetActive(true);
 
-            if(turnOffGridOnPlay) { ToggleGridGuide(true); }
+            if(turnOffGridOnPlay) {
+                ToggleGridGuide(true);
+            }
 
             m_UIGroupLeft.blocksRaycasts = false;
             m_UIGroupLeft.interactable = false;
@@ -4271,11 +4303,12 @@ namespace MiKu.NET {
             m_UIGroupRight.interactable = true;
             // m_UIGroupRight.alpha = 1f;
 
-            if(gridWasOn && turnOffGridOnPlay) ToggleGridGuide();
+            if(gridIsActive && turnOffGridOnPlay)
+                ToggleGridGuide();
 
             ResetDisabledList();
             // ResetResizedList();
-            DrawTrackXSLines(GetDataForCurrentStepMode());
+            DrawTrackStepLines(GetDataForCurrentStepMode());
 
             // Clear the effect stack
             effectsStacks.Clear();
@@ -5325,7 +5358,7 @@ namespace MiKu.NET {
                 ToggleWorkingStateAlertOff();
             }
 
-            notesArea.RefreshSelectedObjec();
+            notesArea.RefreshSelectedObject();
         }
 
         void ToggleGripSnapping() {
@@ -5557,14 +5590,14 @@ namespace MiKu.NET {
 
 
         public static bool IsBallNoteType(EditorNote.NoteUsageType noteType) {
-            if(noteType == EditorNote.NoteUsageType.Ball) {
+            if(noteType == EditorNote.NoteUsageType.Note) {
                 return true;
             }
             return false;
         }
 
         public static bool IsSameUsageTypeClass(EditorNote.NoteUsageType noteType1, EditorNote.NoteUsageType noteType2) {
-            if(noteType1 == EditorNote.NoteUsageType.Ball && noteType2 == EditorNote.NoteUsageType.Ball) {
+            if(noteType1 == EditorNote.NoteUsageType.Note && noteType2 == EditorNote.NoteUsageType.Note) {
                 return true;
             }
             if((noteType1 == EditorNote.NoteUsageType.Line || noteType1 == EditorNote.NoteUsageType.Breaker) &&
@@ -5754,12 +5787,12 @@ namespace MiKu.NET {
                 Trace.WriteLine("AddNoteToChart called");
                 if(PromtWindowOpen || s_instance.isBusy) return;
 
-                if(CurrentTime < MIN_NOTE_START * msInSecond) {
+                if(CurrentTime < ALLOW_NOTES_AFTER_SECS * msInSecond) {
                     Miku_DialogManager.ShowDialog(
                         Miku_DialogManager.DialogType.Alert,
                         string.Format(
                             StringVault.Info_NoteTooClose,
-                            MIN_NOTE_START
+                            ALLOW_NOTES_AFTER_SECS
                         )
                     );
 
@@ -6508,7 +6541,7 @@ namespace MiKu.NET {
             if(PromtWindowOpen) {
                 s_instance.ClosePromtWindow();
             }
-            s_instance.DrawTrackXSLines(s_instance.GetDataForCurrentStepMode());
+            s_instance.DrawTrackStepLines(s_instance.GetDataForCurrentStepMode());
             s_instance.ResetResizedList();
             s_instance.ResetDisabledList();
         }
@@ -6542,9 +6575,9 @@ namespace MiKu.NET {
 
                     for(int i = 0; i < workingEffects.Count; ++i) {
 
-                        if(IsWithin(workingEffects[i], CurrentTime - MIN_FLASH_INTERVAL, CurrentTime + MIN_FLASH_INTERVAL)) {
+                        if(IsWithin(workingEffects[i], CurrentTime - MIN_FLASH_INTERVAL_MS, CurrentTime + MIN_FLASH_INTERVAL_MS)) {
                             Miku_DialogManager.ShowDialog(Miku_DialogManager.DialogType.Alert,
-                                string.Format(StringVault.Alert_EffectsInterval, (MIN_FLASH_INTERVAL / msInSecond)));
+                                string.Format(StringVault.Alert_EffectsInterval, (MIN_FLASH_INTERVAL_MS / msInSecond)));
                             return;
                         }
                     }
@@ -6591,12 +6624,12 @@ namespace MiKu.NET {
         public static void ToggleMovementSectionToChart(string MoveTAG, bool isOverwrite = false) {
             if(PromtWindowOpen || IsPlaying) return;
 
-            if(CurrentTime < MIN_NOTE_START * msInSecond) {
+            if(CurrentTime < ALLOW_NOTES_AFTER_SECS * msInSecond) {
                 Miku_DialogManager.ShowDialog(
                     Miku_DialogManager.DialogType.Alert,
                     string.Format(
                         StringVault.Info_NoteTooClose,
-                        MIN_NOTE_START
+                        ALLOW_NOTES_AFTER_SECS
                     )
                 );
 
@@ -6742,9 +6775,9 @@ namespace MiKu.NET {
                 } else {
                     for(int i = 0; i < lights.Count; ++i) {
 
-                        if(IsWithin(lights[i], CurrentTime - MIN_FLASH_INTERVAL, CurrentTime + MIN_FLASH_INTERVAL)) {
+                        if(IsWithin(lights[i], CurrentTime - MIN_FLASH_INTERVAL_MS, CurrentTime + MIN_FLASH_INTERVAL_MS)) {
                             Miku_DialogManager.ShowDialog(Miku_DialogManager.DialogType.Alert,
-                                string.Format(StringVault.Alert_EffectsInterval, (MIN_FLASH_INTERVAL / msInSecond)));
+                                string.Format(StringVault.Alert_EffectsInterval, (MIN_FLASH_INTERVAL_MS / msInSecond)));
                             return;
                         }
                     }
@@ -6766,7 +6799,7 @@ namespace MiKu.NET {
         }
 
         public static bool NeedSaveAction() {
-            return (s_instance.lastSaveTime > SAVE_TIME_CHECK);
+            return (s_instance.lastSaveTime > SAVE_TIME_CHECK_SECS);
         }
         #endregion
 
@@ -6847,7 +6880,7 @@ namespace MiKu.NET {
                     selectedUsageType = EditorNote.NoteUsageType.None;
                     break;
                 case 1:
-                    selectedUsageType = EditorNote.NoteUsageType.Ball;
+                    selectedUsageType = EditorNote.NoteUsageType.Note;
                     break;
                 case 2:
                     selectedUsageType = EditorNote.NoteUsageType.Line;
@@ -6866,9 +6899,9 @@ namespace MiKu.NET {
         /// </summary>
         /// <param name="noteType">The type of note to look for, default is <see cref="EditorNote.NoteHandType.LeftHanded" /></param>
         /// <returns>Returns <typeparamref name="GameObject"/></returns>
-        public GameObject GetNoteMarkerByType(EditorNote.NoteHandType noteType = EditorNote.NoteHandType.LeftHanded, EditorNote.NoteUsageType usageType = EditorNote.NoteUsageType.Ball, bool isSegment = false) {
+        public GameObject GetNoteMarkerByType(EditorNote.NoteHandType noteType = EditorNote.NoteHandType.LeftHanded, EditorNote.NoteUsageType usageType = EditorNote.NoteUsageType.Note, bool isSegment = false) {
             GameObject result = m_LefthandNoteMarker;
-            if(usageType == EditorNote.NoteUsageType.Ball) {
+            if(usageType == EditorNote.NoteUsageType.Note) {
                 switch(noteType) {
                     case EditorNote.NoteHandType.LeftHanded:
                         result = isSegment ? m_LefthandNoteMarkerSegment : m_LefthandNoteMarker;
@@ -6944,7 +6977,7 @@ namespace MiKu.NET {
             switch(noteType) {
                 case EditorNote.NoteUsageType.None:
                     return 0;
-                case EditorNote.NoteUsageType.Ball:
+                case EditorNote.NoteUsageType.Note:
                     return 1;
                 case EditorNote.NoteUsageType.Line:
                     return 2;

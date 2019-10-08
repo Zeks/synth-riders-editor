@@ -800,7 +800,6 @@ namespace MiKu.NET {
 
         public RailNoteWrapper breakerTail;
         public RailNoteWrapper breakerHead;
-        //public LongNote railInstance;
         Game_LineWaveCustom waveCustom;
         
     }

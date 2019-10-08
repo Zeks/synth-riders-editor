@@ -187,7 +187,7 @@ namespace MiKu.NET {
             }
         }
 
-        public void RefreshSelectedObjec() {
+        public void RefreshSelectedObject() {
             if(selectedNote != null) {
                 GameObject.DestroyImmediate(selectedNote);
                 selectedNote = Track.GetSelectedNoteMarker();
