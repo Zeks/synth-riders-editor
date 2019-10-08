@@ -73,6 +73,11 @@ namespace MiKu.NET {
     }
 
 
+    public class StepLineData {
+        public float currentStepLineDrawStartingPosition = -1;
+        public float currentBeatIncreasePerStep;
+    }
+
     public class LongNote {
         public TimeWrapper startTime = new TimeWrapper(0);
         public EditorNote note;
@@ -844,8 +849,8 @@ namespace MiKu.NET {
         // set this to trigger an update of displayed note type in NoteArea on the next Update invocation
         private bool markerWasUpdated = false;
         private bool gridIsActive = false;
-        private float currentXSLinesSection = -1;
-        private float currentXSMPBM;
+
+        private StepLineData stepLineData;
 
         // metronome
         private bool isMetronomeActive = false;
@@ -3877,52 +3882,47 @@ namespace MiKu.NET {
         /// <summary>
         /// <param name="forceClear">If true, the lines will be forcefull redrawed</param>
         void DrawTrackStepLines(StepDataHolder stepHolder, bool forceClear = false) {
-            TimeWrapper usedTime = isPlaying ? _currentPlayTime.FloatValue : _currentTime.FloatValue;
+            TimeWrapper currentTime = isPlaying ? _currentPlayTime.FloatValue : _currentTime.FloatValue;
             if(stepHolder.BeatIncreasePerStep < 1) {
-                float newXSSection = 0;
-                float _CK = (_msPerBeat * stepHolder.BeatIncreasePerStep);
-                // double xsKConst = (MS*MINUTE)/(double)BPM;
-                if((usedTime.FloatValue % _msPerBeat) > 0) {
-                    newXSSection = usedTime.FloatValue - (usedTime.FloatValue % _msPerBeat);
+                float stepLineDrawStartingPosition = 0;
+                if((currentTime.FloatValue % _msPerBeat) > 0) {
+                    stepLineDrawStartingPosition = currentTime.FloatValue - (currentTime.FloatValue % _msPerBeat);
                 } else {
-                    newXSSection = usedTime.FloatValue; //+ ( K - (_currentTime%K ) );            
+                    stepLineDrawStartingPosition = currentTime.FloatValue; //+ ( K - (_currentTime%K ) );            
                 }
 
-                //print(string.Format("{2} : {0} - {1}", currentXSLinesSection, newXSSection, _currentTime));
+                if(stepLineData.currentStepLineDrawStartingPosition != stepLineDrawStartingPosition || stepLineData.currentBeatIncreasePerStep != stepHolder.BeatIncreasePerStep || forceClear) {
+                    ClearStepLines();
 
-                if(currentXSLinesSection != newXSSection || currentXSMPBM != stepHolder.BeatIncreasePerStep || forceClear) {
-                    ClearXSLines();
+                    stepLineData.currentStepLineDrawStartingPosition = stepLineDrawStartingPosition;
+                    stepLineData.currentBeatIncreasePerStep = stepHolder.BeatIncreasePerStep;
+                    float startTime = stepLineDrawStartingPosition - 2*_msPerBeat;
 
-                    currentXSLinesSection = newXSSection;
-                    currentXSMPBM = stepHolder.BeatIncreasePerStep;
-                    float startTime = newXSSection - 2*_msPerBeat;
-                    //float offset = transform.position.z;
                     float ypos = 0;
 
                     for(int j = 0; j < stepHolder.stepsInBeat * 4; ++j) {
                         startTime += _msPerBeat * stepHolder.BeatIncreasePerStep;
-                        GameObject trackLineXS = GameObject.Instantiate(m_ThinLineXS,
+                        GameObject cyrrentStepLineObject = GameObject.Instantiate(m_ThinLineXS,
                             Vector3.zero, Quaternion.identity, gameObject.transform);
-                        trackLineXS.name = "[Generated Beat Line XS]";
+                        cyrrentStepLineObject.name = "[Generated Beat Line XS]";
 
                         
 
-                        trackLineXS.transform.localPosition = new Vector3(0, 0, trackLineXS.transform.localPosition.z);
-                        //trackLineXS.transform.localScale  = new Vector3(trackLineXS.transform.localScale.x, trackLineXS.transform.localScale.y, trackLineXS.transform.localScale.z);
+                        cyrrentStepLineObject.transform.localPosition = new Vector3(0, 0, cyrrentStepLineObject.transform.localPosition.z);
 
-                        LineRenderer trackRenderXS = GetLineRenderer(trackLineXS);
-                        float startWidth = trackRenderXS.startWidth; // 0.005
-                        float endWidth = trackRenderXS.endWidth;
-                        trackRenderXS.startWidth = 0.03f;
-                        trackRenderXS.endWidth = 0.03f;
-                        stepLineObjects.Add(trackLineXS);
+                        LineRenderer stepLineRenderer = GetLineRenderer(cyrrentStepLineObject);
+                        float startWidth = stepLineRenderer.startWidth; // 0.005
+                        float endWidth = stepLineRenderer.endWidth;
+                        stepLineRenderer.startWidth = 0.03f;
+                        stepLineRenderer.endWidth = 0.03f;
+                        stepLineObjects.Add(cyrrentStepLineObject);
 
-                        trackRenderXS.SetPosition(0, new Vector3(_trackHorizontalBounds.x, ypos, GetLineEndPoint(startTime)));
-                        trackRenderXS.SetPosition(1, new Vector3(_trackHorizontalBounds.y, ypos, GetLineEndPoint(startTime)));
+                        stepLineRenderer.SetPosition(0, new Vector3(_trackHorizontalBounds.x, ypos, GetLineEndPoint(startTime)));
+                        stepLineRenderer.SetPosition(1, new Vector3(_trackHorizontalBounds.y, ypos, GetLineEndPoint(startTime)));
                     }
                 }
             } else {
-                ClearXSLines();
+                ClearStepLines();
             }
         }
 
@@ -3942,7 +3942,7 @@ namespace MiKu.NET {
         /// <summary>
         /// Clear the already drawed extra thin lines
         /// </summary>
-        void ClearXSLines() {
+        void ClearStepLines() {
             if(stepLineObjects.Count <= 0) return;
 
             for(int i = 0; i < stepLineObjects.Count; i++) {

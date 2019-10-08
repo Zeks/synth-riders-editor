@@ -8,7 +8,7 @@ namespace MiKu.NET {
         public TimeWrapper(float value) {
             if(Divisor != 1)
                 Divisor = ((Track.BPM/60f)/64f)*50;
-            FloatValue = value;
+            this.FloatValue = value;
         }
         public TimeWrapper() { }
         public static TimeWrapper Create(float value) { return new TimeWrapper(value); }
