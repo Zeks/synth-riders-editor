@@ -6,10 +6,9 @@ using MiKu.NET.Charting;
 namespace MiKu.NET {
     public sealed class TimeWrapper : IComparable, IEqualityComparer<TimeWrapper> {
         public TimeWrapper(float value) {
-            Divisor = ((Track.BPM/60f)/64f)*50;
+            if(Divisor != 1)
+                Divisor = ((Track.BPM/60f)/64f)*50;
             FloatValue = value;
-
-            //Hash = (int)(Math.Round(FloatValue/Divisor, 0, MidpointRounding.AwayFromZero));
         }
         public TimeWrapper() { }
         public static TimeWrapper Create(float value) { return new TimeWrapper(value); }
@@ -24,12 +23,11 @@ namespace MiKu.NET {
             set
             {
                 Hash = (int)(Math.Round(value/Divisor, 0, MidpointRounding.AwayFromZero));
-                //Hash=(Hash%2==0) ? Hash : (Hash - 1);
                 _pureHash =Hash;
                 _value = value;
             }
         }
-        public float Divisor
+        public static float Divisor
         {
             get
             {
@@ -56,7 +54,7 @@ namespace MiKu.NET {
         }
 
         float _value = 0;
-        float _divisor = 1;
+        static float _divisor = 1;
         int _hash = 1;
         int _pureHash = 1;
 

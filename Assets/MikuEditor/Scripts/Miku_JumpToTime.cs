@@ -19,7 +19,7 @@ public class Miku_JumpToTime : MonoBehaviour {
 	}
 
 	public void DoGoToTime() {
-		float timeInMS = ( ( (minutePicker.PickerValue * Track.MINUTE) + secondsPicker.PickerValue ) * Track.MS );
+		float timeInMS = ( ( (minutePicker.PickerValue * Track.secondsInMinute) + secondsPicker.PickerValue ) * Track.msInSecond );
 		Track.JumpToTime(timeInMS);
 	}
 

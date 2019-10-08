@@ -18,8 +18,8 @@ using UnityEngine.UI;
 using System.Diagnostics;
 
 namespace MiKu.NET {
-   
 
+    
 
     /// <sumary>
     /// Small class for the representation of the Track info
@@ -213,10 +213,6 @@ namespace MiKu.NET {
             }
         }
     }
-    
-
-
-
     [RequireComponent(typeof(AudioSource))]
     public class Track : MonoBehaviour {
         public enum TrackDifficulty {
@@ -273,24 +269,27 @@ namespace MiKu.NET {
 
         #region Constanst
         // Time constants
-        // A second is 1000 Milliseconds
         public static bool newLaunch = true;
-
-        public const int MS = 1000;
+        
+        // A second is 1000 Milliseconds
+        public const int msInSecond = 1000;
+        
+        // ms in minute
+        public const int msInMinute = 60*1000;
 
         // A minute is 60 seconds
-        public const int MINUTE = 60;
-
-        // Music vars
-        // Resolution
-        private const int R = 192;
+        public const int secondsInMinute = 60;
+        
 
         // Unity Unit / Second ratio
-        public const float UsC = 20f / 1f;
+        public const float unitsPerSecond = 20f / 1f;
 
         // Beat per Measure
         // BpM use to draw the lines
-        private const float DBPM = 1f / 1f;
+        private const float bpmForLines = 1f / 1f;
+
+        // Resolution
+        private const int R = 192;
 
         // Max Number of normal notes allowed
         private const int MAX_ALLOWED_NOTES = 2;
@@ -317,10 +316,10 @@ namespace MiKu.NET {
         private const float MIN_OVERLAP_DISTANCE = 0.15f;
 
         // Min duration on milliseconds that the line can have
-        public const float MIN_LINE_DURATION = 0.1f * MS;
+        public const float MIN_LINE_DURATION = 0.1f * msInSecond;
 
         // Max duration on milliseconds that the line can have
-        public const float MAX_LINE_DURATION = 10 * MS;
+        public const float MAX_LINE_DURATION = 10 * msInSecond;
 
         // Max size that the note can have
         private const float MAX_NOTE_RESIZE = 0.2f;
@@ -734,13 +733,13 @@ namespace MiKu.NET {
         public bool DirectionalNotesEnabled = true;
 
         // distance/time that will be drawed
-        private int TM;
+        private int _songLengthInSteps;
 
         // BPM
-        private float _BPM = 120;
+        private float _bpm = 120;
 
         // Milliseconds per Beat
-        private float K;
+        private float _msPerBeat;
 
         // BpM use to for the track movement
         private CurrentStepMode _stepMode = CurrentStepMode.Primary;
@@ -843,7 +842,7 @@ namespace MiKu.NET {
         //
 
         private float lastBPM = 120f;
-        private float lastK = 0;
+        private float lastMsPerBeat = 0;
         private bool wasBPMUpdated = false;
 
         private PromtType currentPromt = PromtType.BackToMenu;
@@ -1964,7 +1963,7 @@ namespace MiKu.NET {
             if(Input.GetButtonDown("Advance UP") && !PromtWindowOpen) {
                 if(!IsPlaying) {
                     float ms = MeasureToTime((TimeToMeasure(CurrentTime) + 1));
-                    if(ms <= TrackDuration * MS) {
+                    if(ms <= TrackDuration * msInSecond) {
                         StorePreviousTime();
                         CurrentTime = GetCloseStepMeasure(ms, false);
                         MoveCamera(true, MStoUnit(CurrentTime));
@@ -2047,7 +2046,7 @@ namespace MiKu.NET {
 
         void FixedUpdate() {
             if(IsPlaying) {
-                if(_currentPlayTime >= TrackDuration * MS) { Stop(); } else {
+                if(_currentPlayTime >= TrackDuration * msInSecond) { Stop(); } else {
                     MoveCamera();
                     DrawTrackXSLines(GetBPMForCurrentStepMode());
                 }
@@ -2095,19 +2094,19 @@ namespace MiKu.NET {
             CalculateConst();
             Gizmos.color = Color.yellow;
             Gizmos.DrawLine(new Vector3(_trackHorizontalBounds.x, ypos, offset),
-                new Vector3(_trackHorizontalBounds.x, ypos, GetLineEndPoint((TM - 1) * K) + offset));
+                new Vector3(_trackHorizontalBounds.x, ypos, GetLineEndPoint((_songLengthInSteps - 1) * _msPerBeat) + offset));
             Gizmos.DrawLine(new Vector3(_trackHorizontalBounds.y, ypos, offset),
-                new Vector3(_trackHorizontalBounds.y, ypos, GetLineEndPoint((TM - 1) * K) + offset));
+                new Vector3(_trackHorizontalBounds.y, ypos, GetLineEndPoint((_songLengthInSteps - 1) * _msPerBeat) + offset));
 
-            for(int i = 0; i < TM; i++) {
-                Gizmos.DrawLine(new Vector3(_trackHorizontalBounds.x, ypos, i * GetLineEndPoint(K)),
-                    new Vector3(_trackHorizontalBounds.y, ypos, i * GetLineEndPoint(K)));
+            for(int i = 0; i < _songLengthInSteps; i++) {
+                Gizmos.DrawLine(new Vector3(_trackHorizontalBounds.x, ypos, i * GetLineEndPoint(_msPerBeat)),
+                    new Vector3(_trackHorizontalBounds.y, ypos, i * GetLineEndPoint(_msPerBeat)));
 
             }
 
             float lastCiqo = 0;
             for(int j = 0; j < 4; ++j) {
-                lastCiqo += K * (1f / 4f);
+                lastCiqo += _msPerBeat * (1f / 4f);
                 Gizmos.DrawLine(new Vector3(_trackHorizontalBounds.x, ypos, GetLineEndPoint(lastCiqo)),
                     new Vector3(_trackHorizontalBounds.y, ypos, GetLineEndPoint(lastCiqo)));
             }
@@ -2430,8 +2429,8 @@ namespace MiKu.NET {
 
             TimeWrapper result = 0;
 
-            TimeWrapper previousFullBeat = time.FloatValue  - (time.FloatValue % K);
-            bool atExactTime = time.FloatValue % K == 0;
+            TimeWrapper previousFullBeat = time.FloatValue  - (time.FloatValue % _msPerBeat);
+            bool atExactTime = time.FloatValue % _msPerBeat == 0;
 
             if(atExactTime)
                 return time;
@@ -2442,14 +2441,14 @@ namespace MiKu.NET {
             TimeWrapper previousStepTime = result;
             while(result < time) {
                 previousStepTime=result;
-                result += K/GetBPMForCurrentStepMode().IncreaseFactor;
+                result += _msPerBeat/GetBPMForCurrentStepMode().IncreaseFactor;
             }
             previousSnap = previousStepTime;
             
             result = previousFullBeat;
             TimeWrapper tempTime = previousFullBeat;
             while(tempTime < time) {
-                tempTime += K/GetBPMForCurrentStepMode().IncreaseFactor;
+                tempTime += _msPerBeat/GetBPMForCurrentStepMode().IncreaseFactor;
             }
             nextSnap = tempTime;
 
@@ -2491,11 +2490,11 @@ namespace MiKu.NET {
                     ).transform;
                     targetTransform.x = plotTempInstance.position.x;
                     targetTransform.y = plotTempInstance.position.y;
-                    targetTransform.z = MStoUnit((spcInfo.time * MS)); //+StartOffset);
+                    targetTransform.z = MStoUnit((spcInfo.time * msInSecond)); //+StartOffset);
                     if(spcInfo.isPeak)
-                        peakTimes.Add(spcInfo.time * MS);
+                        peakTimes.Add(spcInfo.time * msInSecond);
                     else
-                        barTimes.Add(spcInfo.time * MS);
+                        barTimes.Add(spcInfo.time * msInSecond);
                     plotTempInstance.position = targetTransform;
                     plotTempInstance.parent = m_SpectrumHolder;
 
@@ -2671,12 +2670,12 @@ namespace MiKu.NET {
 
             // wasBPMUpdated = true;
             lastBPM = BPM;
-            lastK = K;
+            lastMsPerBeat = _msPerBeat;
             BPM = _bpm;
             m_BPMDisplay.SetText(BPM.ToString());
             DrawTrackLines();
             DrawTrackXSLines(GetBPMForCurrentStepMode(), true);
-            UpdateNotePositions(lastBPM, lastK != K);
+            UpdateNotePositions(lastBPM, lastMsPerBeat != _msPerBeat);
             PreviousTime = 0;
             CurrentTime = 0;
             MoveCamera(true, CurrentTime);
@@ -2838,7 +2837,7 @@ namespace MiKu.NET {
         /// Send view to end time
         ///</summary>
         public void GoToEndTime() {
-            JumpToTime(trackDuration * MS);
+            JumpToTime(trackDuration * msInSecond);
         }
 
         /// <summary>
@@ -3348,7 +3347,7 @@ namespace MiKu.NET {
             CurrentSelection.EndTime = backUpTime + CurrentClipBoard.lenght;
 
             // print(string.Format("Current {0} Lenght {1} Duration {2}", CurrentTime, CurrentClipBoard.lenght, TrackDuration * MS));
-            if((CurrentTime + CurrentClipBoard.lenght) > (TrackDuration * MS) + MS) {
+            if((CurrentTime + CurrentClipBoard.lenght) > (TrackDuration * msInSecond) + msInSecond) {
                 // print(string.Format("{0} > {1} - {2}", (CurrentTime + CurrentClipBoard.lenght), TrackDuration * MS, (CurrentTime + CurrentClipBoard.lenght) > (TrackDuration * MS)));
                 Miku_DialogManager.ShowDialog(Miku_DialogManager.DialogType.Alert, StringVault.Info_PasteTooFar);
                 isBusy = false;
@@ -3841,13 +3840,13 @@ namespace MiKu.NET {
 
                 BeatsLookupTable.BPM = BPM;
                 BeatsLookupTable.full = new BeatsLookup();
-                BeatsLookupTable.full.step = K;
-                BeatsLookupTable.half.step = K / 2;
-                BeatsLookupTable.quarter.step = K / 4;
-                BeatsLookupTable.eighth.step = K / 8;
-                BeatsLookupTable.sixteenth.step = K / 16;
-                BeatsLookupTable.thirtyTwo.step = K / 32;
-                BeatsLookupTable.sixtyFourth.step = K / 64;
+                BeatsLookupTable.full.step = _msPerBeat;
+                BeatsLookupTable.half.step = _msPerBeat / 2;
+                BeatsLookupTable.quarter.step = _msPerBeat / 4;
+                BeatsLookupTable.eighth.step = _msPerBeat / 8;
+                BeatsLookupTable.sixteenth.step = _msPerBeat / 16;
+                BeatsLookupTable.thirtyTwo.step = _msPerBeat / 32;
+                BeatsLookupTable.sixtyFourth.step = _msPerBeat / 64;
 
                 if(BeatsLookupTable.full.beats == null) {
                     BeatsLookupTable.full.beats = new List<float>();
@@ -3872,7 +3871,7 @@ namespace MiKu.NET {
                     BeatsLookupTable.full.beats.Add(lineEndPosition);
                 } */
                 float currentBeat = 0;
-                while(currentBeat < TrackDuration * MS) {
+                while(currentBeat < TrackDuration * msInSecond) {
                     BeatsLookupTable.full.beats.Add(currentBeat);
                     currentBeat += BeatsLookupTable.full.step;
                 }
@@ -3896,18 +3895,18 @@ namespace MiKu.NET {
 
             LineRenderer lr = GetLineRenderer(generatedLeftLine);
             lr.SetPosition(0, new Vector3(_trackHorizontalBounds.x, ypos, offset));
-            lr.SetPosition(1, new Vector3(_trackHorizontalBounds.x, ypos, GetLineEndPoint((TM - 1) * K) + offset));
+            lr.SetPosition(1, new Vector3(_trackHorizontalBounds.x, ypos, GetLineEndPoint((_songLengthInSteps - 1) * _msPerBeat) + offset));
 
             LineRenderer rl = GetLineRenderer(generatedRightLine);
             rl.SetPosition(0, new Vector3(_trackHorizontalBounds.y, ypos, offset));
-            rl.SetPosition(1, new Vector3(_trackHorizontalBounds.y, ypos, GetLineEndPoint((TM - 1) * K) + offset));
+            rl.SetPosition(1, new Vector3(_trackHorizontalBounds.y, ypos, GetLineEndPoint((_songLengthInSteps - 1) * _msPerBeat) + offset));
 
             uint currentBEAT = 0;
             uint beatNumberReal = 0;
             GameObject trackLine;
             LineRenderer trackRender;
-            for(int i = 0; i < TM * _currentMultiplier; i++) {
-                float lineEndPosition = (i * GetLineEndPoint(K)) + offset;
+            for(int i = 0; i < _songLengthInSteps * _currentMultiplier; i++) {
+                float lineEndPosition = (i * GetLineEndPoint(_msPerBeat)) + offset;
                 if(currentBEAT % 4 == 0) {
                     trackLine = GameObject.Instantiate(m_ThickLine, Vector3.zero,
                         Quaternion.identity, gameObject.transform);
@@ -3938,10 +3937,10 @@ namespace MiKu.NET {
             TimeWrapper usedTime = isPlaying ? _currentPlayTime.FloatValue : _currentTime.FloatValue;
             if(bpm.Value < 1) {
                 float newXSSection = 0;
-                float _CK = (K * bpm.Value);
+                float _CK = (_msPerBeat * bpm.Value);
                 // double xsKConst = (MS*MINUTE)/(double)BPM;
-                if((usedTime.FloatValue % K) > 0) {
-                    newXSSection = usedTime.FloatValue - (usedTime.FloatValue % K);
+                if((usedTime.FloatValue % _msPerBeat) > 0) {
+                    newXSSection = usedTime.FloatValue - (usedTime.FloatValue % _msPerBeat);
                 } else {
                     newXSSection = usedTime.FloatValue; //+ ( K - (_currentTime%K ) );            
                 }
@@ -3953,12 +3952,12 @@ namespace MiKu.NET {
 
                     currentXSLinesSection = newXSSection;
                     currentXSMPBM = bpm.Value;
-                    float startTime = currentXSLinesSection - 2*K;
+                    float startTime = currentXSLinesSection - 2*_msPerBeat;
                     //float offset = transform.position.z;
                     float ypos = 0;
 
                     for(int j = 0; j < bpm.IncreaseFactor * 4; ++j) {
-                        startTime += K * bpm.Value;
+                        startTime += _msPerBeat * bpm.Value;
                         GameObject trackLineXS = GameObject.Instantiate(m_ThinLineXS,
                             Vector3.zero, Quaternion.identity, gameObject.transform);
                         trackLineXS.name = "[Generated Beat Line XS]";
@@ -4036,8 +4035,8 @@ namespace MiKu.NET {
         /// Calculate the constans needed to draw the track
         /// </summary>
         void CalculateConst() {
-            K = (MS * MINUTE) / BPM;
-            TM = Mathf.RoundToInt(BPM * (TrackDuration / 60)) + 1;
+            _msPerBeat = (msInSecond * secondsInMinute) / BPM;
+            _songLengthInSteps = Mathf.RoundToInt(BPM * (TrackDuration / 60)) + 1;
         }
 
         /// <summary>
@@ -4046,7 +4045,7 @@ namespace MiKu.NET {
         /// <param name="_ms">Milliseconds to convert</param>
         /// <returns>Returns <typeparamref name="float"/></returns>
         public static float MStoUnit(TimeWrapper _ms) {
-            return (_ms.FloatValue / MS) * UsC;
+            return (_ms.FloatValue / msInSecond) * unitsPerSecond;
         }
 
         /// <summary>
@@ -4055,7 +4054,7 @@ namespace MiKu.NET {
         /// <param name="_unit">Unity Units to convert</param>
         /// <returns>Returns <typeparamref name="float"/></returns>
         public static TimeWrapper UnitToMS(float _unit) {
-            return (_unit / UsC) * MS;
+            return (_unit / unitsPerSecond) * msInSecond;
         }
 
         /// <summary>
@@ -4065,26 +4064,26 @@ namespace MiKu.NET {
         /// <param name="offset">Offest at where the line will be drawed</param>
         /// <returns>Returns <typeparamref name="float"/></returns>
         float GetLineEndPoint(float _ms, float offset = 0) {
-            return MStoUnit((_ms + offset) * DBPM);
+            return MStoUnit((_ms + offset) * bpmForLines);
         }
 
         /// <summary>
         /// Return the next point to displace the stage
         /// </summary>
         /// <remarks>
-        /// Based on the values of <see cref="K"/> and <see cref="MBPM"/>
+        /// Based on the values of <see cref="_msPerBeat"/> and <see cref="MBPM"/>
         /// </remarks>
         /// <returns>Returns <typeparamref name="float"/></returns>
         float GetNextStepPoint(InternalBPM bpm) {
             int multiplier = 64/bpm.IncreaseFactor;
-            float realStepsFloat = _currentTime.FloatValue/(K * bpm.Value);
+            float realStepsFloat = _currentTime.FloatValue/(_msPerBeat * bpm.Value);
             int realStepsInt = (int)realStepsFloat;
-            float fraction = Math.Abs((realStepsInt+1)*K*bpm.Value - _currentTime.FloatValue)/(K*bpm.Value) ;
+            float fraction = Math.Abs((realStepsInt+1)*_msPerBeat*bpm.Value - _currentTime.FloatValue)/(_msPerBeat*bpm.Value) ;
             if(fraction > 0.1)
-                CurrentTime=(realStepsInt+1)*K*bpm.Value;
+                CurrentTime=(realStepsInt+1)*_msPerBeat*bpm.Value;
             else
-                CurrentTime=(realStepsInt+2)*K*bpm.Value;
-            CurrentTime = Mathf.Min(_currentTime.FloatValue, (TM - 1) * K);
+                CurrentTime=(realStepsInt+2)*_msPerBeat*bpm.Value;
+            CurrentTime = Mathf.Min(_currentTime.FloatValue, (_songLengthInSteps - 1) * _msPerBeat);
             return MStoUnit(_currentTime.FloatValue);
         }
 
@@ -4092,19 +4091,19 @@ namespace MiKu.NET {
         /// Return the prev point to displace the stage
         /// </summary>
         /// <remarks>
-        /// Based on the values of <see cref="K"/> and <see cref="MBPM"/>
+        /// Based on the values of <see cref="_msPerBeat"/> and <see cref="MBPM"/>
         /// </remarks>
         /// <returns>Returns <typeparamref name="float"/></returns>
         float GetPrevStepPoint(InternalBPM bpm) {
             int multiplier = 64/bpm.IncreaseFactor;
-            float realStepsFloat = _currentTime.FloatValue/(K * bpm.Value);
+            float realStepsFloat = _currentTime.FloatValue/(_msPerBeat * bpm.Value);
             int realStepsInt = (int)realStepsFloat;
-            float fraction = Math.Abs(realStepsInt*K*bpm.Value-_currentTime.FloatValue)/(K*bpm.Value);
-            bool diffLessThan0 = (realStepsInt*K*bpm.Value-_currentTime.FloatValue) < 0;
+            float fraction = Math.Abs(realStepsInt*_msPerBeat*bpm.Value-_currentTime.FloatValue)/(_msPerBeat*bpm.Value);
+            bool diffLessThan0 = (realStepsInt*_msPerBeat*bpm.Value-_currentTime.FloatValue) < 0;
             if(diffLessThan0 && fraction > 0.1)
-                CurrentTime=(realStepsInt)*K*bpm.Value;
+                CurrentTime=(realStepsInt)*_msPerBeat*bpm.Value;
             else
-                CurrentTime=(realStepsInt-1)*K*bpm.Value;
+                CurrentTime=(realStepsInt-1)*_msPerBeat*bpm.Value;
             CurrentTime = Mathf.Max(_currentTime.FloatValue, 0);
             return MStoUnit(_currentTime.FloatValue);
         }
@@ -4129,10 +4128,10 @@ namespace MiKu.NET {
 
                 // Init the beats to a max of 10min
                 //print("A beat every "+K.ToString());
-                float metroDuration = Math.Max(5000, TrackDuration * MS);
+                float metroDuration = Math.Max(5000, TrackDuration * msInSecond);
                 for(int i = 1; i <= metroDuration; ++i) {
                     //print(i+"-"+(i*K).ToString());
-                    Metronome.beats.Add(i * K);
+                    Metronome.beats.Add(i * _msPerBeat);
                 }
                 Metronome.beats.Sort();
             }
@@ -4142,7 +4141,7 @@ namespace MiKu.NET {
         /// Play the track from the start or from <see cref="StartOffset"/>
         /// </summary>
         void Play() {
-            float seekTime = (StartOffset > 0) ? Mathf.Max(0, (_currentTime.FloatValue / MS) - (StartOffset.FloatValue / MS)) : (_currentTime.FloatValue / MS);
+            float seekTime = (StartOffset > 0) ? Mathf.Max(0, (_currentTime.FloatValue / msInSecond) - (StartOffset.FloatValue / msInSecond)) : (_currentTime.FloatValue / msInSecond);
             // if(seekTime >= audioSource.clip.length) { seekTime = audioSource.clip.length; }
             audioSource.time = seekTime;
             /*float targetSample = (StartOffset > 0) ? Mathf.Max(0, (_currentTime / MS) - (StartOffset / MS) ) : (_currentTime / MS);
@@ -4254,7 +4253,7 @@ namespace MiKu.NET {
         /// Coorutine that start the AudioSource after the <see cref="StartOffset"/> millisecons has passed
         /// </summary>
         IEnumerator StartAudioSourceDelay() {
-            yield return new WaitForSecondsRealtime(Mathf.Max(0, ((StartOffset.FloatValue / MS) - (_currentTime.FloatValue / MS)) / PlaySpeed));
+            yield return new WaitForSecondsRealtime(Mathf.Max(0, ((StartOffset.FloatValue / msInSecond) - (_currentTime.FloatValue / msInSecond)) / PlaySpeed));
 
             if(IsPlaying) { audioSource.Play(); }
         }
@@ -4288,7 +4287,7 @@ namespace MiKu.NET {
 
             if(!backToPreviousPoint) {
                 if(playStopMode == PlayStopMode.StepBack) {
-                    float _CK = (K * GetBPMForCurrentStepMode().Value);
+                    float _CK = (_msPerBeat * GetBPMForCurrentStepMode().Value);
                     if((_currentPlayTime.FloatValue % _CK) / _CK >= 0.5f) {
                         CurrentTime = GetCloseStepMeasure(_currentPlayTime).FloatValue;
                     } else {
@@ -4345,16 +4344,16 @@ namespace MiKu.NET {
             } else {
                 //_currentPlayTime += Time.unscaledDeltaTime * MS;
                 if(audioSource.isPlaying && syncnhWithAudio)
-                    _currentPlayTime.FloatValue = ((audioSource.timeSamples / (float)audioSource.clip.frequency) * MS) + StartOffset.FloatValue;
+                    _currentPlayTime.FloatValue = ((audioSource.timeSamples / (float)audioSource.clip.frequency) * msInSecond) + StartOffset.FloatValue;
                 else {
-                    _currentPlayTime.FloatValue += (Time.smoothDeltaTime * MS) * PlaySpeed;
+                    _currentPlayTime.FloatValue += (Time.smoothDeltaTime * msInSecond) * PlaySpeed;
                 }
 
                 //_currentPlayTime -= (LatencyOffset * MS);
                 //GetTrackTime();
                 UpdateDisplayTime(_currentPlayTime);
                 //m_CamerasHolder.Translate((Vector3.forward * Time.unscaledDeltaTime) * UsC);
-                zDest = MStoUnit(_currentPlayTime.FloatValue - (LatencyOffset * MS));
+                zDest = MStoUnit(_currentPlayTime.FloatValue - (LatencyOffset * msInSecond));
             }
 
             m_CamerasHolder.position = new Vector3(
@@ -4384,7 +4383,7 @@ namespace MiKu.NET {
 
             m_diplayTime.SetText(forwardTimeSB);
 
-            forwardTimeSpan = TimeSpan.FromMilliseconds((TrackDuration * MS) - _ms.FloatValue);
+            forwardTimeSpan = TimeSpan.FromMilliseconds((TrackDuration * msInSecond) - _ms.FloatValue);
 
             backwardTimeSB.Length = 0;
             backwardTimeSB.AppendFormat("{0:D2}m:{1:D2}s.{2:D3}ms",
@@ -4438,9 +4437,9 @@ namespace MiKu.NET {
         private void UpdateTrackDuration() {
             if(Serializer.Initialized) {
                 // TrackDuration = (StartOffset / MS) + ( CurrentChart.AudioData.Length / (CurrentChart.AudioFrecuency * CurrentChart.AudioChannels) ) + END_OF_SONG_OFFSET;
-                TrackDuration = (StartOffset.FloatValue / MS) + (songClip.length) + END_OF_SONG_OFFSET;
+                TrackDuration = (StartOffset.FloatValue / msInSecond) + (songClip.length) + END_OF_SONG_OFFSET;
             } else {
-                TrackDuration = (StartOffset.FloatValue / MS) + (MINUTE) + END_OF_SONG_OFFSET;
+                TrackDuration = (StartOffset.FloatValue / msInSecond) + (secondsInMinute) + END_OF_SONG_OFFSET;
             }
 
         }
@@ -4469,7 +4468,7 @@ namespace MiKu.NET {
                 // Iterate each entry on the Dictionary and get the note to update
                 //foreach( List<Note> _notes in valueColl ) {
                 foreach(TimeWrapper key in keys_sorted.OrEmptyIfNull()) {
-                    if(key > (TrackDuration * MS)) {
+                    if(key > (TrackDuration * msInSecond)) {
                         // If the note to add is pass the current song duration, we delete it
                         workingTrack.Remove(key);
                     } else {
@@ -5107,7 +5106,7 @@ namespace MiKu.NET {
         /// <param name="forward">If true the close measure to return will be on the forward direction, otherwise it will be the close passed meassure</param>
         /// <returns>Returns <typeparamref name="float"/></returns>
         TimeWrapper GetCloseStepMeasure(TimeWrapper time, bool forward = true) {
-            float _CK = (K * GetBPMForCurrentStepMode().Value);
+            float _CK = (_msPerBeat * GetBPMForCurrentStepMode().Value);
             TimeWrapper closeMeasure = 0;
             if(forward) {
                 closeMeasure = time + (_CK - (time.FloatValue % _CK));
@@ -5138,11 +5137,11 @@ namespace MiKu.NET {
         }
 
         float TimeToMeasure(TimeWrapper time) {
-            return ((time.FloatValue * BPM) / (MINUTE * MS)) / 4;
+            return ((time.FloatValue * BPM) / (secondsInMinute * msInSecond)) / 4;
         }
 
         float MeasureToTime(float measure) {
-            return ((measure * (MINUTE * MS)) / BPM) * 4;
+            return ((measure * (secondsInMinute * msInSecond)) / BPM) * 4;
         }
 
         void RefreshCurrentTime() {
@@ -5964,7 +5963,7 @@ namespace MiKu.NET {
                 Trace.WriteLine("AddNoteToChart called");
                 if(PromtWindowOpen || s_instance.isBusy) return;
 
-                if(CurrentTime < MIN_NOTE_START * MS) {
+                if(CurrentTime < MIN_NOTE_START * msInSecond) {
                     Miku_DialogManager.ShowDialog(
                         Miku_DialogManager.DialogType.Alert,
                         string.Format(
@@ -6706,9 +6705,9 @@ namespace MiKu.NET {
         /// Move the camera to the closed measure of the passed time value
         /// </summary>
         public static void JumpToTime(TimeWrapper time) {
-            time = Mathf.Min(time.FloatValue, s_instance.TrackDuration * MS);
+            time = Mathf.Min(time.FloatValue, s_instance.TrackDuration * msInSecond);
             Track.CurrentTime = s_instance.GetCloseStepMeasure(time, false);
-            int slicesPerStep = new TimeWrapper(s_instance.K * s_instance.GetBPMForCurrentStepMode().Value).Hash;
+            int slicesPerStep = new TimeWrapper(s_instance._msPerBeat * s_instance.GetBPMForCurrentStepMode().Value).Hash;
             if(s_instance._currentTime.Hash%slicesPerStep != 0) {
                 if(s_instance._currentTime.Hash > s_instance._currentTime.Hash%slicesPerStep)
                     s_instance._currentTime.Hash-=2;
@@ -6756,7 +6755,7 @@ namespace MiKu.NET {
 
                         if(IsWithin(workingEffects[i], CurrentTime - MIN_FLASH_INTERVAL, CurrentTime + MIN_FLASH_INTERVAL)) {
                             Miku_DialogManager.ShowDialog(Miku_DialogManager.DialogType.Alert,
-                                string.Format(StringVault.Alert_EffectsInterval, (MIN_FLASH_INTERVAL / MS)));
+                                string.Format(StringVault.Alert_EffectsInterval, (MIN_FLASH_INTERVAL / msInSecond)));
                             return;
                         }
                     }
@@ -6803,7 +6802,7 @@ namespace MiKu.NET {
         public static void ToggleMovementSectionToChart(string MoveTAG, bool isOverwrite = false) {
             if(PromtWindowOpen || IsPlaying) return;
 
-            if(CurrentTime < MIN_NOTE_START * MS) {
+            if(CurrentTime < MIN_NOTE_START * msInSecond) {
                 Miku_DialogManager.ShowDialog(
                     Miku_DialogManager.DialogType.Alert,
                     string.Format(
@@ -6956,7 +6955,7 @@ namespace MiKu.NET {
 
                         if(IsWithin(lights[i], CurrentTime - MIN_FLASH_INTERVAL, CurrentTime + MIN_FLASH_INTERVAL)) {
                             Miku_DialogManager.ShowDialog(Miku_DialogManager.DialogType.Alert,
-                                string.Format(StringVault.Alert_EffectsInterval, (MIN_FLASH_INTERVAL / MS)));
+                                string.Format(StringVault.Alert_EffectsInterval, (MIN_FLASH_INTERVAL / msInSecond)));
                             return;
                         }
                     }
@@ -7187,7 +7186,7 @@ namespace MiKu.NET {
                     rail.DestroyLeaderGameObject();
                     foreach(RailNoteWrapper note in rail.notesByTime.Values) {
                         rail.DestroyNoteObjectAndRemoveItFromTheRail(note.thisNote.noteId);
-                        newTime = UpdateTimeToBPM(note.thisNote.TimePoint, fromBPM);
+                        newTime = UpdateTimeToNewBPM(note.thisNote.TimePoint, fromBPM);
                         if(note == rail.Leader)
                             AddTimeToSFXList(newTime);
                         newPos = MStoUnit(newTime);
@@ -7213,7 +7212,7 @@ namespace MiKu.NET {
                         List<EditorNote> updateList = new List<EditorNote>();
 
                         // The new update time
-                        newTime = UpdateTimeToBPM(kvp.Key, fromBPM);
+                        newTime = UpdateTimeToNewBPM(kvp.Key, fromBPM);
 
                         // Iterate each note and update its info
                         for(int i = 0; i < _notes.Count; i++) {
@@ -7244,7 +7243,7 @@ namespace MiKu.NET {
                                     );
 
                                     TimeWrapper tms = UnitToMS(segmentPos.z);
-                                    n.Segments[j, 2] = MStoUnit(UpdateTimeToBPM(tms, fromBPM));
+                                    n.Segments[j, 2] = MStoUnit(UpdateTimeToNewBPM(tms, fromBPM));
                                 }
 
                                 AddNoteSegmentsObject(n, noteGO.transform.Find("LineArea"), true);
@@ -7282,7 +7281,7 @@ namespace MiKu.NET {
                     List<TimeWrapper> updatedEffects = new List<TimeWrapper>();
                     for(int i = 0; i < workingEffects.Count; ++i) {
                         // The new update time
-                        newTime = UpdateTimeToBPM(workingEffects[i], fromBPM);
+                        newTime = UpdateTimeToNewBPM(workingEffects[i], fromBPM);
                         newPos = MStoUnit(newTime);
 
                         GameObject effectGO = GameObject.Find(GetEffectIdFormated(workingEffects[i]));
@@ -7308,7 +7307,7 @@ namespace MiKu.NET {
                     EditorBookmark currBookmark;
                     for(int i = 0; i < bookmarks.Count; ++i) {
                         currBookmark = bookmarks[i];
-                        newTime = UpdateTimeToBPM(currBookmark.time, fromBPM);
+                        newTime = UpdateTimeToNewBPM(currBookmark.time, fromBPM);
                         newPos = MStoUnit(newTime);
 
                         GameObject bookmarkGO = GameObject.Find(GetBookmarkIdFormated(currBookmark.time));
@@ -7334,7 +7333,7 @@ namespace MiKu.NET {
                 if(jumps != null && jumps.Count > 0) {
                     List<TimeWrapper> updatedJumps = new List<TimeWrapper>();
                     for(int i = 0; i < jumps.Count; ++i) {
-                        newTime = UpdateTimeToBPM(jumps[i], fromBPM);
+                        newTime = UpdateTimeToNewBPM(jumps[i], fromBPM);
                         newPos = MStoUnit(newTime);
 
                         GameObject moveSectGO = GameObject.Find(GetMovementIdFormated(jumps[i], JUMP_TAG));
@@ -7357,7 +7356,7 @@ namespace MiKu.NET {
                 if(crouchs != null && crouchs.Count > 0) {
                     List<TimeWrapper> updatedCrouchs = new List<TimeWrapper>();
                     for(int i = 0; i < crouchs.Count; ++i) {
-                        newTime = UpdateTimeToBPM(crouchs[i], fromBPM);
+                        newTime = UpdateTimeToNewBPM(crouchs[i], fromBPM);
                         newPos = MStoUnit(newTime);
 
                         GameObject moveSectGO = GameObject.Find(GetMovementIdFormated(crouchs[i], CROUCH_TAG));
@@ -7381,7 +7380,7 @@ namespace MiKu.NET {
                     List<EditorSlide> updateSlides = new List<EditorSlide>();
                     for(int i = 0; i < slides.Count; ++i) {
                         EditorSlide currSlide = slides[i];
-                        newTime = UpdateTimeToBPM(slides[i].time, fromBPM);
+                        newTime = UpdateTimeToNewBPM(slides[i].time, fromBPM);
                         newPos = MStoUnit(newTime);
 
                         GameObject moveSectGO = GameObject.Find(GetMovementIdFormated(currSlide.time, GetSlideTagByType(currSlide.slideType)));
@@ -7406,7 +7405,7 @@ namespace MiKu.NET {
                     List<TimeWrapper> updatedLights = new List<TimeWrapper>();
                     for(int i = 0; i < lights.Count; ++i) {
                         // The new update time
-                        newTime = UpdateTimeToBPM(lights[i], fromBPM);
+                        newTime = UpdateTimeToNewBPM(lights[i], fromBPM);
                         newPos = MStoUnit(newTime);
 
                         GameObject effectGO = GameObject.Find(GetLightIdFormated(lights[i]));
@@ -7447,11 +7446,11 @@ namespace MiKu.NET {
         /// </summary>
         /// <param name="fromBPM">Overwrite the BPM use for the update</param>
         /// <returns>Returns <typeparamref name="float"/></returns>
-        public TimeWrapper UpdateTimeToBPM(TimeWrapper ms, float fromBPM = 0) {
+        public TimeWrapper UpdateTimeToNewBPM(TimeWrapper ms, float fromBPM = 0) {
             //return ms - ( ( (MS*MINUTE)/CurrentChart.BPM ) - K );
             if(ms > 0) {
                 fromBPM = (fromBPM > 0) ? fromBPM : lastBPM;
-                return (K * ms.FloatValue) / ((MS * MINUTE) / fromBPM);
+                return (_msPerBeat * ms.FloatValue) / (msInMinute / fromBPM);
             } else {
                 return ms;
             }
@@ -7460,13 +7459,13 @@ namespace MiKu.NET {
         }
 
         /// <summary>
-        /// Return the given time update to the new K const
+        /// Return the given time update to the new msPerBeat const
         /// </summary>
-        /// <param name="fromK">Overwrite the K use for the update</param>
+        /// <param name="fromK">Overwrite the msPerBeat use for the update</param>
         /// <returns>Returns <typeparamref name="float"/></returns>
-        float UpdateTimeToK(float ms, float fromK = 0) {
+        float UpdateTimeToNewMsPerBeat(float ms, float fromMsPerBeat = 0) {
             if(ms > 0) {
-                return (K * ms) / fromK;
+                return (_msPerBeat * ms) / fromMsPerBeat;
             } else {
                 return ms;
             }
@@ -8503,12 +8502,12 @@ namespace MiKu.NET {
         {
             get
             {
-                return (s_instance != null) ? s_instance._BPM : 0;
+                return (s_instance != null) ? s_instance._bpm : 0;
             }
 
             set
             {
-                s_instance._BPM = value;
+                s_instance._bpm = value;
             }
         }
 

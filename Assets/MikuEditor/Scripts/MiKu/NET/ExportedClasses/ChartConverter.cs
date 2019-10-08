@@ -646,10 +646,10 @@ namespace MiKu.NET.Charting {
 
         public static TimeWrapper UpdateTimeToBPM(TimeWrapper ms, float bpm) {
          
-            float K = (Track.MS * Track.MINUTE) / bpm;
+            float K = (Track.msInSecond * Track.secondsInMinute) / bpm;
             //return ms - ( ( (MS*MINUTE)/CurrentChart.BPM ) - K );
             if(ms > 0) {
-                return (K * ms.FloatValue) / ((Track.MS * Track.MINUTE) / bpm);
+                return (K * ms.FloatValue) / ((Track.msInSecond * Track.secondsInMinute) / bpm);
             } else {
                 return ms;
             }
