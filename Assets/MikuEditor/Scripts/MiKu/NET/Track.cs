@@ -734,18 +734,7 @@ namespace MiKu.NET {
 
         // step mode to use to for the track movement
         private StepDataHolder.CurrentStepMode _stepMode = StepDataHolder.CurrentStepMode.Primary;
-        public StepDataHolder.CurrentStepMode StepMode
-        {
-            get
-            {
-                return _stepMode;
-            }
 
-            set
-            {
-                _stepMode = value; 
-            }
-        }
 
         public static StepDataHolder CreateStepData(StepDataHolder.CurrentStepMode stepMode = StepDataHolder.CurrentStepMode.Primary, int stepsInBeat = 1) {
             StepDataHolder stepHolder = new StepDataHolder();
@@ -926,10 +915,7 @@ namespace MiKu.NET {
         private uint SideBarsStatus = 0;
         private bool bookmarksLoaded = false;
 
-        
-
         private int middleButtonNoteTarget = 0;
-
         private int MiddleButtonSelectorType = 0;
         private bool canAutoSave = true;
         private bool doScrollSound = true;
@@ -945,6 +931,7 @@ namespace MiKu.NET {
         private const float MIN_HIGHLIGHT_CHECK = 0.2f;
         private float currentHighlightCheck = 0;
         private bool highlightChecked = false;
+
         private CursorLockMode currentLockeMode;
 
 
@@ -3864,20 +3851,6 @@ namespace MiKu.NET {
                 m_SideBarScroll.verticalNormalizedPosition = 1;
             }
 
-            // Deprecated, Old Metronome Code
-            /* if (m_metronome != null) {
-                m_metronome.BPM = BPM;
-
-                if(isMetronomeActive) {
-                    if(m_MetronomeSound != null) {
-                        m_metronome.TickClip = m_MetronomeSound;
-                    }
-                    
-                    m_metronome.Play( (_currentPlayTime % K) / (float)MS);
-                    wasMetronomePlayed = true;
-                }
-            } */
-
             if(Metronome.isMetronomeActive) {
                 InitMetronomeQueue();
                 Metronome.isPlaying = true;
@@ -4563,38 +4536,6 @@ namespace MiKu.NET {
 
             return lightGO;
         }
-
-        /// <summary>
-        /// Update the <see cref="TotalNotes" /> stat
-        /// </summary>
-        /// <param name="clear">If true, will reset count to 0</param>
-        /// <param name="deleted">If true, the count will be decreased</param>
-        //void UpdateTotalNotes(bool clear = false, bool deleted = false) {
-        //    if(clear) {
-        //        TotalNotes = 0;
-        //    } else {
-        //        if(deleted) TotalNotes--;
-        //        else TotalNotes++;
-        //    }
-        //    // todo will need to create it dynamically from relevant data
-        //    m_statsTotalNotesText.SetText(TotalNotes.ToString() + " Notes");
-        //}
-
-        /// <summary>
-        /// Increase the <see cref="TotalNotes" /> stat
-        /// </summary>
-        //void IncreaseTotalNotesCount() {
-        //    TotalNotes++;
-        //    m_statsTotalNotesText.SetText(TotalNotes.ToString() + " Notes");
-        //}
-        /// <summary>
-        /// Decrease the <see cref="TotalNotes" /> stat
-        /// </summary>
-        //void DecreaseTotalNotesCount() {
-        //    TotalNotes--;
-        //    m_statsTotalNotesText.SetText(TotalNotes.ToString() + " Notes");
-        //}
-
 
         /// <summary>
         /// Increase the <see cref="TotalNotes" /> stat
@@ -8284,6 +8225,18 @@ namespace MiKu.NET {
             get
             {
                 return s_instance;
+            }
+        }
+        public StepDataHolder.CurrentStepMode StepMode
+        {
+            get
+            {
+                return _stepMode;
+            }
+
+            set
+            {
+                _stepMode = value;
             }
         }
         #endregion
