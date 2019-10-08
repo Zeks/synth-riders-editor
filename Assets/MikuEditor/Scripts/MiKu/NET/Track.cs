@@ -146,12 +146,13 @@ namespace MiKu.NET {
         public bool isPlaying;
         public List<float> beats;
     }
-    public enum CurrentStepMode {
-        Primary = 0,
-        Secondary = 1,
-        Precise = 2,
-    }
+ 
     public class StepDataHolder {
+        public enum CurrentStepMode {
+            Primary = 0,
+            Secondary = 1,
+            Precise = 2,
+        }
         private float _beatIncreasePerStep = 1f;
         private int _stepsInBeat = 1;
         private CurrentStepMode _stepMode = CurrentStepMode.Primary;
@@ -722,8 +723,8 @@ namespace MiKu.NET {
         private float _msPerBeat;
 
         // step mode to use to for the track movement
-        private CurrentStepMode _stepMode = CurrentStepMode.Primary;
-        public CurrentStepMode StepMode
+        private StepDataHolder.CurrentStepMode _stepMode = StepDataHolder.CurrentStepMode.Primary;
+        public StepDataHolder.CurrentStepMode StepMode
         {
             get
             {
@@ -736,7 +737,7 @@ namespace MiKu.NET {
             }
         }
 
-        public static StepDataHolder CreateStepData(CurrentStepMode stepMode = CurrentStepMode.Primary, int stepsInBeat = 1) {
+        public static StepDataHolder CreateStepData(StepDataHolder.CurrentStepMode stepMode = StepDataHolder.CurrentStepMode.Primary, int stepsInBeat = 1) {
             StepDataHolder stepHolder = new StepDataHolder();
             stepHolder.BeatIncreasePerStep = 1f/stepsInBeat;
             stepHolder.stepsInBeat= stepsInBeat;
@@ -747,8 +748,8 @@ namespace MiKu.NET {
         // used to for positional/bpm calculations
         // contain bpm and step information
         private StepDataHolder stepHolderPrimary = CreateStepData();
-        private StepDataHolder stepHolderSecondary = CreateStepData(CurrentStepMode.Secondary);
-        private StepDataHolder stepHolderPrecise = CreateStepData(CurrentStepMode.Precise, 64);
+        private StepDataHolder stepHolderSecondary = CreateStepData(StepDataHolder.CurrentStepMode.Secondary);
+        private StepDataHolder stepHolderPrecise = CreateStepData(StepDataHolder.CurrentStepMode.Precise, 64);
 
         private PlayStopMode playStopMode = PlayStopMode.StepBack;
 
@@ -940,28 +941,28 @@ namespace MiKu.NET {
         private CursorLockMode currentLockeMode;
 
 
-        public StepDataHolder GetDataForStepMode(CurrentStepMode mode) {
-            if(mode == CurrentStepMode.Primary)
+        public StepDataHolder GetDataForStepMode(StepDataHolder.CurrentStepMode mode) {
+            if(mode == StepDataHolder.CurrentStepMode.Primary)
                 return stepHolderPrimary;
-            if(mode == CurrentStepMode.Secondary)
+            if(mode == StepDataHolder.CurrentStepMode.Secondary)
                 return stepHolderSecondary;
             return stepHolderPrecise;
         }
 
         public StepDataHolder GetDataForCurrentStepMode() {
-            if(StepMode == CurrentStepMode.Primary)
+            if(StepMode == StepDataHolder.CurrentStepMode.Primary)
                 return stepHolderPrimary;
-            if(StepMode == CurrentStepMode.Secondary)
+            if(StepMode == StepDataHolder.CurrentStepMode.Secondary)
                 return stepHolderSecondary;
             return stepHolderPrecise;
         }
 
-        public CurrentStepMode GetNextStepMode(CurrentStepMode mode) {
-            if(mode == CurrentStepMode.Primary)
-                return CurrentStepMode.Secondary;
-            if(mode == CurrentStepMode.Secondary)
-                return CurrentStepMode.Precise;
-            return CurrentStepMode.Primary;
+        public StepDataHolder.CurrentStepMode GetNextStepMode(StepDataHolder.CurrentStepMode mode) {
+            if(mode == StepDataHolder.CurrentStepMode.Primary)
+                return StepDataHolder.CurrentStepMode.Secondary;
+            if(mode == StepDataHolder.CurrentStepMode.Secondary)
+                return StepDataHolder.CurrentStepMode.Precise;
+            return StepDataHolder.CurrentStepMode.Primary;
         }
 
         public bool AddTimeToCurrentTrack(TimeWrapper time) {
@@ -1699,11 +1700,11 @@ namespace MiKu.NET {
                     cameraMoved = true;
                     if(isCTRLDown) {
                         MoveCamera(true, GetNextStepPoint(stepHolderPrecise));
-                        StepMode = CurrentStepMode.Precise;
+                        StepMode = StepDataHolder.CurrentStepMode.Precise;
                         DrawTrackXSLines(stepHolderPrecise);
                     } else {
                         MoveCamera(true, GetNextStepPoint(stepHolderSecondary));
-                        StepMode = CurrentStepMode.Secondary;
+                        StepMode = StepDataHolder.CurrentStepMode.Secondary;
                         DrawTrackXSLines(stepHolderSecondary);
                     }
                 }
@@ -1741,10 +1742,10 @@ namespace MiKu.NET {
                     cameraMoved = true;
                     if(isCTRLDown) {
                         MoveCamera(true, GetPrevStepPoint(stepHolderPrecise));
-                        StepMode=CurrentStepMode.Precise;
+                        StepMode=StepDataHolder.CurrentStepMode.Precise;
                         DrawTrackXSLines(stepHolderPrecise);
                     } else {
-                        StepMode=CurrentStepMode.Secondary;
+                        StepMode=StepDataHolder.CurrentStepMode.Secondary;
                         MoveCamera(true, GetPrevStepPoint(stepHolderSecondary));
                         DrawTrackXSLines(stepHolderSecondary);
                     }
@@ -2701,9 +2702,9 @@ namespace MiKu.NET {
                 ((bpm.stepsInBeat >= 16) ? bpm.stepsInBeat / 2 : bpm.stepsInBeat - 1);
             bpm.stepsInBeat = Mathf.Clamp(bpm.stepsInBeat, 1, 64);
             bpm.BeatIncreasePerStep = (float)1 / bpm.stepsInBeat;
-            if(bpm.StepMode == CurrentStepMode.Primary)
+            if(bpm.StepMode == StepDataHolder.CurrentStepMode.Primary)
                 m_StepMeasureDisplay.SetText(string.Format("1/{0}", bpm.stepsInBeat));
-            if(bpm.StepMode == CurrentStepMode.Secondary)
+            if(bpm.StepMode == StepDataHolder.CurrentStepMode.Secondary)
                 m_SecondaryStepMeasureDisplay.SetText(string.Format("1/{0}", bpm.stepsInBeat));
             StepMode = bpm.StepMode;
             DrawTrackXSLines(bpm);
