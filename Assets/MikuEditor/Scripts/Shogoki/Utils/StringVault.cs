@@ -50,26 +50,6 @@ namespace Shogoki.Utils {
 
 		[SerializeField]
 		[TextArea(3, 8)]
-		string alert_LongNoteModeWrongNote = "A long note only can be of type LeftHanded or RightHanded"; 
-
-		[SerializeField]
-		[TextArea(3, 8)]
-		string alert_LongNoteLenghtBounds = "The long note duration must be between {0}s and {1}s";		
-
-		[SerializeField]
-		[TextArea(3, 8)]
-		string alert_LongNoteStartPoint = "A line segments must be after the line start time";	
-
-		[SerializeField]
-		[TextArea(3, 8)]
-		string alert_LongNoteStartSegment = "A line segments must be after the previous segments";	
-
-		[SerializeField]
-		[TextArea(3, 8)]
-		string alert_LongNoteNotFinalized = "Please finish or abort LongNote mode before adding a new note";
-
-		[SerializeField]
-		[TextArea(3, 8)]
 		string alert_MaxNumberOfNotes = "Max number of notes reached";
 
 		[SerializeField]
@@ -92,13 +72,6 @@ namespace Shogoki.Utils {
 		[TextArea(3, 8)]
 		string alert_MaxNumberOfTypeNotes = "Max number of {0} notes reached";	
 
-		[SerializeField]
-		[TextArea(3, 8)]
-		string alert_LongNoteNotFinalizedEffect = "Please finish or abort LongNote mode before toggling a effect";
-
-        [SerializeField]
-		[TextArea(3, 8)]
-		string alert_LongNoteNotFinalizedBookmark = "Please finish or abort LongNote mode before toggling a bookmar";
 
 		[SerializeField]
 		[TextArea(3, 8)]
@@ -156,10 +129,6 @@ namespace Shogoki.Utils {
 
 		[SerializeField]
 		[TextArea(3, 8)]
-		private string info_UserOnLongNoteMode = "Working on Long Note Section";
-
-		[SerializeField]
-		[TextArea(3, 8)]
 		private string info_NotNotesToCopy = "There is no notes to be copied";
 
 		[Header("Warning")]
@@ -197,29 +166,13 @@ namespace Shogoki.Utils {
 
 		[SerializeField]
 		[TextArea(3, 8)]
-		private string info_LongNoteModeEnabled = "LongNote mode enabled";
-
-		[SerializeField]
-		[TextArea(3, 8)]
-		private string info_LongNoteModeDisabled = "LongNote mode disabled";
-
-		[SerializeField]
-		[TextArea(3, 8)]
-		private string info_LongNoteModeFinalized = "LongNote mode disabled";
-
-		[SerializeField]
-		[TextArea(3, 8)]
-		private string info_LongNoteModeAborted = "LongNote mode finalized";
-
-		[SerializeField]
-		[TextArea(3, 8)]
-		private string info_NotePasteSuccess = "LongNote mode aborted";
-
-		[SerializeField]
-		[TextArea(3, 8)]
 		private string info_SpecialModeStarted = "Starting new Special section";
 
-		[SerializeField]
+        [SerializeField]
+        [TextArea(3, 8)]
+        private string info_NotePasteSuccess = "Notes pasted successfully";
+
+        [SerializeField]
 		[TextArea(3, 8)]
 		private string info_SpecialModeFinalized = "Special section finalized";
 
@@ -417,46 +370,6 @@ namespace Shogoki.Utils {
             }
         }		
 
-        public static string Alert_LongNoteModeWrongNote
-        {
-            get
-            {
-                return s_instance.alert_LongNoteModeWrongNote;
-            }
-        }
-
-        public static string Alert_LongNoteLenghtBounds
-        {
-            get
-            {
-                return s_instance.alert_LongNoteLenghtBounds;
-            }
-        }
-
-        public static string Alert_LongNoteStartPoint
-        {
-            get
-            {
-                return s_instance.alert_LongNoteStartPoint;
-            }
-        }
-
-        public static string Alert_LongNoteStartSegment
-        {
-            get
-            {
-                return s_instance.alert_LongNoteStartSegment;
-            }
-        }
-
-        public static string Alert_LongNoteNotFinalized
-        {
-            get
-            {
-                return s_instance.alert_LongNoteNotFinalized;
-            }
-        }
-
         public static string Alert_MaxNumberOfNotes
         {
             get
@@ -503,22 +416,6 @@ namespace Shogoki.Utils {
             get
             {
                 return s_instance.alert_MaxNumberOfTypeNotes;
-            }
-        }
-
-        public static string Alert_LongNoteNotFinalizedEffect
-        {
-            get
-            {
-                return s_instance.alert_LongNoteNotFinalizedEffect;
-            }
-        }
-
-        public static string Alert_LongNoteNotFinalizedBookmark
-        {
-            get
-            {
-                return s_instance.alert_LongNoteNotFinalizedBookmark;
             }
         }
 
@@ -614,14 +511,6 @@ namespace Shogoki.Utils {
             }
         }
 
-        public static string Info_UserOnLongNoteMode
-        {
-            get
-            {
-                return s_instance.info_UserOnLongNoteMode;
-            }
-        }
-
         public static string Info_NotNotesToCopy
         {
             get
@@ -691,38 +580,6 @@ namespace Shogoki.Utils {
             get
             {
                 return s_instance.info_FreeCameraLabel;
-            }
-        }
-
-        public static string Info_LongNoteModeEnabled
-        {
-            get
-            {
-                return s_instance.info_LongNoteModeEnabled;
-            }
-        }
-
-        public static string Info_LongNoteModeDisabled
-        {
-            get
-            {
-                return s_instance.info_LongNoteModeDisabled;
-            }
-        }
-
-        public static string Info_LongNoteModeFinalized
-        {
-            get
-            {
-                return s_instance.info_LongNoteModeFinalized;
-            }
-        }
-
-        public static string Info_LongNoteModeAborted
-        {
-            get
-            {
-                return s_instance.info_LongNoteModeAborted;
             }
         }
 

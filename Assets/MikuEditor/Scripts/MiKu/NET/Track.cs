@@ -850,12 +850,6 @@ namespace MiKu.NET {
         // For the ease of resizing of notes when to close of the front camera
         private List<GameObject> resizedNotes;
 
-        // For when a Long note is being added
-        // is no longer used
-        //private bool isOnLongNoteMode = false; 
-
-        //private LongNote CurrentLongNote { get; set; }
-
         private bool turnOffGridOnPlay = false;
 
         // For the specials
@@ -1077,7 +1071,6 @@ namespace MiKu.NET {
                 peakTimes = new List<TimeWrapper>();
                 barTimes = new List<TimeWrapper>();
 
-                //CurrentLongNote = new LongNote();            
                 CurrentSelection = new SelectionArea();
                 //
                 if(CurrentClipBoard == null) {
@@ -3540,25 +3533,6 @@ namespace MiKu.NET {
         }
 
         /// <summary> 
-        /// Toggle the LongLine Mode
-        /// not used anymore
-        /// </summary>
-        //public void ToggleLineMode() {
-        //    if(isOnLongNoteMode) {
-        //        FinalizeLongNoteMode();
-        //    } else {
-        //        /* if(selectedNoteType == Note.NoteType.LeftHanded || selectedNoteType == Note.NoteType.RightHanded)  */{
-        //            isOnLongNoteMode = true;
-        //            CloseSpecialSection();
-        //            Miku_DialogManager.ShowDialog(Miku_DialogManager.DialogType.Info, StringVault.Info_LongNoteModeEnabled);
-        //            ToggleWorkingStateAlertOn(StringVault.Info_UserOnLongNoteMode);
-        //        }/*  else {
-        //            Miku_DialogManager.ShowDialog(Miku_DialogManager.DialogType.Alert, StringVault.Alert_LongNoteModeWrongNote);
-        //        }     */                
-        //    }
-        //}
-
-        /// <summary> 
         /// Public handler for the ToggleEffectToChart method
         /// </summary>
         public void ToggleFlash() {
@@ -4903,173 +4877,6 @@ namespace MiKu.NET {
             TotalDisplayedNotes = 0;
             m_statsTotalNotesText.SetText(TotalNotes.ToString() + " Notes");
         }
-        /// <summary>
-        /// Start the functionality to add a longnote
-        /// no longer used
-        /// </summary>
-        //void StartLongNoteMode() {
-        //    /// TODO, show message with mode instructions
-        //    Track.LogMessage("TODO Show help long note");
-        //}
-
-        /// <summary>
-        /// Finalize the LongNote mode functionality and remove any incomplete elements
-        /// not used anymore
-        /// </summary>
-        //void FinalizeLongNoteMode() {
-        //    if(isOnLongNoteMode) {
-        //        isOnLongNoteMode = false;
-        //        bool abortLongNote = false;
-
-        //        if(CurrentLongNote.duration <= 0) {
-        //            // if the line has no segement we just disable the mode
-        //            Miku_DialogManager.ShowDialog(Miku_DialogManager.DialogType.Info, StringVault.Info_LongNoteModeDisabled);
-        //            abortLongNote = true;
-        //        } else if(CurrentLongNote.duration < MIN_LINE_DURATION || CurrentLongNote.duration > MAX_LINE_DURATION) {
-        //            // if the line duration is not between the min/max duration                
-        //            Miku_DialogManager.ShowDialog(Miku_DialogManager.DialogType.Alert, 
-        //                string.Format(StringVault.Alert_LongNoteLenghtBounds,
-        //                    MIN_LINE_DURATION/MS, MAX_LINE_DURATION/MS
-        //                ));
-        //            abortLongNote = true;                    
-        //        } else {
-        //            // Add the long segment to the working track;
-        //            // first we check if theres is any note in that time period
-        //            // We need to check the track difficulty selected
-        //            Dictionary<float, List<Note>> workingTrack = s_instance.GetCurrentTrackDifficulty();
-        //            if(workingTrack != null) {
-        //                if(!workingTrack.ContainsKey(CurrentLongNote.startTime)) {
-        //                    workingTrack.Add(CurrentLongNote.startTime, new List<Note>());
-        //                } 
-
-        //                if(CurrentLongNote.note.Segments == null) {
-        //                    CurrentLongNote.note.Segments = new float[CurrentLongNote.segments.Count, 3];
-
-        //                    if(CurrentLongNote.mirroredNote != null) { 
-        //                        CurrentLongNote.mirroredNote.Segments = new float[CurrentLongNote.segments.Count, 3];
-        //                    }
-        //                }
-
-        //                for(int i = 0; i < CurrentLongNote.segments.Count; ++i) {
-        //                    Transform segmentTransform = CurrentLongNote.segments[i].transform;
-        //                    int segmentAxis = CurrentLongNote.segmentAxis[i];
-        //                    CurrentLongNote.note.Segments[i, 0] = segmentTransform.position.x; 
-        //                    CurrentLongNote.note.Segments[i, 1] = segmentTransform.position.y;
-        //                    CurrentLongNote.note.Segments[i, 2] = segmentTransform.position.z;    
-
-        //                    if(CurrentLongNote.mirroredNote != null) {
-        //                        CurrentLongNote.mirroredNote.Segments[i, 0] = segmentTransform.position.x * -1; 
-        //                        CurrentLongNote.mirroredNote.Segments[i, 1] = segmentTransform.position.y * segmentAxis;
-        //                        CurrentLongNote.mirroredNote.Segments[i, 2] = segmentTransform.position.z;
-        //                    }                        
-        //                }
-
-        //                workingTrack[CurrentLongNote.startTime].Add(CurrentLongNote.note);
-        //                abortLongNote = false;
-        //                Miku_DialogManager.ShowDialog(Miku_DialogManager.DialogType.Info, StringVault.Info_LongNoteModeFinalized);
-
-        //                UpdateTotalNotes();
-        //                RenderLine(CurrentLongNote.gameObject, CurrentLongNote.note.Segments);
-        //                AddTimeToSFXList(CurrentLongNote.startTime);
-
-        //                if(CurrentLongNote.mirroredNote != null) {
-        //                    workingTrack[CurrentLongNote.startTime].Add(CurrentLongNote.mirroredNote);
-        //                    UpdateTotalNotes();
-        //                    RenderLine(CurrentLongNote.mirroredObject, CurrentLongNote.mirroredNote.Segments);
-        //                }
-        //                // Uncoment to enable sound on line end
-        //                // AddTimeToSFXList(CurrentLongNote.lastSegment);
-        //            } else {
-        //                abortLongNote = true;
-        //                Miku_DialogManager.ShowDialog(Miku_DialogManager.DialogType.Info, StringVault.Info_LongNoteModeAborted);
-        //            }                    
-        //        }
-
-        //        if(abortLongNote) {
-        //            // If aborted, remove the GameObject
-        //            GameObject.DestroyImmediate(CurrentLongNote.gameObject);
-        //            if(CurrentLongNote.mirroredObject != null) {
-        //                GameObject.DestroyImmediate(CurrentLongNote.mirroredObject);
-        //            }
-
-        //            /* if(CurrentLongNote.startTime > 0){
-        //                _currentTime = CurrentLongNote.startTime;
-        //                MoveCamera(true, _currentTime);
-        //            }    */                
-
-        //        } /* else {
-        //            // Otherwise, just remove the segments markers
-        //            // If debug mode, we let it on for testin purpose
-        //            if(!Track.IsOnDebugMode) {
-        //                for(int segm = 0; segm < CurrentLongNote.segments.Count; ++segm) {
-        //                    GameObject.Destroy(CurrentLongNote.segments[segm]);                            
-        //                }
-        //            }                
-        //        } */
-
-        //        Track.LogMessage("Note Duration "+CurrentLongNote.duration);
-        //        CurrentLongNote = new LongNote();
-        //        ToggleWorkingStateAlertOff();            
-        //    }
-        //}
-
-        /// <summary>
-        /// Add a Segment to the current longnote
-        /// not used anymore
-        /// </summary>
-        //void AddLongNoteSegment(GameObject note) {
-        //    // check if the insert time if less that the start time
-        //    if(_currentTime <= CurrentLongNote.startTime) {
-        //        Miku_DialogManager.ShowDialog(Miku_DialogManager.DialogType.Alert, StringVault.Alert_LongNoteStartPoint);
-        //        return;
-        //    }
-
-        //    LongNote workingLongNote = CurrentLongNote;
-        //    // if there is not segments initialize the List
-        //    if(workingLongNote.segments == null) {
-        //        workingLongNote.segments = new List<GameObject>();
-        //        workingLongNote.segmentAxis = new List<int>();
-        //    }
-
-        //    // check if there was a previos segment
-        //    if(workingLongNote.lastSegment > 0) {
-        //        // check if new segment insert larger that the previous segments
-        //        if(_currentTime <= workingLongNote.lastSegment) {
-        //            if(!IsOnMirrorMode) {
-        //                Miku_DialogManager.ShowDialog(Miku_DialogManager.DialogType.Alert, StringVault.Alert_LongNoteStartSegment);
-        //            }                    
-        //            return;
-        //        }                
-        //    }
-
-        //    // starting insert proccess
-        //    // updating duration
-        //    workingLongNote.duration = _currentTime - workingLongNote.startTime;
-        //    // updating the time of the lastSegment
-        //    workingLongNote.lastSegment = _currentTime;
-        //    // add segment object to the scene
-        //    // add the note game object to the screen
-        //    GameObject noteGO = GameObject.Instantiate(GetNoteMarkerByType(workingLongNote.note.Type, true));
-        //    noteGO.transform.localPosition = note.transform.position;
-        //    noteGO.transform.rotation =    Quaternion.identity;
-        //    noteGO.transform.localScale *= m_NoteSegmentMarkerRedution;
-        //    noteGO.transform.parent = workingLongNote.gameObject.transform.Find("LineArea");
-        //    noteGO.name = workingLongNote.note.Id+"_Segment";
-        //    // and finally add the gameObject to the segment list
-        //    workingLongNote.segments.Add(noteGO);
-        //    workingLongNote.segmentAxis.Add(YAxisInverse ? -1 : 1);
-
-        //    if(isOnMirrorMode) {
-        //        GameObject mirroredNoteGO = GameObject.Instantiate(GetNoteMarkerByType(GetMirroreNoteMarkerType(workingLongNote.note.Type), true));
-        //        mirroredNoteGO.transform.localPosition = GetMirrorePosition(note.transform.position);
-        //        mirroredNoteGO.transform.rotation =    Quaternion.identity;
-        //        mirroredNoteGO.transform.localScale *= m_NoteSegmentMarkerRedution;
-        //        mirroredNoteGO.transform.parent = workingLongNote.mirroredObject.transform.Find("LineArea");
-        //        mirroredNoteGO.name = workingLongNote.mirroredNote.Id+"_Segment";
-        //    }
-
-        //    CurrentLongNote = workingLongNote;
-        //}
 
         /// <summary>
         /// Close the special section if active
@@ -6546,8 +6353,6 @@ namespace MiKu.NET {
         /// </summary>
         /// <param name="note">The GameObject to add to the list</summary>
         public static void AddNoteToReduceList(GameObject note, bool turnOff = false) {
-            // || s_instance.MBPMIncreaseFactor == 1
-            // || s_instance.isOnLongNoteMode 
             if(Track.IsPlaying || note == null) return;
             //string searchName = note.name.Equals("Lefthand Single Note") || note.name.Equals("Righthand Single Note") || turnOff ? note.transform.parent.name : note.name;
             string searchName = note.transform.parent.name;
