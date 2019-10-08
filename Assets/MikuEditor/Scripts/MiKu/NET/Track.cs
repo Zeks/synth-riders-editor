@@ -151,53 +151,53 @@ namespace MiKu.NET {
         Secondary = 1,
         Precise = 2,
     }
-    public class InternalBPM {
-        private float _value = 1f;
-        private int _increaseFactor = 1;
+    public class StepDataHolder {
+        private float _bpm = 1f;
+        private int _stepsInBeat = 1;
         private CurrentStepMode _stepMode = CurrentStepMode.Primary;
-        public static InternalBPM DefaultPrimaryBPM() {
-            InternalBPM bpm = new InternalBPM();
-            bpm.Value = 1f;
-            bpm.IncreaseFactor= 1;
-            bpm.StepMode = CurrentStepMode.Primary;
-            return bpm;
+        public static StepDataHolder DefaultPrimaryStepData() {
+            StepDataHolder stepHolder = new StepDataHolder();
+            stepHolder.BPM = 1f;
+            stepHolder.stepsInBeat= 1;
+            stepHolder.StepMode = CurrentStepMode.Primary;
+            return stepHolder;
         }
-        public static InternalBPM DefaultSecondaryBPM() {
-            InternalBPM bpm = new InternalBPM();
-            bpm.Value = 1f;
-            bpm.IncreaseFactor= 1;
-            bpm.StepMode = CurrentStepMode.Secondary;
-            return bpm;
+        public static StepDataHolder DefaultSecondaryStepData() {
+            StepDataHolder stepHolder = new StepDataHolder();
+            stepHolder.BPM = 1f;
+            stepHolder.stepsInBeat= 1;
+            stepHolder.StepMode = CurrentStepMode.Secondary;
+            return stepHolder;
         }
-        public static InternalBPM DefaultPreciseBPM() {
-            InternalBPM bpm = new InternalBPM();
-            bpm.Value = 1f/64f;
-            bpm.IncreaseFactor= 64;
-            bpm.StepMode = CurrentStepMode.Precise;
-            return bpm;
+        public static StepDataHolder DefaultPreciseStepData() {
+            StepDataHolder stepHolder = new StepDataHolder();
+            stepHolder.BPM = 1f/64f;
+            stepHolder.stepsInBeat= 64;
+            stepHolder.StepMode = CurrentStepMode.Precise;
+            return stepHolder;
         }
-        public float Value
+        public float BPM
         {
             get
             {
-                return _value;
+                return _bpm;
             }
 
             set
             {
-                _value = value;
+                _bpm = value;
             }
         }
-        public int IncreaseFactor
+        public int stepsInBeat
         {
             get
             {
-                return _increaseFactor;
+                return _stepsInBeat;
             }
 
             set
             {
-                _increaseFactor = value;
+                _stepsInBeat = value;
             }
         }
         public CurrentStepMode StepMode
@@ -756,9 +756,9 @@ namespace MiKu.NET {
             }
         }
 
-        private InternalBPM bpmPrimary = InternalBPM.DefaultPrimaryBPM();
-        private InternalBPM bpmSecondary = InternalBPM.DefaultSecondaryBPM();
-        private InternalBPM bpmPrecise = InternalBPM.DefaultPreciseBPM();
+        private StepDataHolder stepHolderPrimary = StepDataHolder.DefaultPrimaryStepData();
+        private StepDataHolder stepHolderSecondary = StepDataHolder.DefaultSecondaryStepData();
+        private StepDataHolder stepHolderPrecise = StepDataHolder.DefaultPreciseStepData();
         private PlayStopMode playStopMode = PlayStopMode.StepBack;
         //
 
@@ -963,20 +963,20 @@ namespace MiKu.NET {
         private CursorLockMode currentLockeMode;
 
 
-        public InternalBPM GetBPMForStepMode(CurrentStepMode mode) {
+        public StepDataHolder GetDataForStepMode(CurrentStepMode mode) {
             if(mode == CurrentStepMode.Primary)
-                return bpmPrimary;
+                return stepHolderPrimary;
             if(mode == CurrentStepMode.Secondary)
-                return bpmSecondary;
-            return bpmPrecise;
+                return stepHolderSecondary;
+            return stepHolderPrecise;
         }
 
-        public InternalBPM GetBPMForCurrentStepMode() {
+        public StepDataHolder GetDataForCurrentStepMode() {
             if(StepMode == CurrentStepMode.Primary)
-                return bpmPrimary;
+                return stepHolderPrimary;
             if(StepMode == CurrentStepMode.Secondary)
-                return bpmSecondary;
-            return bpmPrecise;
+                return stepHolderSecondary;
+            return stepHolderPrecise;
         }
 
         public CurrentStepMode GetNextStepMode(CurrentStepMode mode) {
@@ -1241,7 +1241,7 @@ namespace MiKu.NET {
             switch(scrollMode) {
                 case ScrollMode.Steps:
                     //StepMode = CurrentStepMode.Primary;
-                    MoveCamera(true, GetNextStepPoint(GetBPMForCurrentStepMode()));
+                    MoveCamera(true, GetNextStepPoint(GetDataForCurrentStepMode()));
                     finishedMove = true;
                     break;
                 case ScrollMode.Objects:
@@ -1262,7 +1262,7 @@ namespace MiKu.NET {
                 CurrentTime = nextTime;
                 MoveCamera(true, moveTarget);
             }
-            DrawTrackXSLines(GetBPMForCurrentStepMode());
+            DrawTrackXSLines(GetDataForCurrentStepMode());
             gridManager.ResetLinesMaterial();
             if(showPlacementLines)
                 gridManager.HighlightLinesForPointList(FetchObjectPositionsAtCurrentTime(CurrentTime));
@@ -1274,7 +1274,7 @@ namespace MiKu.NET {
             switch(scrollMode) {
                 case ScrollMode.Steps:
                     //StepMode = CurrentStepMode.Primary;
-                    MoveCamera(true, GetPrevStepPoint(GetBPMForCurrentStepMode()));
+                    MoveCamera(true, GetPrevStepPoint(GetDataForCurrentStepMode()));
                     finishedMove = true;
                     break;
                 case ScrollMode.Objects:
@@ -1295,7 +1295,7 @@ namespace MiKu.NET {
                 CurrentTime = previousTime;
                 MoveCamera(true, moveTarget);
             }
-            DrawTrackXSLines(GetBPMForCurrentStepMode());
+            DrawTrackXSLines(GetDataForCurrentStepMode());
             gridManager.ResetLinesMaterial();
             if(showPlacementLines)
                 gridManager.HighlightLinesForPointList(FetchObjectPositionsAtCurrentTime(CurrentTime));
@@ -1396,7 +1396,7 @@ namespace MiKu.NET {
                     /* if(isCTRLDown) { m_BPMSlider.value = BPM + 1; }
                     else { ChangeStepMeasure(true); }     */
                     if(!isCTRLDown) {
-                        ChangeStepMeasure(Input.GetAxis("Horizontal") > 0, GetBPMForCurrentStepMode());
+                        ChangeStepMeasure(Input.GetAxis("Horizontal") > 0, GetDataForCurrentStepMode());
                     }
                     
                 } else {
@@ -1430,8 +1430,8 @@ namespace MiKu.NET {
 
             if(vertAxis < 0 && keyHoldTime > nextKeyHold && !PromtWindowOpen && !isCTRLDown && !isALTDown) {
                 nextKeyHold = keyHoldTime + keyHoldDelta;
-                MoveCamera(true, GetPrevStepPoint(GetBPMForCurrentStepMode()));
-                DrawTrackXSLines(GetBPMForCurrentStepMode());
+                MoveCamera(true, GetPrevStepPoint(GetDataForCurrentStepMode()));
+                DrawTrackXSLines(GetDataForCurrentStepMode());
                 nextKeyHold = nextKeyHold - keyHoldTime;
                 keyHoldTime = 0.0f;
             }
@@ -1439,8 +1439,8 @@ namespace MiKu.NET {
             // Input.GetKey(KeyCode.UpArrow)
             if(vertAxis > 0 && keyHoldTime > nextKeyHold && !PromtWindowOpen && !isCTRLDown && !isALTDown) {
                 nextKeyHold = keyHoldTime + keyHoldDelta;
-                MoveCamera(true, GetNextStepPoint(GetBPMForCurrentStepMode()));
-                DrawTrackXSLines(GetBPMForCurrentStepMode());
+                MoveCamera(true, GetNextStepPoint(GetDataForCurrentStepMode()));
+                DrawTrackXSLines(GetDataForCurrentStepMode());
                 nextKeyHold = nextKeyHold - keyHoldTime;
                 keyHoldTime = 0.0f;
             }
@@ -1467,7 +1467,7 @@ namespace MiKu.NET {
                 if(isCTRLDown && !IsPlaying) {
                     CloseSpecialSection();
                     ReturnToStartTime();
-                    DrawTrackXSLines(GetBPMForCurrentStepMode());
+                    DrawTrackXSLines(GetDataForCurrentStepMode());
                     gridManager.ResetLinesMaterial();
                     if(showPlacementLines)
                         gridManager.HighlightLinesForPointList(FetchObjectPositionsAtCurrentTime(CurrentTime));
@@ -1479,7 +1479,7 @@ namespace MiKu.NET {
                 if(isCTRLDown && !IsPlaying) {
                     CloseSpecialSection();
                     GoToEndTime();
-                    DrawTrackXSLines(GetBPMForCurrentStepMode());
+                    DrawTrackXSLines(GetDataForCurrentStepMode());
                     gridManager.ResetLinesMaterial();
                     if(showPlacementLines)
                         gridManager.HighlightLinesForPointList(FetchObjectPositionsAtCurrentTime(CurrentTime));
@@ -1527,8 +1527,8 @@ namespace MiKu.NET {
 
             if(Input.GetKeyDown(KeyCode.T) && !PromtWindowOpen) {
                 StepMode = GetNextStepMode(StepMode);
-                InternalBPM bpm = GetBPMForStepMode(StepMode);
-                DrawTrackXSLines(bpm, true);
+                StepDataHolder stepHolder = GetDataForStepMode(StepMode);
+                DrawTrackXSLines(stepHolder, true);
             }
 
             if(Input.GetKeyDown(KeyCode.L) && !PromtWindowOpen) {
@@ -1716,19 +1716,19 @@ namespace MiKu.NET {
                     return;
                 } else if(isCTRLDown && !isALTDown) {
                     //currentScrollMode = ScrollMode.Steps;
-                    ChangeStepMeasure(true, bpmPrimary);
+                    ChangeStepMeasure(true, stepHolderPrimary);
                     resetSelectionIfNeeded = false;
                 }
                 if(isALTDown) {
                     cameraMoved = true;
                     if(isCTRLDown) {
-                        MoveCamera(true, GetNextStepPoint(bpmPrecise));
+                        MoveCamera(true, GetNextStepPoint(stepHolderPrecise));
                         StepMode = CurrentStepMode.Precise;
-                        DrawTrackXSLines(bpmPrecise);
+                        DrawTrackXSLines(stepHolderPrecise);
                     } else {
-                        MoveCamera(true, GetNextStepPoint(bpmSecondary));
+                        MoveCamera(true, GetNextStepPoint(stepHolderSecondary));
                         StepMode = CurrentStepMode.Secondary;
-                        DrawTrackXSLines(bpmSecondary);
+                        DrawTrackXSLines(stepHolderSecondary);
                     }
                 }
                 if(cameraMoved) {
@@ -1759,18 +1759,18 @@ namespace MiKu.NET {
                 } else if(isCTRLDown && !isALTDown) {
                     resetSelectionIfNeeded = false;
                     //currentScrollMode = ScrollMode.Steps;
-                    ChangeStepMeasure(false, bpmPrimary);
+                    ChangeStepMeasure(false, stepHolderPrimary);
                 }
                 if(isALTDown) {
                     cameraMoved = true;
                     if(isCTRLDown) {
-                        MoveCamera(true, GetPrevStepPoint(bpmPrecise));
+                        MoveCamera(true, GetPrevStepPoint(stepHolderPrecise));
                         StepMode=CurrentStepMode.Precise;
-                        DrawTrackXSLines(bpmPrecise);
+                        DrawTrackXSLines(stepHolderPrecise);
                     } else {
                         StepMode=CurrentStepMode.Secondary;
-                        MoveCamera(true, GetPrevStepPoint(bpmSecondary));
-                        DrawTrackXSLines(bpmSecondary);
+                        MoveCamera(true, GetPrevStepPoint(stepHolderSecondary));
+                        DrawTrackXSLines(stepHolderSecondary);
                     }
                 }
                 if(cameraMoved) {
@@ -1967,7 +1967,7 @@ namespace MiKu.NET {
                         StorePreviousTime();
                         CurrentTime = GetCloseStepMeasure(ms, false);
                         MoveCamera(true, MStoUnit(CurrentTime));
-                        DrawTrackXSLines(GetBPMForCurrentStepMode());
+                        DrawTrackXSLines(GetDataForCurrentStepMode());
                     }
                 }
             }
@@ -1982,7 +1982,7 @@ namespace MiKu.NET {
                     StorePreviousTime();
                     CurrentTime = GetCloseStepMeasure(ms, false);
                     MoveCamera(true, MStoUnit(CurrentTime));
-                    DrawTrackXSLines(GetBPMForCurrentStepMode());
+                    DrawTrackXSLines(GetDataForCurrentStepMode());
                 }
             }
 
@@ -2048,7 +2048,7 @@ namespace MiKu.NET {
             if(IsPlaying) {
                 if(_currentPlayTime >= TrackDuration * msInSecond) { Stop(); } else {
                     MoveCamera();
-                    DrawTrackXSLines(GetBPMForCurrentStepMode());
+                    DrawTrackXSLines(GetDataForCurrentStepMode());
                 }
             }
         }
@@ -2441,14 +2441,14 @@ namespace MiKu.NET {
             TimeWrapper previousStepTime = result;
             while(result < time) {
                 previousStepTime=result;
-                result += _msPerBeat/GetBPMForCurrentStepMode().IncreaseFactor;
+                result += _msPerBeat/GetDataForCurrentStepMode().stepsInBeat;
             }
             previousSnap = previousStepTime;
             
             result = previousFullBeat;
             TimeWrapper tempTime = previousFullBeat;
             while(tempTime < time) {
-                tempTime += _msPerBeat/GetBPMForCurrentStepMode().IncreaseFactor;
+                tempTime += _msPerBeat/GetDataForCurrentStepMode().stepsInBeat;
             }
             nextSnap = tempTime;
 
@@ -2674,7 +2674,7 @@ namespace MiKu.NET {
             BPM = _bpm;
             m_BPMDisplay.SetText(BPM.ToString());
             DrawTrackLines();
-            DrawTrackXSLines(GetBPMForCurrentStepMode(), true);
+            DrawTrackXSLines(GetDataForCurrentStepMode(), true);
             UpdateNotePositions(lastBPM, lastMsPerBeat != _msPerBeat);
             PreviousTime = 0;
             CurrentTime = 0;
@@ -2701,34 +2701,34 @@ namespace MiKu.NET {
         /// <param name="isIncrease">if true increase <see cname="MBPM" /> otherwise decrease it</param>
         public void IncreaseStepMeasure(int mode) {
             if(mode == 0)
-                ChangeStepMeasure(true, bpmPrimary);
+                ChangeStepMeasure(true, stepHolderPrimary);
             else if(mode == 1)
-                ChangeStepMeasure(true, bpmSecondary);
+                ChangeStepMeasure(true, stepHolderSecondary);
             else
-                ChangeStepMeasure(true, bpmPrecise);
+                ChangeStepMeasure(true, stepHolderPrecise);
         }
         public void DecreaseStepMeasure(int mode) {
             if(mode == 0)
-                ChangeStepMeasure(false, bpmPrimary);
+                ChangeStepMeasure(false, stepHolderPrimary);
             else if(mode == 1)
-                ChangeStepMeasure(false, bpmSecondary);
+                ChangeStepMeasure(false, stepHolderSecondary);
             else
-                ChangeStepMeasure(false, bpmPrecise);
+                ChangeStepMeasure(false, stepHolderPrecise);
         }
 
         /// <summary>
         /// Change the how large if the step that we are advancing on the measure
         /// </summary>
         /// <param name="isIncrease">if true increase <see cname="MBPM" /> otherwise decrease it</param>
-        public void ChangeStepMeasure(bool isIncrease, InternalBPM bpm) {
-            bpm.IncreaseFactor = (isIncrease) ? ((bpm.IncreaseFactor >= 8) ? bpm.IncreaseFactor * 2 : bpm.IncreaseFactor + 1) :
-                ((bpm.IncreaseFactor >= 16) ? bpm.IncreaseFactor / 2 : bpm.IncreaseFactor - 1);
-            bpm.IncreaseFactor = Mathf.Clamp(bpm.IncreaseFactor, 1, 64);
-            bpm.Value = (float)1 / bpm.IncreaseFactor;
+        public void ChangeStepMeasure(bool isIncrease, StepDataHolder bpm) {
+            bpm.stepsInBeat = (isIncrease) ? ((bpm.stepsInBeat >= 8) ? bpm.stepsInBeat * 2 : bpm.stepsInBeat + 1) :
+                ((bpm.stepsInBeat >= 16) ? bpm.stepsInBeat / 2 : bpm.stepsInBeat - 1);
+            bpm.stepsInBeat = Mathf.Clamp(bpm.stepsInBeat, 1, 64);
+            bpm.BPM = (float)1 / bpm.stepsInBeat;
             if(bpm.StepMode == CurrentStepMode.Primary)
-                m_StepMeasureDisplay.SetText(string.Format("1/{0}", bpm.IncreaseFactor));
+                m_StepMeasureDisplay.SetText(string.Format("1/{0}", bpm.stepsInBeat));
             if(bpm.StepMode == CurrentStepMode.Secondary)
-                m_SecondaryStepMeasureDisplay.SetText(string.Format("1/{0}", bpm.IncreaseFactor));
+                m_SecondaryStepMeasureDisplay.SetText(string.Format("1/{0}", bpm.stepsInBeat));
             StepMode = bpm.StepMode;
             DrawTrackXSLines(bpm);
         }
@@ -3933,11 +3933,11 @@ namespace MiKu.NET {
         /// Draw the track extra thin lines when the <see cref="MBPM"/> is increase
         /// <summary>
         /// <param name="forceClear">If true, the lines will be forcefull redrawed</param>
-        void DrawTrackXSLines(InternalBPM bpm, bool forceClear = false) {
+        void DrawTrackXSLines(StepDataHolder bpm, bool forceClear = false) {
             TimeWrapper usedTime = isPlaying ? _currentPlayTime.FloatValue : _currentTime.FloatValue;
-            if(bpm.Value < 1) {
+            if(bpm.BPM < 1) {
                 float newXSSection = 0;
-                float _CK = (_msPerBeat * bpm.Value);
+                float _CK = (_msPerBeat * bpm.BPM);
                 // double xsKConst = (MS*MINUTE)/(double)BPM;
                 if((usedTime.FloatValue % _msPerBeat) > 0) {
                     newXSSection = usedTime.FloatValue - (usedTime.FloatValue % _msPerBeat);
@@ -3947,17 +3947,17 @@ namespace MiKu.NET {
 
                 //print(string.Format("{2} : {0} - {1}", currentXSLinesSection, newXSSection, _currentTime));
 
-                if(currentXSLinesSection != newXSSection || currentXSMPBM != bpm.Value || forceClear) {
+                if(currentXSLinesSection != newXSSection || currentXSMPBM != bpm.BPM || forceClear) {
                     ClearXSLines();
 
                     currentXSLinesSection = newXSSection;
-                    currentXSMPBM = bpm.Value;
+                    currentXSMPBM = bpm.BPM;
                     float startTime = currentXSLinesSection - 2*_msPerBeat;
                     //float offset = transform.position.z;
                     float ypos = 0;
 
-                    for(int j = 0; j < bpm.IncreaseFactor * 4; ++j) {
-                        startTime += _msPerBeat * bpm.Value;
+                    for(int j = 0; j < bpm.stepsInBeat * 4; ++j) {
+                        startTime += _msPerBeat * bpm.BPM;
                         GameObject trackLineXS = GameObject.Instantiate(m_ThinLineXS,
                             Vector3.zero, Quaternion.identity, gameObject.transform);
                         trackLineXS.name = "[Generated Beat Line XS]";
@@ -4074,15 +4074,15 @@ namespace MiKu.NET {
         /// Based on the values of <see cref="_msPerBeat"/> and <see cref="MBPM"/>
         /// </remarks>
         /// <returns>Returns <typeparamref name="float"/></returns>
-        float GetNextStepPoint(InternalBPM bpm) {
-            int multiplier = 64/bpm.IncreaseFactor;
-            float realStepsFloat = _currentTime.FloatValue/(_msPerBeat * bpm.Value);
+        float GetNextStepPoint(StepDataHolder stepHolder) {
+            int multiplier = 64/stepHolder.stepsInBeat;
+            float realStepsFloat = _currentTime.FloatValue/(_msPerBeat * stepHolder.BPM);
             int realStepsInt = (int)realStepsFloat;
-            float fraction = Math.Abs((realStepsInt+1)*_msPerBeat*bpm.Value - _currentTime.FloatValue)/(_msPerBeat*bpm.Value) ;
+            float fraction = Math.Abs((realStepsInt+1)*_msPerBeat*stepHolder.BPM - _currentTime.FloatValue)/(_msPerBeat*stepHolder.BPM) ;
             if(fraction > 0.1)
-                CurrentTime=(realStepsInt+1)*_msPerBeat*bpm.Value;
+                CurrentTime=(realStepsInt+1)*_msPerBeat*stepHolder.BPM;
             else
-                CurrentTime=(realStepsInt+2)*_msPerBeat*bpm.Value;
+                CurrentTime=(realStepsInt+2)*_msPerBeat*stepHolder.BPM;
             CurrentTime = Mathf.Min(_currentTime.FloatValue, (_songLengthInSteps - 1) * _msPerBeat);
             return MStoUnit(_currentTime.FloatValue);
         }
@@ -4094,16 +4094,16 @@ namespace MiKu.NET {
         /// Based on the values of <see cref="_msPerBeat"/> and <see cref="MBPM"/>
         /// </remarks>
         /// <returns>Returns <typeparamref name="float"/></returns>
-        float GetPrevStepPoint(InternalBPM bpm) {
-            int multiplier = 64/bpm.IncreaseFactor;
-            float realStepsFloat = _currentTime.FloatValue/(_msPerBeat * bpm.Value);
+        float GetPrevStepPoint(StepDataHolder stepHolder) {
+            int multiplier = 64/stepHolder.stepsInBeat;
+            float realStepsFloat = _currentTime.FloatValue/(_msPerBeat * stepHolder.BPM);
             int realStepsInt = (int)realStepsFloat;
-            float fraction = Math.Abs(realStepsInt*_msPerBeat*bpm.Value-_currentTime.FloatValue)/(_msPerBeat*bpm.Value);
-            bool diffLessThan0 = (realStepsInt*_msPerBeat*bpm.Value-_currentTime.FloatValue) < 0;
+            float fraction = Math.Abs(realStepsInt*_msPerBeat*stepHolder.BPM-_currentTime.FloatValue)/(_msPerBeat*stepHolder.BPM);
+            bool diffLessThan0 = (realStepsInt*_msPerBeat*stepHolder.BPM-_currentTime.FloatValue) < 0;
             if(diffLessThan0 && fraction > 0.1)
-                CurrentTime=(realStepsInt)*_msPerBeat*bpm.Value;
+                CurrentTime=(realStepsInt)*_msPerBeat*stepHolder.BPM;
             else
-                CurrentTime=(realStepsInt-1)*_msPerBeat*bpm.Value;
+                CurrentTime=(realStepsInt-1)*_msPerBeat*stepHolder.BPM;
             CurrentTime = Mathf.Max(_currentTime.FloatValue, 0);
             return MStoUnit(_currentTime.FloatValue);
         }
@@ -4287,7 +4287,7 @@ namespace MiKu.NET {
 
             if(!backToPreviousPoint) {
                 if(playStopMode == PlayStopMode.StepBack) {
-                    float _CK = (_msPerBeat * GetBPMForCurrentStepMode().Value);
+                    float _CK = (_msPerBeat * GetDataForCurrentStepMode().BPM);
                     if((_currentPlayTime.FloatValue % _CK) / _CK >= 0.5f) {
                         CurrentTime = GetCloseStepMeasure(_currentPlayTime).FloatValue;
                     } else {
@@ -4317,7 +4317,7 @@ namespace MiKu.NET {
 
             ResetDisabledList();
             // ResetResizedList();
-            DrawTrackXSLines(GetBPMForCurrentStepMode());
+            DrawTrackXSLines(GetDataForCurrentStepMode());
 
             // Clear the effect stack
             effectsStacks.Clear();
@@ -5106,7 +5106,7 @@ namespace MiKu.NET {
         /// <param name="forward">If true the close measure to return will be on the forward direction, otherwise it will be the close passed meassure</param>
         /// <returns>Returns <typeparamref name="float"/></returns>
         TimeWrapper GetCloseStepMeasure(TimeWrapper time, bool forward = true) {
-            float _CK = (_msPerBeat * GetBPMForCurrentStepMode().Value);
+            float _CK = (_msPerBeat * GetDataForCurrentStepMode().BPM);
             TimeWrapper closeMeasure = 0;
             if(forward) {
                 closeMeasure = time + (_CK - (time.FloatValue % _CK));
@@ -6707,7 +6707,7 @@ namespace MiKu.NET {
         public static void JumpToTime(TimeWrapper time) {
             time = Mathf.Min(time.FloatValue, s_instance.TrackDuration * msInSecond);
             Track.CurrentTime = s_instance.GetCloseStepMeasure(time, false);
-            int slicesPerStep = new TimeWrapper(s_instance._msPerBeat * s_instance.GetBPMForCurrentStepMode().Value).Hash;
+            int slicesPerStep = new TimeWrapper(s_instance._msPerBeat * s_instance.GetDataForCurrentStepMode().BPM).Hash;
             if(s_instance._currentTime.Hash%slicesPerStep != 0) {
                 if(s_instance._currentTime.Hash > s_instance._currentTime.Hash%slicesPerStep)
                     s_instance._currentTime.Hash-=2;
@@ -6719,7 +6719,7 @@ namespace MiKu.NET {
             if(PromtWindowOpen) {
                 s_instance.ClosePromtWindow();
             }
-            s_instance.DrawTrackXSLines(s_instance.GetBPMForCurrentStepMode());
+            s_instance.DrawTrackXSLines(s_instance.GetDataForCurrentStepMode());
             s_instance.ResetResizedList();
             s_instance.ResetDisabledList();
         }
