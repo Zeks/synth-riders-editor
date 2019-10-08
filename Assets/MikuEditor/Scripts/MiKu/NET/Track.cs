@@ -148,7 +148,10 @@ namespace MiKu.NET {
         public List<Rail> rails;
     }
 
-    public struct TrackMetronome {
+    public class TrackMetronome {
+        public bool isMetronomeActive = false;
+        public bool wasMetronomePlayed = false;
+
         public float bpm;
         public bool isPlaying;
         public List<float> beats;
@@ -858,8 +861,11 @@ namespace MiKu.NET {
         private StepLineData stepLineDrawData = new StepLineData();
 
         // metronome
-        private bool isMetronomeActive = false;
-        private bool wasMetronomePlayed = false;
+        
+
+        private TrackMetronome Metronome;
+        private Queue<float> MetronomeBeatQueue;
+
 
         public int TotalNotes { get; set; }
         public int TotalDisplayedNotes { get; set; }
@@ -890,7 +896,6 @@ namespace MiKu.NET {
         Spectrum audioSpectrum = new Spectrum();
 
         int CurrentVsync = 0;
-        Transform plotTempInstance;
 
         // Pref Settings
         private const string MUSIC_VOLUME_PREF_KEY = "com.synth.editor.MusicVolume";
@@ -909,6 +914,10 @@ namespace MiKu.NET {
         private WaitForSeconds pointEightWait;
 
         private SelectionArea CurrentSelection;
+
+        // candidates for refactor, but later
+        // seems to be largley superseded by CurrentSelection members
+        // but selectionEndPos is kept and reused sometimes
         private Vector3 selectionStartPos;
         private Vector3 selectionEndPos;
 
@@ -916,10 +925,8 @@ namespace MiKu.NET {
 
         private uint SideBarsStatus = 0;
         private bool bookmarksLoaded = false;
-        private float lastUsedCK;
 
-        private TrackMetronome Metronome;
-        private Queue<float> MetronomeBeatQueue;
+        
 
         private int middleButtonNoteTarget = 0;
 
@@ -2899,8 +2906,8 @@ namespace MiKu.NET {
         /// Toggle Metronome on/off
         ///</summary>
         public void ToggleMetronome() {
-            isMetronomeActive = !isMetronomeActive;
-            Miku_DialogManager.ShowDialog(Miku_DialogManager.DialogType.Alert, StringVault.Info_Metronome + (isMetronomeActive ? "On" : "Off"));
+            Metronome.isMetronomeActive = !Metronome.isMetronomeActive;
+            Miku_DialogManager.ShowDialog(Miku_DialogManager.DialogType.Alert, StringVault.Info_Metronome + (Metronome.isMetronomeActive ? "On" : "Off"));
 
             if(IsPlaying) {
                 /* if(isMetronomeActive && !wasMetronomePlayed) {
@@ -2913,14 +2920,14 @@ namespace MiKu.NET {
 
                 wasMetronomePlayed = isMetronomeActive; */
 
-                if(isMetronomeActive && !wasMetronomePlayed) {
+                if(Metronome.isMetronomeActive && !Metronome.wasMetronomePlayed) {
                     InitMetronomeQueue();
                     Metronome.isPlaying = true;
                 } else {
                     Metronome.isPlaying = false;
                 }
 
-                wasMetronomePlayed = isMetronomeActive;
+                Metronome.wasMetronomePlayed = Metronome.isMetronomeActive;
             }
         }
 
@@ -3871,10 +3878,10 @@ namespace MiKu.NET {
                 }
             } */
 
-            if(isMetronomeActive) {
+            if(Metronome.isMetronomeActive) {
                 InitMetronomeQueue();
                 Metronome.isPlaying = true;
-                wasMetronomePlayed = true;
+                Metronome.wasMetronomePlayed = true;
             }
 
             EventSystem.current.SetSelectedGameObject(null);
@@ -3973,7 +3980,7 @@ namespace MiKu.NET {
                 wasMetronomePlayed = false;
             } */
 
-            wasMetronomePlayed = false;
+            Metronome.wasMetronomePlayed = false;
             IsPlaying = false;
 
             if(!backToPreviousPoint) {
