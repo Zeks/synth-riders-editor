@@ -163,10 +163,15 @@ namespace MiKu.NET {
             Secondary = 1,
             Precise = 2,
         }
+        public enum StepSelectorCycleMode {
+            Fours = 0,
+            Threes = 1,
+            All = 2
+        }
         private float _beatIncreasePerStep = 1f;
         private int _stepsInBeat = 1;
         private CurrentStepMode _stepMode = CurrentStepMode.Primary;
-
+        private StepSelectorCycleMode _stepCycleMode = StepSelectorCycleMode.All;
         public float BeatIncreasePerStep
         {
             get
@@ -189,6 +194,7 @@ namespace MiKu.NET {
             set
             {
                 _stepsInBeat = value;
+                _beatIncreasePerStep = 1f/_stepsInBeat;
             }
         }
         public CurrentStepMode StepMode
@@ -201,6 +207,18 @@ namespace MiKu.NET {
             set
             {
                 _stepMode = value;
+            }
+        }
+        public StepSelectorCycleMode StepCycleMode
+        {
+            get
+            {
+                return _stepCycleMode;
+            }
+
+            set
+            {
+                _stepCycleMode = value;
             }
         }
     }
@@ -578,8 +596,15 @@ namespace MiKu.NET {
 
         [SerializeField]
         private TextMeshProUGUI m_StepMeasureDisplay;
+
+        [SerializeField]
+        private TextMeshProUGUI m_CycleStepMeasureDisplay;
+
         [SerializeField]
         private TextMeshProUGUI m_SecondaryStepMeasureDisplay;
+
+        [SerializeField]
+        private TextMeshProUGUI m_CycleSecondaryStepMeasureDisplay;
 
         [SerializeField]
         private TMP_Dropdown m_BookmarkJumpDrop;
@@ -754,6 +779,10 @@ namespace MiKu.NET {
         private StepDataHolder stepHolderSecondary = CreateStepData(StepDataHolder.CurrentStepMode.Secondary);
         private StepDataHolder stepHolderPrecise = CreateStepData(StepDataHolder.CurrentStepMode.Precise, 64);
 
+        private List<int> foursStepCycle = new List<int>() { 1, 4, 8, 16, 32, 64 };
+        private List<int> threesStepCycle = new List<int>() { 1, 3, 6, 12, 24, 48 };
+        private List<int> allStepCycle = new List<int>() { 1, 2, 3, 4, 6, 8, 12, 16, 24, 32, 48, 64 };
+
         // current time the editor is at
         private TimeWrapper _currentTime = 0;
         // recorded before stepping to the next time
@@ -856,7 +885,7 @@ namespace MiKu.NET {
         // metronome
 
 
-        private TrackMetronome Metronome;
+        private TrackMetronome Metronome = new TrackMetronome();
         private Queue<float> MetronomeBeatQueue;
 
 
@@ -2470,23 +2499,103 @@ namespace MiKu.NET {
                 ChangeStepMeasure(false, stepHolderPrecise);
         }
 
+
+
         /// <summary>
         /// Change the how large if the step that we are advancing on the measure
         /// </summary>
         /// <param name="isIncrease">if true increase <see cname="MBPM" /> otherwise decrease it</param>
-        public void ChangeStepMeasure(bool isIncrease, StepDataHolder bpm) {
-            bpm.stepsInBeat = (isIncrease) ? ((bpm.stepsInBeat >= 8) ? bpm.stepsInBeat * 2 : bpm.stepsInBeat + 1) :
-                ((bpm.stepsInBeat >= 16) ? bpm.stepsInBeat / 2 : bpm.stepsInBeat - 1);
-            bpm.stepsInBeat = Mathf.Clamp(bpm.stepsInBeat, 1, 64);
-            bpm.BeatIncreasePerStep = (float)1 / bpm.stepsInBeat;
-            if(bpm.StepMode == StepDataHolder.CurrentStepMode.Primary)
-                m_StepMeasureDisplay.SetText(string.Format("1/{0}", bpm.stepsInBeat));
-            if(bpm.StepMode == StepDataHolder.CurrentStepMode.Secondary)
-                m_SecondaryStepMeasureDisplay.SetText(string.Format("1/{0}", bpm.stepsInBeat));
-            StepMode = bpm.StepMode;
-            DrawTrackStepLines(bpm);
-        }
+        public void ChangeStepMeasure(bool isIncrease, StepDataHolder stepHolder) {
+            List<int> listToOperateOn = allStepCycle;
+            switch(stepHolder.StepCycleMode) {
+                case StepDataHolder.StepSelectorCycleMode.Fours:
+                    listToOperateOn = foursStepCycle;
+                break;
+                case StepDataHolder.StepSelectorCycleMode.Threes:
+                    listToOperateOn = threesStepCycle;
+                    break;
+                case StepDataHolder.StepSelectorCycleMode.All:
+                    listToOperateOn = allStepCycle;
+                    break;
+            }
 
+            int scheduledIndex = listToOperateOn.IndexOf(stepHolder.stepsInBeat);
+            if(scheduledIndex == -1)
+                scheduledIndex = 0;
+            if(isIncrease) {
+                if((scheduledIndex + 1) == listToOperateOn.Count)
+                    scheduledIndex = 0;
+                else
+                    scheduledIndex+=1;
+            } else {
+                if(scheduledIndex == 0)
+                    scheduledIndex = listToOperateOn.Count - 1;
+                else
+                    scheduledIndex-=1;
+            }
+
+            int newStepsInBeat = listToOperateOn[scheduledIndex];
+
+            stepHolder.stepsInBeat = newStepsInBeat;
+            stepHolder.BeatIncreasePerStep = (float)1 / stepHolder.stepsInBeat;
+
+            if(stepHolder.StepMode == StepDataHolder.CurrentStepMode.Primary)
+                m_StepMeasureDisplay.SetText(string.Format("1/{0}", stepHolder.stepsInBeat));
+            if(stepHolder.StepMode == StepDataHolder.CurrentStepMode.Secondary)
+                m_SecondaryStepMeasureDisplay.SetText(string.Format("1/{0}", stepHolder.stepsInBeat));
+
+            StepMode = stepHolder.StepMode;
+            DrawTrackStepLines(stepHolder);
+        }
+        /// <summary>
+        /// Will cycle primary step holder 
+        ///</summary>
+        public void CyclePrimaryStep() {
+            CycleStepMeasure(stepHolderPrimary);
+        }
+        public void CycleSecondaryStep() {
+            CycleStepMeasure(stepHolderSecondary);
+        }
+        /// <summary>
+        /// Cycles the current step measure mode. Evens mode will only snap to evens, any snaps to any, etc.
+        /// </summary>
+        public void CycleStepMeasure(StepDataHolder stepHolder) {
+            //Debug.Log(MBPMIncreaseFactor);
+            TextMeshProUGUI modeTextToChange = m_CycleStepMeasureDisplay;
+            TextMeshProUGUI stepTextToChange = m_StepMeasureDisplay;
+            if(stepHolder.StepMode == StepDataHolder.CurrentStepMode.Primary) {
+                stepTextToChange = m_StepMeasureDisplay;
+                modeTextToChange = m_CycleStepMeasureDisplay;
+            }
+            if(stepHolder.StepMode == StepDataHolder.CurrentStepMode.Secondary) {
+                stepTextToChange = m_SecondaryStepMeasureDisplay;
+                modeTextToChange = m_CycleSecondaryStepMeasureDisplay;
+            }
+
+            switch(stepHolder.StepCycleMode) {
+                case StepDataHolder.StepSelectorCycleMode.Fours:
+                    stepHolder.StepCycleMode = StepDataHolder.StepSelectorCycleMode.Threes;
+                    stepHolder.stepsInBeat = 3;
+                    stepTextToChange.SetText(string.Format("1/{0}", 3));
+                    modeTextToChange.SetText("Threes");
+                    break;
+
+                case StepDataHolder.StepSelectorCycleMode.Threes:
+                    stepHolder.StepCycleMode = StepDataHolder.StepSelectorCycleMode.All;
+                    stepHolder.stepsInBeat = 4;
+                    stepTextToChange.SetText(string.Format("1/{0}", 4));
+                    modeTextToChange.SetText("Any");
+                    break;
+
+                case StepDataHolder.StepSelectorCycleMode.All:
+                    stepHolder.StepCycleMode = StepDataHolder.StepSelectorCycleMode.Fours;
+                    stepHolder.stepsInBeat = 4;
+                    stepTextToChange.SetText(string.Format("1/{0}", 4));
+                    modeTextToChange.SetText("Fours");
+                    break;
+            }
+            DrawTrackStepLines(stepHolder);
+        }
 
         /// <summary>
         /// Change the selected difficulty bein displayed
