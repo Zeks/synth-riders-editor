@@ -8282,49 +8282,4 @@ namespace MiKu.NET {
         #endregion
     }
 
-    public class FrequencyData {
-        public FrequencyData() {
-            peakTimes = new List<TimeWrapper>();
-            barTimes = new List<TimeWrapper>();
-        }
-        private TimeWrapper NextPeak(TimeWrapper time) {
-            TimeWrapper result = time;
-            peakTimes.Sort();
-            var temp = peakTimes.SkipWhile(t => t <= time);
-            if(temp.ToList().Count != 0) {
-                result = temp.First();
-            }
-            return result;
-        }
-        private TimeWrapper PreviousPeak(TimeWrapper time) {
-            TimeWrapper result = time;
-            peakTimes.Sort();
-            peakTimes.Reverse();
-            var temp = peakTimes.SkipWhile(t => t >= time);
-            if(temp.ToList().Count != 0) {
-                result = temp.First();
-            }
-            return result;
-        }
-        public static TimeWrapper SnapToBar(FrequencyData data, TimeWrapper StartOffset, TimeWrapper time, Track.PlacerClickSnapMode mode = Track.PlacerClickSnapMode.MinorBar) {
-            TimeWrapper result = 0;
-            if(mode == Track.PlacerClickSnapMode.MinorBar) {
-                data.barTimes.Sort();
-                data.barTimes.Reverse();
-                var temp = data.barTimes.SkipWhile(t => t + StartOffset > time);
-                result = temp.First() + StartOffset;
-            } else {
-                data.peakTimes.Sort();
-                data.peakTimes.Reverse();
-                var temp = data.peakTimes.SkipWhile(t => t + StartOffset > time);
-                if(temp.Count() > 0)
-                    result = temp.First() + StartOffset;
-                else
-                    result = 0;
-            }
-            return result;
-        }
-        public List<TimeWrapper> peakTimes;
-        public List<TimeWrapper> barTimes;
-    }
 }
