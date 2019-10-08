@@ -123,18 +123,6 @@ namespace MiKu.NET {
         public float currentBeatIncreasePerStep;
     }
 
-    public class LongNote {
-        public TimeWrapper startTime = new TimeWrapper(0);
-        public EditorNote note;
-        public EditorNote mirroredNote;
-        public GameObject gameObject;
-        public GameObject mirroredObject;
-        public TimeWrapper duration = new TimeWrapper(0);
-        public TimeWrapper lastSegment = new TimeWrapper(0);
-        public List<GameObject> segments;
-        public List<int> segmentAxis;
-    }
-
     public class SelectionArea {
         private TimeWrapper _startTime = -1f;
         private TimeWrapper _endTime = -1f;
