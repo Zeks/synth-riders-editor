@@ -635,6 +635,9 @@ namespace MiKu.NET {
         private TMP_Dropdown m_ScrollSelector;
 
         [SerializeField]
+        private TMP_Dropdown m_StopModeSelector;
+
+        [SerializeField]
         private GridManager gridManager;
 
         [Space(20)]
@@ -943,6 +946,18 @@ namespace MiKu.NET {
         private const string AUTOSAVE_KEY = "com.synth.editor.AutoSave";
         private const string SCROLLSOUND_KEY = "com.synth.editor.ScrollSound";
         private const string GRIDSIZE_KEY = "com.synth.editor.GridSize";
+
+        private const string GRID_HIGHLIGHT_KEY = "com.synth.editor.GridHighlight";
+        private const string STOP_MODE_KEY = "com.synth.editor.StopMode";
+        private const string SCROLL_MODE_KEY = "com.synth.editor.ScrollMode";
+        private const string CAMERA_TYPE_KEY = "com.synth.editor.CameraType";
+
+        private const string PRIMARY_STEP_KEY = "com.synth.editor.PrimaryStep";
+        private const string PRIMARY_STEP_CYCLE_KEY = "com.synth.editor.PrimaryStepCycle";
+        private const string SEDONDARY_STEP_KEY = "com.synth.editor.SecondaryStep";
+        private const string SECONDARY_STEP_CYCLE_KEY = "com.synth.editor.SecondaryStepCycle";
+        private const string GRID_START_OFFSET = "com.synth.editor.GridStartOffset";
+
 
         // 
         private WaitForSeconds pointEightWait;
@@ -3999,7 +4014,7 @@ namespace MiKu.NET {
             float realStepsFloat = (_currentTime.FloatValue - GridOffset)/(_msPerBeat * stepHolder.BeatIncreasePerStep);
             int realStepsInt = (int)Math.Round(realStepsFloat, 0, MidpointRounding.AwayFromZero);
             float fraction = Math.Abs(realStepsInt*_msPerBeat*stepHolder.BeatIncreasePerStep-_currentTime.FloatValue)/(_msPerBeat*stepHolder.BeatIncreasePerStep);
-            bool diffLessThan0 = (realStepsInt*_msPerBeat*stepHolder.BeatIncreasePerStep-_currentTime.FloatValue) < 0;
+            bool diffLessThan0 = (realStepsInt*_msPerBeat*stepHolder.BeatIncreasePerStep-(_currentTime.FloatValue - GridOffset)) < 0;
             if(diffLessThan0 && fraction > 0.1)
                 CurrentTime=(realStepsInt)*_msPerBeat*stepHolder.BeatIncreasePerStep;
             else
@@ -7984,6 +7999,43 @@ namespace MiKu.NET {
             doScrollSound = PlayerPrefs.GetInt(SCROLLSOUND_KEY, 1);
             gridManager.SeparationSize = (PlayerPrefs.GetFloat(GRIDSIZE_KEY, 0.1365f));
             gridManager.DrawGridLines();
+
+            // need to set relevant UI
+            showPlacementLines = PlayerPrefs.GetInt(GRID_HIGHLIGHT_KEY, 1)  == 1 ? true : false;
+            playStopMode = (PlayStopMode) PlayerPrefs.GetInt(STOP_MODE_KEY, 0);
+            currentScrollMode = (ScrollMode) PlayerPrefs.GetInt(SCROLL_MODE_KEY, 0);
+
+            stepHolderPrimary.stepsInBeat = PlayerPrefs.GetInt(PRIMARY_STEP_KEY, 1);
+            stepHolderSecondary.stepsInBeat = PlayerPrefs.GetInt(SEDONDARY_STEP_KEY, 1);
+            stepHolderPrimary.StepCycleMode = (StepDataHolder.StepSelectorCycleMode) PlayerPrefs.GetInt(PRIMARY_STEP_CYCLE_KEY, 0);
+            stepHolderSecondary.StepCycleMode = (StepDataHolder.StepSelectorCycleMode) PlayerPrefs.GetInt(SECONDARY_STEP_CYCLE_KEY, 0);
+
+            SwitchRenderCamera(PlayerPrefs.GetInt(CAMERA_TYPE_KEY, 2));
+
+            m_StopModeSelector.SetValueWithoutNotify((int)playStopMode);
+            m_ScrollSelector.SetValueWithoutNotify((int)currentScrollMode);
+            m_StepMeasureDisplay.SetText(string.Format("1/{0}", stepHolderPrimary.stepsInBeat));
+            m_SecondaryStepMeasureDisplay.SetText(string.Format("1/{0}", stepHolderSecondary.stepsInBeat));
+
+            if(stepHolderPrimary.StepCycleMode == StepDataHolder.StepSelectorCycleMode.All)
+                m_CycleStepMeasureDisplay.SetText("Any");
+            if(stepHolderPrimary.StepCycleMode == StepDataHolder.StepSelectorCycleMode.Threes)
+                m_CycleStepMeasureDisplay.SetText("Threes");
+            if(stepHolderPrimary.StepCycleMode == StepDataHolder.StepSelectorCycleMode.Fours)
+                m_CycleStepMeasureDisplay.SetText("Fours");
+
+            if(stepHolderSecondary.StepCycleMode == StepDataHolder.StepSelectorCycleMode.All)
+                m_CycleSecondaryStepMeasureDisplay.SetText("Any");
+            if(stepHolderSecondary.StepCycleMode == StepDataHolder.StepSelectorCycleMode.Threes)
+                m_CycleSecondaryStepMeasureDisplay.SetText("Threes");
+            if(stepHolderSecondary.StepCycleMode == StepDataHolder.StepSelectorCycleMode.Fours)
+                m_CycleSecondaryStepMeasureDisplay.SetText("Fours");
+
+            GridOffset = PlayerPrefs.GetFloat(GRID_START_OFFSET, 0);
+            UpdateDisplayGridOffset(GridOffset);
+            DrawTrackLines();
+            DrawTrackStepLines(GetDataForCurrentStepMode());
+
         }
 
         private void SaveEditorUserPrefs() {
@@ -7998,7 +8050,29 @@ namespace MiKu.NET {
             PlayerPrefs.SetInt(AUTOSAVE_KEY, (canAutoSave) ? 1 : 0);
             PlayerPrefs.SetInt(SCROLLSOUND_KEY, doScrollSound);
             PlayerPrefs.SetFloat(GRIDSIZE_KEY, gridManager.SeparationSize);
-        }
+
+            PlayerPrefs.SetInt(GRID_HIGHLIGHT_KEY, showPlacementLines ? 1 : 0);
+            PlayerPrefs.SetInt(STOP_MODE_KEY, (int) playStopMode);
+            PlayerPrefs.SetInt(SCROLL_MODE_KEY, (int) currentScrollMode);
+
+            PlayerPrefs.SetFloat(GRID_START_OFFSET, GridOffset);
+
+            if(SelectedCamera == m_FrontViewCamera)
+                PlayerPrefs.SetInt(CAMERA_TYPE_KEY, 0);
+            if(SelectedCamera == m_LeftViewCamera)
+                PlayerPrefs.SetInt(CAMERA_TYPE_KEY, 1);
+            if(SelectedCamera == m_RightViewCamera)
+                PlayerPrefs.SetInt(CAMERA_TYPE_KEY, 2);
+            if(SelectedCamera == m_FreeViewCamera)
+                PlayerPrefs.SetInt(CAMERA_TYPE_KEY, 3);
+            
+
+            PlayerPrefs.SetInt(PRIMARY_STEP_KEY, stepHolderPrimary.stepsInBeat);
+            PlayerPrefs.SetInt(PRIMARY_STEP_CYCLE_KEY, (int) stepHolderPrimary.StepCycleMode);
+            PlayerPrefs.SetInt(SEDONDARY_STEP_KEY, stepHolderSecondary.stepsInBeat);
+            PlayerPrefs.SetInt(SECONDARY_STEP_CYCLE_KEY, (int)stepHolderSecondary.StepCycleMode);
+
+    }
 
         /// <summary>
         /// Abort the spectrum tread is it has not finished

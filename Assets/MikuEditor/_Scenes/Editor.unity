@@ -6887,8 +6887,8 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 248361475}
   m_HandleRect: {fileID: 248361474}
   m_Direction: 2
-  m_Value: 1
-  m_Size: 0.94053763
+  m_Value: 0
+  m_Size: 1
   m_NumberOfSteps: 0
   m_OnValueChanged:
     m_PersistentCalls:
@@ -8604,8 +8604,8 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 629322659}
   m_HandleRect: {fileID: 629322658}
   m_Direction: 2
-  m_Value: 1
-  m_Size: 0.9999999
+  m_Value: 0
+  m_Size: 1
   m_NumberOfSteps: 0
   m_OnValueChanged:
     m_PersistentCalls:
@@ -27628,7 +27628,7 @@ GameObject:
   - component: {fileID: 856675277}
   - component: {fileID: 856675276}
   m_Layer: 5
-  m_Name: Scroll Mode Dropdown
+  m_Name: Stop Mode Dropdown
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -36484,7 +36484,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 0, y: 0.000016875969}
+  m_AnchoredPosition: {x: 0, y: 0.000024482031}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0, y: 1}
 --- !u!114 &1161121330
@@ -60307,6 +60307,7 @@ MonoBehaviour:
   m_CustomDiffSpeedInput: {fileID: 919818751}
   m_DifficultyDisplay: {fileID: 2113486706}
   m_ScrollSelector: {fileID: 591146345}
+  m_StopModeSelector: {fileID: 856675276}
   gridManager: {fileID: 260409146}
   m_PromtWindowAnimator: {fileID: 1687153754}
   m_JumpWindowAnimator: {fileID: 55215822}
