@@ -169,6 +169,7 @@ namespace MiKu.NET {
             All = 2
         }
         private float _beatIncreasePerStep = 1f;
+        private float _msIncreasePerStep = 1f;
         private int _stepsInBeat = 1;
         private CurrentStepMode _stepMode = CurrentStepMode.Primary;
         private StepSelectorCycleMode _stepCycleMode = StepSelectorCycleMode.All;
@@ -184,6 +185,18 @@ namespace MiKu.NET {
                 _beatIncreasePerStep = value;
             }
         }
+        public float MsIncreasePerStep
+        {
+            get
+            {
+                return _msIncreasePerStep;
+            }
+
+            set
+            {
+                _msIncreasePerStep = value;
+            }
+        }
         public int stepsInBeat
         {
             get
@@ -195,6 +208,9 @@ namespace MiKu.NET {
             {
                 _stepsInBeat = value;
                 _beatIncreasePerStep = 1f/_stepsInBeat;
+
+                float msInBeat = 1000*(60/Track.BPM);
+                _msIncreasePerStep = msInBeat/_stepsInBeat;
             }
         }
         public CurrentStepMode StepMode
@@ -2512,6 +2528,25 @@ namespace MiKu.NET {
             UpdateDisplayStepOffset(StepOffset);
             DrawTrackLines();
             DrawTrackStepLines(GetDataForCurrentStepMode(), true);
+        }
+
+        private void OffsetTheGridToTime(TimeWrapper time, int stepToUse) {
+            TimeWrapper convertedTime = 0;
+            StepDataHolder stepHolder = Track.s_instance.GetDataForCurrentStepMode();
+            int savedStepsInBeat = stepHolder.stepsInBeat;
+            stepHolder.stepsInBeat = stepToUse;
+            convertedTime = Track.s_instance.SnapToStep(time);
+            stepHolder.stepsInBeat = savedStepsInBeat;
+            if(convertedTime == 0)
+                return;
+
+            float diff = time.FloatValue - convertedTime.FloatValue;
+            Track.s_instance.SetNewStepOffset(diff);
+        }
+
+        public void CenterStepOffsetAtCurrentTime() {
+            StepDataHolder stepHolder = Track.s_instance.GetDataForCurrentStepMode();
+            OffsetTheGridToTime(CurrentTime, stepHolder.stepsInBeat);
         }
 
         /// <summary>
@@ -8255,7 +8290,16 @@ namespace MiKu.NET {
 
             set
             {
-                _stepOffset = value;
+                StepDataHolder stepHolder = Track.s_instance.GetDataForCurrentStepMode();
+                int savedStepsInBeat = stepHolder.stepsInBeat;
+                stepHolder.stepsInBeat = 64;
+                if(value % stepHolder.MsIncreasePerStep == 0)
+                    _stepOffset = value;
+                else {
+                    int sixtyFourths = (int)Math.Round(value/stepHolder.MsIncreasePerStep, 0, MidpointRounding.AwayFromZero);
+                    _stepOffset  = sixtyFourths*stepHolder.MsIncreasePerStep;
+                }
+                stepHolder.stepsInBeat = savedStepsInBeat;
             }
         }
 
