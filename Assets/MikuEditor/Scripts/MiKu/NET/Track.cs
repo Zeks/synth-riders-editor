@@ -1462,17 +1462,8 @@ namespace MiKu.NET {
 
             if(vertAxis < 0 && keyHoldTime > nextKeyHold && !PromtWindowOpen && !isCTRLDown && !isALTDown) {
                 nextKeyHold = keyHoldTime + keyHoldDelta;
-                if(!isPlaying) {
-                    MoveCamera(true, GetPrevStepPoint(GetDataForCurrentStepMode()));
-                    DrawTrackStepLines(GetDataForCurrentStepMode());
-                    PlayStepPreview();
-                } else {
-                    TogglePlay();
-                    MoveCamera(true, GetPrevStepPoint(GetDataForCurrentStepMode()));
-                    DrawTrackStepLines(GetDataForCurrentStepMode());
-                    TogglePlay();
-                }
-
+                MoveCamera(true, GetPrevStepPoint(GetDataForCurrentStepMode()));
+                DrawTrackStepLines(GetDataForCurrentStepMode());
                 nextKeyHold = nextKeyHold - keyHoldTime;
                 keyHoldTime = 0.0f;
             }
@@ -1480,20 +1471,14 @@ namespace MiKu.NET {
             // Input.GetKey(KeyCode.UpArrow)
             if(vertAxis > 0 && keyHoldTime > nextKeyHold && !PromtWindowOpen && !isCTRLDown && !isALTDown) {
                 nextKeyHold = keyHoldTime + keyHoldDelta;
-                if(!isPlaying) {
-                    MoveCamera(true, GetNextStepPoint(GetDataForCurrentStepMode()));
-                    DrawTrackStepLines(GetDataForCurrentStepMode());
-                    PlayStepPreview();
-                } else {
-                    TogglePlay();
-                    MoveCamera(true, GetNextStepPoint(GetDataForCurrentStepMode()));
-                    DrawTrackStepLines(GetDataForCurrentStepMode());
-                    TogglePlay();
-                }
-
+                MoveCamera(true, GetNextStepPoint(GetDataForCurrentStepMode()));
+                DrawTrackStepLines(GetDataForCurrentStepMode());
                 nextKeyHold = nextKeyHold - keyHoldTime;
                 keyHoldTime = 0.0f;
             }
+
+            if(vertAxis != 0 && keyHoldTime > nextKeyHold && !PromtWindowOpen && !isPlaying)
+                PlayStepPreview();
 
             // Delete all the notes of the current difficulty
             // Input.GetKeyDown(KeyCode.Delete) 
@@ -2909,7 +2894,7 @@ namespace MiKu.NET {
                         float targetOffset = float.Parse(m_GridOffsetInput.text);
                         if(targetOffset >= 0 && targetOffset != GridOffset) {
                             GridOffset = targetOffset;
-                            UpdateDisplayGridOffset(StartOffset);
+                            UpdateDisplayGridOffset(GridOffset);
                             DrawTrackLines();
                             DrawTrackStepLines(GetDataForCurrentStepMode(), true);
                         }
@@ -3979,7 +3964,7 @@ namespace MiKu.NET {
         /// <param name="offset">Offest at where the line will be drawed</param>
         /// <returns>Returns <typeparamref name="float"/></returns>
         float GetLineEndPoint(float _ms, float offset = 0) {
-            return MStoUnit((_ms + offset) * bpmForLines);
+            return MStoUnit((_ms + offset) * bpmForLines); // honestly, this doesn't make nuch sense (zeks)
         }
 
         /// <summary>

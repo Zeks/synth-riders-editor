@@ -58,7 +58,7 @@ namespace MiKu.NET {
         int _hash = 1;
         int _pureHash = 1;
 
-        void RegenerateHash() {
+        public void RegenerateHash() {
             Divisor = ((Track.BPM/60f)/64f)*50;
             Hash = (int)(Math.Round(FloatValue/Divisor, 0, MidpointRounding.AwayFromZero));
         }
