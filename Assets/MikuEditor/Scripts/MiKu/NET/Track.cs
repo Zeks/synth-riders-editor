@@ -7001,8 +7001,9 @@ namespace MiKu.NET {
                     foreach(KeyValuePair<TimeWrapper, List<EditorNote>> kvp in workingTrack.OrEmptyIfNull()) {
                         List<EditorNote> _notes = kvp.Value;
                         // Iterate each note and update its info
-                        var adjustedTime = AdjustTimeForNewBPM(kvp.Key, BPM);
+                        TimeWrapper adjustedTime = AdjustTimeForNewBPM(kvp.Key, BPM);
                         foreach(EditorNote note in _notes) {
+                            adjustedTime = AdjustTimeForNewBPM(note.InitialTimePoint, BPM);
                             note.TimePoint = adjustedTime;
                         }
                         updatedData.Add(adjustedTime, _notes);
