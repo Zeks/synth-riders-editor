@@ -19,7 +19,7 @@ namespace MiKu.NET {
                 return;
 
             float diff = time.FloatValue - convertedTime.FloatValue;
-            Track.s_instance.SetNewGridOffset(diff);
+            Track.s_instance.SetNewStepOffset(diff);
         }
         
         private void PlaceWithSnapToStep(TimeWrapper time, PointerEventData.InputButton button) {

@@ -274,7 +274,7 @@ namespace MiKu.NET {
             MouseSentitivity,
             CustomDifficultyEdit,
             TagEdition,
-            EditGridOffset,
+            EditStepOffset,
         }
 
         #region Constanst
@@ -570,7 +570,7 @@ namespace MiKu.NET {
         private InputField m_OffsetInput;
 
         [SerializeField]
-        private InputField m_GridOffsetInput;
+        private InputField m_StepOffsetInput;
 
         [SerializeField]
         private InputField m_BookmarkInput;
@@ -596,7 +596,7 @@ namespace MiKu.NET {
         private TextMeshProUGUI m_OffsetDisplay;
 
         [SerializeField]
-        private TextMeshProUGUI m_GridOffsetDisplay;
+        private TextMeshProUGUI m_StepOffsetDisplay;
 
         [SerializeField]
         private TextMeshProUGUI m_PlaySpeedDisplay;
@@ -654,7 +654,7 @@ namespace MiKu.NET {
         private Animator m_ManualOffsetWindowAnimator;
 
         [SerializeField]
-        private Animator m_ManualGridOffsetWindowAnimator;
+        private Animator m_ManualStepOffsetWindowAnimator;
 
         [SerializeField]
         private Animator m_BookmarkWindowAnimator;
@@ -774,7 +774,7 @@ namespace MiKu.NET {
         // Milliseconds per Beat
         private float _msPerBeat;
 
-        private float _gridOffset;
+        private float _stepOffset;
 
         // step mode to use to for the track movement
         private StepDataHolder.CurrentStepMode _stepMode = StepDataHolder.CurrentStepMode.Primary;
@@ -2138,7 +2138,7 @@ namespace MiKu.NET {
         void OnDrawGizmos() {
             if(s_instance == null) s_instance = this;
 
-            float offset = transform.position.z + MStoUnit(GridOffset);
+            float offset = transform.position.z + MStoUnit(StepOffset);
             float ypos = transform.parent.position.y;
             CalculateConst();
             Gizmos.color = Color.yellow;
@@ -2415,7 +2415,7 @@ namespace MiKu.NET {
 
             TimeWrapper result = 0;
 
-            TimeWrapper timeWithoutOffset = time.FloatValue - GridOffset;
+            TimeWrapper timeWithoutOffset = time.FloatValue - StepOffset;
             TimeWrapper previousFullBeat = timeWithoutOffset.FloatValue  - (timeWithoutOffset.FloatValue % _msPerBeat);
             bool atExactTime = timeWithoutOffset.FloatValue % _msPerBeat == 0;
 
@@ -2454,7 +2454,7 @@ namespace MiKu.NET {
                     result = nextSnap;
             }
 
-            return result.FloatValue + GridOffset;
+            return result.FloatValue + StepOffset;
         }
 
 
@@ -2500,16 +2500,16 @@ namespace MiKu.NET {
         }
 
         /// <summary>
-        /// Change <see cname="GridOffset" /> by one Unit
+        /// Change <see cname="StepOffset" /> by one Unit
         /// </summary>
         /// <param name="isIncrease">if true increase <see cname="StartOffset" /> otherwise decrease it</param>
-        public void ChangeGridOffset(bool isIncrease) {
+        public void ChangeStepOffset(bool isIncrease) {
             int incrementFactor = (isCTRLDown) ? 1 : 100;
             int increment = (isIncrease) ? incrementFactor : -incrementFactor;
-            GridOffset += increment;
+            StepOffset += increment;
 
-            GridOffset = Mathf.Max(0, GridOffset);
-            UpdateDisplayGridOffset(GridOffset);
+            StepOffset = Mathf.Max(0, StepOffset);
+            UpdateDisplayStepOffset(StepOffset);
             DrawTrackLines();
             DrawTrackStepLines(GetDataForCurrentStepMode(), true);
         }
@@ -2771,10 +2771,10 @@ namespace MiKu.NET {
         /// <summary>
         /// Show promt for manually edit BPM/Offset
         /// </summary>
-        public void DoEditGridOffsetManual() {
-            currentPromt = PromtType.EditGridOffset;
-            m_GridOffsetInput.text = GridOffset.ToString();
-            StartCoroutine(SetFieldFocus(m_GridOffsetInput));
+        public void DoEditStepOffsetManual() {
+            currentPromt = PromtType.EditStepOffset;
+            m_StepOffsetInput.text = StepOffset.ToString();
+            StartCoroutine(SetFieldFocus(m_StepOffsetInput));
             ShowPromtWindow(string.Empty);
         }
 
@@ -2889,12 +2889,12 @@ namespace MiKu.NET {
                         }
                     }
                     break;
-                case PromtType.EditGridOffset:
-                    if(m_GridOffsetInput.text != string.Empty) {
-                        float targetOffset = float.Parse(m_GridOffsetInput.text);
-                        if(targetOffset >= 0 && targetOffset != GridOffset) {
-                            GridOffset = targetOffset;
-                            UpdateDisplayGridOffset(GridOffset);
+                case PromtType.EditStepOffset:
+                    if(m_StepOffsetInput.text != string.Empty) {
+                        float targetOffset = float.Parse(m_StepOffsetInput.text);
+                        if(targetOffset >= 0 && targetOffset != StepOffset) {
+                            StepOffset = targetOffset;
+                            UpdateDisplayStepOffset(StepOffset);
                             DrawTrackLines();
                             DrawTrackStepLines(GetDataForCurrentStepMode(), true);
                         }
@@ -2947,7 +2947,7 @@ namespace MiKu.NET {
                 && currentPromt != PromtType.SaveAction
                 && currentPromt != PromtType.EditLatency
                 && currentPromt != PromtType.EditOffset
-                && currentPromt != PromtType.EditGridOffset
+                && currentPromt != PromtType.EditStepOffset
                 && currentPromt != PromtType.MouseSentitivity
                 && currentPromt != PromtType.CustomDifficultyEdit
                 && currentPromt != PromtType.TagEdition) {
@@ -2969,9 +2969,9 @@ namespace MiKu.NET {
                 } else if(currentPromt == PromtType.EditOffset) {
                     m_ManualOffsetWindowAnimator.Play("Panel Out");
                     m_OffsetInput.DeactivateInputField();
-                } else if(currentPromt == PromtType.EditGridOffset) {
-                    m_ManualGridOffsetWindowAnimator.Play("Panel Out");
-                    m_GridOffsetInput.DeactivateInputField();
+                } else if(currentPromt == PromtType.EditStepOffset) {
+                    m_ManualStepOffsetWindowAnimator.Play("Panel Out");
+                    m_StepOffsetInput.DeactivateInputField();
                 } else if(currentPromt == PromtType.MouseSentitivity) {
                     m_MouseSentitivityAnimator.Play("Panel Out");
                     m_PanningInput.DeactivateInputField();
@@ -3700,7 +3700,7 @@ namespace MiKu.NET {
                 && currentPromt != PromtType.SaveAction
                 && currentPromt != PromtType.EditLatency
                 && currentPromt != PromtType.EditOffset
-                && currentPromt != PromtType.EditGridOffset
+                && currentPromt != PromtType.EditStepOffset
                 && currentPromt != PromtType.MouseSentitivity
                 && currentPromt != PromtType.CustomDifficultyEdit
                 && currentPromt != PromtType.TagEdition) {
@@ -3724,8 +3724,8 @@ namespace MiKu.NET {
                     StartCoroutine(SetFieldFocus(m_LatencyInput));
                 } else if(currentPromt == PromtType.EditOffset) {
                     m_ManualOffsetWindowAnimator.Play("Panel In");
-                } else if(currentPromt == PromtType.EditGridOffset) {
-                    m_ManualGridOffsetWindowAnimator.Play("Panel In");
+                } else if(currentPromt == PromtType.EditStepOffset) {
+                    m_ManualStepOffsetWindowAnimator.Play("Panel In");
                 } else if(currentPromt == PromtType.MouseSentitivity) {
                     m_MouseSentitivityAnimator.Play("Panel In");
                     StartCoroutine(SetFieldFocus(m_PanningInput));
@@ -3809,7 +3809,7 @@ namespace MiKu.NET {
             ClearLines();
             // DrawTrackXSLines();
 
-            float offset = transform.position.z + MStoUnit(GridOffset);
+            float offset = transform.position.z + MStoUnit(StepOffset);
             float ypos = transform.parent.position.y;
 
             LineRenderer lr = GetLineRenderer(generatedLeftLine);
@@ -3854,11 +3854,11 @@ namespace MiKu.NET {
         /// <param name="forceClear">If true, the lines will be forcefull redrawed</param>
         public void DrawTrackStepLines(StepDataHolder stepHolder, bool forceClear = false) {
             TimeWrapper currentTime = isPlaying ? _currentPlayTime.FloatValue : _currentTime.FloatValue;
-            TimeWrapper timeWithoutOffset = currentTime - GridOffset;
+            TimeWrapper timeWithoutOffset = currentTime - StepOffset;
             if(stepHolder.BeatIncreasePerStep < 1) {
                 float stepLineDrawStartingPosition = 0;
                 if(Math.Abs(timeWithoutOffset.FloatValue % _msPerBeat) > 0.01) {
-                    stepLineDrawStartingPosition = timeWithoutOffset.FloatValue - (timeWithoutOffset.FloatValue % _msPerBeat) + GridOffset;
+                    stepLineDrawStartingPosition = timeWithoutOffset.FloatValue - (timeWithoutOffset.FloatValue % _msPerBeat) + StepOffset;
                 } else {
                     stepLineDrawStartingPosition = currentTime.FloatValue; //+ ( K - (_currentTime%K ) );            
                 }
@@ -3980,15 +3980,15 @@ namespace MiKu.NET {
         /// <returns>Returns <typeparamref name="float"/></returns>
         float GetNextStepPoint(StepDataHolder stepHolder) {
             int multiplier = 64/stepHolder.stepsInBeat;
-            float timeWithoutOffset = _currentTime.FloatValue - GridOffset;
-            float realStepsFloat = (_currentTime.FloatValue - GridOffset)/(_msPerBeat * stepHolder.BeatIncreasePerStep);
+            float timeWithoutOffset = _currentTime.FloatValue - StepOffset;
+            float realStepsFloat = (_currentTime.FloatValue - StepOffset)/(_msPerBeat * stepHolder.BeatIncreasePerStep);
             int realStepsInt = (int)Math.Round(realStepsFloat, 0, MidpointRounding.AwayFromZero);
             float fraction = Math.Abs((realStepsInt+1)*_msPerBeat*stepHolder.BeatIncreasePerStep - timeWithoutOffset)/(_msPerBeat*stepHolder.BeatIncreasePerStep);
             if(fraction > 0.1)
                 CurrentTime=(realStepsInt+1)*_msPerBeat*stepHolder.BeatIncreasePerStep;
             else
                 CurrentTime=(realStepsInt+2)*_msPerBeat*stepHolder.BeatIncreasePerStep;
-            CurrentTime = Mathf.Min(_currentTime.FloatValue, (_songLengthInBeats - 1) * _msPerBeat) + GridOffset;
+            CurrentTime = Mathf.Min(_currentTime.FloatValue, (_songLengthInBeats - 1) * _msPerBeat) + StepOffset;
             return MStoUnit(_currentTime.FloatValue);
         }
 
@@ -4001,8 +4001,8 @@ namespace MiKu.NET {
         /// <returns>Returns <typeparamref name="float"/></returns>
         float GetPrevStepPoint(StepDataHolder stepHolder) {
             int multiplier = 64/stepHolder.stepsInBeat;
-            float timeWithoutOffset = _currentTime.FloatValue - GridOffset;
-            float realStepsFloat = (_currentTime.FloatValue - GridOffset)/(_msPerBeat * stepHolder.BeatIncreasePerStep);
+            float timeWithoutOffset = _currentTime.FloatValue - StepOffset;
+            float realStepsFloat = (_currentTime.FloatValue - StepOffset)/(_msPerBeat * stepHolder.BeatIncreasePerStep);
             int realStepsInt = (int)Math.Round(realStepsFloat, 0, MidpointRounding.AwayFromZero);
             float fraction = Math.Abs(realStepsInt*_msPerBeat*stepHolder.BeatIncreasePerStep-timeWithoutOffset)/(_msPerBeat*stepHolder.BeatIncreasePerStep);
             bool diffLessThan0 = (realStepsInt*_msPerBeat*stepHolder.BeatIncreasePerStep-timeWithoutOffset) < 0;
@@ -4010,7 +4010,7 @@ namespace MiKu.NET {
                 CurrentTime=(realStepsInt)*_msPerBeat*stepHolder.BeatIncreasePerStep;
             else
                 CurrentTime=(realStepsInt-1)*_msPerBeat*stepHolder.BeatIncreasePerStep;
-            CurrentTime = Mathf.Max(_currentTime.FloatValue, 0) + GridOffset;
+            CurrentTime = Mathf.Max(_currentTime.FloatValue, 0) + StepOffset;
             return MStoUnit(_currentTime.FloatValue);
         }
 
@@ -4287,9 +4287,9 @@ namespace MiKu.NET {
             m_diplayTimeLeft.SetText(backwardTimeSB);
         }
 
-        public void SetNewGridOffset(float newOffset) {
-            GridOffset+=newOffset;
-            UpdateDisplayGridOffset(GridOffset);
+        public void SetNewStepOffset(float newOffset) {
+            StepOffset+=newOffset;
+            UpdateDisplayStepOffset(StepOffset);
             DrawTrackStepLines(GetDataForCurrentStepMode(), true);
             DrawTrackLines();
         }
@@ -4298,10 +4298,10 @@ namespace MiKu.NET {
         /// Update the display of the Start Offset to a user friendly form
         /// </summary>
         /// <param name="_ms">Milliseconds to format</param>
-        public void UpdateDisplayGridOffset(TimeWrapper _ms) {
+        public void UpdateDisplayStepOffset(TimeWrapper _ms) {
             TimeSpan t = TimeSpan.FromMilliseconds(_ms.FloatValue);
 
-            m_GridOffsetDisplay.SetText(string.Format("{0:D2}s.{1:D3}ms",
+            m_StepOffsetDisplay.SetText(string.Format("{0:D2}s.{1:D3}ms",
                 t.Seconds.ToString(),
                 t.Milliseconds.ToString()));
 
@@ -8029,8 +8029,8 @@ namespace MiKu.NET {
             if(stepHolderSecondary.StepCycleMode == StepDataHolder.StepSelectorCycleMode.Fours)
                 m_CycleSecondaryStepMeasureDisplay.SetText("Fours");
 
-            GridOffset = PlayerPrefs.GetFloat(GRID_START_OFFSET, 0);
-            UpdateDisplayGridOffset(GridOffset);
+            StepOffset = PlayerPrefs.GetFloat(GRID_START_OFFSET, 0);
+            UpdateDisplayStepOffset(StepOffset);
             DrawTrackLines();
             DrawTrackStepLines(GetDataForCurrentStepMode());
 
@@ -8053,7 +8053,7 @@ namespace MiKu.NET {
             PlayerPrefs.SetInt(STOP_MODE_KEY, (int) playStopMode);
             PlayerPrefs.SetInt(SCROLL_MODE_KEY, (int) currentScrollMode);
 
-            PlayerPrefs.SetFloat(GRID_START_OFFSET, GridOffset);
+            PlayerPrefs.SetFloat(GRID_START_OFFSET, StepOffset);
 
             if(SelectedCamera == m_FrontViewCamera)
                 PlayerPrefs.SetInt(CAMERA_TYPE_KEY, 0);
@@ -8246,16 +8246,16 @@ namespace MiKu.NET {
             }
         }
 
-        public float GridOffset
+        public float StepOffset
         {
             get
             {
-                return _gridOffset;
+                return _stepOffset;
             }
 
             set
             {
-                _gridOffset = value;
+                _stepOffset = value;
             }
         }
 
