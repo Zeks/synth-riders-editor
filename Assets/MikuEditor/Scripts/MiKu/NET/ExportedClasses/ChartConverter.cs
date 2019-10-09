@@ -149,7 +149,7 @@ namespace MiKu.NET.Charting {
                     gameNote.Segments[i, 2] = segmentNote.Position[2];
                     i++;
                 }
-                exportValue[leaderNote.TimePoint.FloatValue].Add(gameNote);
+                exportValue[leaderNote.InitialTimePoint.FloatValue].Add(gameNote);
             }
         }
 
