@@ -2427,7 +2427,7 @@ namespace MiKu.NET {
             MinorBar = 1,
         }
 
-        public TimeWrapper SnapToStep(TimeWrapper time, StepSnapStrategy strategy = StepSnapStrategy.Backwards) {
+        public TimeWrapper SnapToStep(TimeWrapper time, StepSnapStrategy strategy = StepSnapStrategy.Backwards, bool useImprecisionAdjustment = true) {
 
             TimeWrapper result = 0;
 
@@ -2455,7 +2455,8 @@ namespace MiKu.NET {
             }
             nextSnap = tempTime;
 
-            TimeWrapper adjustedTime = timeWithoutOffset - 40;
+            int adjustValue = useImprecisionAdjustment ? 40 : 0;
+            TimeWrapper adjustedTime = timeWithoutOffset - adjustValue;
             TimeWrapper diffLeft = adjustedTime - previousSnap;
             TimeWrapper diffRight = nextSnap - adjustedTime;
 
@@ -2535,7 +2536,7 @@ namespace MiKu.NET {
             StepDataHolder stepHolder = Track.s_instance.GetDataForCurrentStepMode();
             int savedStepsInBeat = stepHolder.stepsInBeat;
             stepHolder.stepsInBeat = stepToUse;
-            convertedTime = Track.s_instance.SnapToStep(time);
+            convertedTime = Track.s_instance.SnapToStep(time, StepSnapStrategy.Closest, false);
             stepHolder.stepsInBeat = savedStepsInBeat;
             if(convertedTime == 0)
                 return;
