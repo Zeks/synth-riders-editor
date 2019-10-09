@@ -1385,6 +1385,14 @@ namespace MiKu.NET {
         private void TogglePreviousScrollMode() {
             m_ScrollSelector.value = GetPreviousScrollModeId(currentScrollMode);
         }
+
+        void ToggleNoteUsageType() {
+            if(s_instance.selectedUsageType == EditorNote.NoteUsageType.Note)
+                s_instance.selectedUsageType = EditorNote.NoteUsageType.Line;
+            else
+                s_instance.selectedUsageType = EditorNote.NoteUsageType.Note;
+        }
+
         // Update is called once per frame
         void Update() {
             if(isBusy || !IsInitilazed) { return; }
@@ -1620,12 +1628,14 @@ namespace MiKu.NET {
                     if(isCTRLDown) {
                         ToggleMovementSectionToChart(SLIDE_LEFT_TAG);
                     } else {
+                        if(selectedNoteType == EditorNote.NoteHandType.LeftHanded)
+                            ToggleNoteUsageType();
                         SetNoteMarkerType(GetNoteMarkerTypeIndex(EditorNote.NoteHandType.LeftHanded));
-                        markerWasUpdated = true;
-                        s_instance.selectedUsageType = EditorNote.NoteUsageType.Note;
+
                         if(isALTDown) {
                             s_instance.selectedUsageType = EditorNote.NoteUsageType.Line;
                         }
+                        markerWasUpdated = true;
                     }
                 }
             }
@@ -1636,12 +1646,15 @@ namespace MiKu.NET {
                     if(isCTRLDown) {
                         ToggleMovementSectionToChart(SLIDE_RIGHT_TAG);
                     } else {
+                        if(selectedNoteType == EditorNote.NoteHandType.RightHanded)
+                            ToggleNoteUsageType();
+
                         SetNoteMarkerType(GetNoteMarkerTypeIndex(EditorNote.NoteHandType.RightHanded));
-                        markerWasUpdated = true;
-                        s_instance.selectedUsageType = EditorNote.NoteUsageType.Note;
+                        
                         if(isALTDown) {
                             s_instance.selectedUsageType = EditorNote.NoteUsageType.Line;
                         }
+                        markerWasUpdated = true;
                     }
                 }
             }
@@ -1652,12 +1665,14 @@ namespace MiKu.NET {
                     if(isCTRLDown) {
                         ToggleMovementSectionToChart(SLIDE_CENTER_TAG);
                     } else {
+                        if(selectedNoteType == EditorNote.NoteHandType.OneHandSpecial)
+                            ToggleNoteUsageType();
                         SetNoteMarkerType(GetNoteMarkerTypeIndex(EditorNote.NoteHandType.OneHandSpecial));
-                        markerWasUpdated = true;
-                        s_instance.selectedUsageType = EditorNote.NoteUsageType.Note;
+                       
                         if(isALTDown) {
                             s_instance.selectedUsageType = EditorNote.NoteUsageType.Line;
                         }
+                        markerWasUpdated = true;
                     }
                 }
             }
@@ -1668,12 +1683,14 @@ namespace MiKu.NET {
                     if(isCTRLDown) {
                         ToggleMovementSectionToChart(SLIDE_LEFT_DIAG_TAG);
                     } else {
+                        if(selectedNoteType == EditorNote.NoteHandType.BothHandsSpecial)
+                            ToggleNoteUsageType();
                         SetNoteMarkerType(GetNoteMarkerTypeIndex(EditorNote.NoteHandType.BothHandsSpecial));
-                        markerWasUpdated = true;
-                        s_instance.selectedUsageType = EditorNote.NoteUsageType.Note;
+                        
                         if(isALTDown) {
                             s_instance.selectedUsageType = EditorNote.NoteUsageType.Line;
                         }
+                        markerWasUpdated = true;
                     }
                 }
             }
