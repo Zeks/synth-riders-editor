@@ -86,7 +86,7 @@ public class MoveCamera : MonoBehaviour
 		}
 
 
-		if( (Input.GetKeyDown(KeyCode.Alpha8) || Input.GetKeyDown(KeyCode.Keypad8)) && Input.GetKey("Input Modifier1")) {
+		if( Input.GetKeyDown(KeyCode.Alpha8) || Input.GetKeyDown(KeyCode.Keypad8)) {
             ResetCamera();
             Miku_DialogManager.ShowDialog(Miku_DialogManager.DialogType.Info, "Camera position was reset");
         }
