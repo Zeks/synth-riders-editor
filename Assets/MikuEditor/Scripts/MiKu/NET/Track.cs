@@ -2947,6 +2947,7 @@ namespace MiKu.NET {
                 && currentPromt != PromtType.SaveAction
                 && currentPromt != PromtType.EditLatency
                 && currentPromt != PromtType.EditOffset
+                && currentPromt != PromtType.EditGridOffset
                 && currentPromt != PromtType.MouseSentitivity
                 && currentPromt != PromtType.CustomDifficultyEdit
                 && currentPromt != PromtType.TagEdition) {
@@ -3699,6 +3700,7 @@ namespace MiKu.NET {
                 && currentPromt != PromtType.SaveAction
                 && currentPromt != PromtType.EditLatency
                 && currentPromt != PromtType.EditOffset
+                && currentPromt != PromtType.EditGridOffset
                 && currentPromt != PromtType.MouseSentitivity
                 && currentPromt != PromtType.CustomDifficultyEdit
                 && currentPromt != PromtType.TagEdition) {
@@ -3722,6 +3724,8 @@ namespace MiKu.NET {
                     StartCoroutine(SetFieldFocus(m_LatencyInput));
                 } else if(currentPromt == PromtType.EditOffset) {
                     m_ManualOffsetWindowAnimator.Play("Panel In");
+                } else if(currentPromt == PromtType.EditGridOffset) {
+                    m_ManualGridOffsetWindowAnimator.Play("Panel In");
                 } else if(currentPromt == PromtType.MouseSentitivity) {
                     m_MouseSentitivityAnimator.Play("Panel In");
                     StartCoroutine(SetFieldFocus(m_PanningInput));
@@ -3798,7 +3802,7 @@ namespace MiKu.NET {
         /// </summary>
         /// Draw the track lines
         /// <summary>
-        void DrawTrackLines() {
+        public void DrawTrackLines() {
             // Make sure that all the const are calculated before Drawing the lines
             CalculateConst();
             // FillLookupTable();
@@ -3848,7 +3852,7 @@ namespace MiKu.NET {
         /// Draw the track extra thin lines when the <see cref="MBPM"/> is increase
         /// <summary>
         /// <param name="forceClear">If true, the lines will be forcefull redrawed</param>
-        void DrawTrackStepLines(StepDataHolder stepHolder, bool forceClear = false) {
+        public void DrawTrackStepLines(StepDataHolder stepHolder, bool forceClear = false) {
             TimeWrapper currentTime = isPlaying ? _currentPlayTime.FloatValue : _currentTime.FloatValue;
             TimeWrapper timeWithoutOffset = currentTime - GridOffset;
             if(stepHolder.BeatIncreasePerStep < 1) {
@@ -3976,9 +3980,10 @@ namespace MiKu.NET {
         /// <returns>Returns <typeparamref name="float"/></returns>
         float GetNextStepPoint(StepDataHolder stepHolder) {
             int multiplier = 64/stepHolder.stepsInBeat;
+            float timeWithoutOffset = _currentTime.FloatValue - GridOffset;
             float realStepsFloat = (_currentTime.FloatValue - GridOffset)/(_msPerBeat * stepHolder.BeatIncreasePerStep);
             int realStepsInt = (int)Math.Round(realStepsFloat, 0, MidpointRounding.AwayFromZero);
-            float fraction = Math.Abs((realStepsInt+1)*_msPerBeat*stepHolder.BeatIncreasePerStep - _currentTime.FloatValue)/(_msPerBeat*stepHolder.BeatIncreasePerStep);
+            float fraction = Math.Abs((realStepsInt+1)*_msPerBeat*stepHolder.BeatIncreasePerStep - timeWithoutOffset)/(_msPerBeat*stepHolder.BeatIncreasePerStep);
             if(fraction > 0.1)
                 CurrentTime=(realStepsInt+1)*_msPerBeat*stepHolder.BeatIncreasePerStep;
             else
@@ -3996,10 +4001,11 @@ namespace MiKu.NET {
         /// <returns>Returns <typeparamref name="float"/></returns>
         float GetPrevStepPoint(StepDataHolder stepHolder) {
             int multiplier = 64/stepHolder.stepsInBeat;
+            float timeWithoutOffset = _currentTime.FloatValue - GridOffset;
             float realStepsFloat = (_currentTime.FloatValue - GridOffset)/(_msPerBeat * stepHolder.BeatIncreasePerStep);
             int realStepsInt = (int)Math.Round(realStepsFloat, 0, MidpointRounding.AwayFromZero);
-            float fraction = Math.Abs(realStepsInt*_msPerBeat*stepHolder.BeatIncreasePerStep-_currentTime.FloatValue)/(_msPerBeat*stepHolder.BeatIncreasePerStep);
-            bool diffLessThan0 = (realStepsInt*_msPerBeat*stepHolder.BeatIncreasePerStep-(_currentTime.FloatValue - GridOffset)) < 0;
+            float fraction = Math.Abs(realStepsInt*_msPerBeat*stepHolder.BeatIncreasePerStep-timeWithoutOffset)/(_msPerBeat*stepHolder.BeatIncreasePerStep);
+            bool diffLessThan0 = (realStepsInt*_msPerBeat*stepHolder.BeatIncreasePerStep-timeWithoutOffset) < 0;
             if(diffLessThan0 && fraction > 0.1)
                 CurrentTime=(realStepsInt)*_msPerBeat*stepHolder.BeatIncreasePerStep;
             else
@@ -4281,11 +4287,18 @@ namespace MiKu.NET {
             m_diplayTimeLeft.SetText(backwardTimeSB);
         }
 
+        public void SetNewGridOffset(float newOffset) {
+            GridOffset+=newOffset;
+            UpdateDisplayGridOffset(GridOffset);
+            DrawTrackStepLines(GetDataForCurrentStepMode(), true);
+            DrawTrackLines();
+        }
+
         /// <summary>
         /// Update the display of the Start Offset to a user friendly form
         /// </summary>
         /// <param name="_ms">Milliseconds to format</param>
-        void UpdateDisplayGridOffset(TimeWrapper _ms) {
+        public void UpdateDisplayGridOffset(TimeWrapper _ms) {
             TimeSpan t = TimeSpan.FromMilliseconds(_ms.FloatValue);
 
             m_GridOffsetDisplay.SetText(string.Format("{0:D2}s.{1:D3}ms",

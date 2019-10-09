@@ -5,6 +5,22 @@ using UnityEngine.UI;
 namespace MiKu.NET {
 
     public class ClickCatcher : MonoBehaviour, IPointerClickHandler {
+
+        private void OffsetTheGridToTime(TimeWrapper time) {
+            TimeWrapper convertedTime = 0;
+            StepDataHolder stepHolder = Track.s_instance. GetDataForCurrentStepMode();
+            int savedStepsInBeat = stepHolder.stepsInBeat;
+            stepHolder.stepsInBeat = 64;
+            convertedTime = Track.s_instance.SnapToStep(time);
+            time = convertedTime;
+            stepHolder.stepsInBeat = savedStepsInBeat;
+            convertedTime = Track.s_instance.SnapToStep(time);
+            if(convertedTime == 0)
+                return;
+
+            float diff = time.FloatValue - convertedTime.FloatValue;
+            Track.s_instance.SetNewGridOffset(diff);
+        }
         
         private void PlaceWithSnapToStep(TimeWrapper time, PointerEventData.InputButton button) {
             TimeWrapper convertedTime = 0;
@@ -46,7 +62,9 @@ namespace MiKu.NET {
             float deltaRealWorld = 1482*deltaPercent;
 
             TimeWrapper time = Track.CurrentTime + deltaRealWorld;
-            if(Track.s_instance.isALTDown)
+            if(Track.s_instance.isSHIFTDown)
+                OffsetTheGridToTime(time);
+            else if(Track.s_instance.isALTDown)
                 PlaceWithSnapToBars(time, eventData.button);
             else
                 PlaceWithSnapToStep(time, eventData.button);
