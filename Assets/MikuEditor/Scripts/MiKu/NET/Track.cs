@@ -568,6 +568,7 @@ namespace MiKu.NET {
         [SerializeField]
         private Material m_BothHandMaterial;
 
+
         [Header("UI Elements")]
         [SerializeField]
         private ColorPicker m_ColorPicker;
@@ -884,12 +885,20 @@ namespace MiKu.NET {
 
 
         private bool colorPickerShown = false;
+        private bool colorPickerUpdateQueued = false;
+        int updateCounter = -1;
+
         private EditorNote.NoteHandType currentColorPickerHand = EditorNote.NoteHandType.LeftHanded;
 
-        private Color colorRightHand = new Color();
-        private Color colorLeftHand = new Color();
-        private Color colorOneHand = new Color();
-        private Color colorBothHand = new Color();
+        private Color colorRightHand;
+        private Color colorLeftHand;
+        private Color colorOneHand;
+        private Color colorBothHand;
+
+        private Color defaultColorRightHand;
+        private Color defaultColorLeftHand;
+        private Color defaultColorOneHand;
+        private Color defaultColorBothHand;
 
         GameObject currentHandButton;
         GameObject currentLineButton;
@@ -1201,30 +1210,30 @@ namespace MiKu.NET {
         }
 
         public void HideColorPicker() {
-            m_ColorPicker.Setup.ShowAlpha = false;
-            m_ColorPicker.Setup.ShowColorBox = false;
-            m_ColorPicker.Setup.ShowColorSliderToggle = false;
-            m_ColorPicker.Setup.ShowHeader = Assets.HSVPicker.ColorPickerSetup.ColorHeaderShowing.Hide;
-            m_ColorPicker.Setup.ShowHsv = false;
-            m_ColorPicker.Setup.ShowRgb = false;
-            m_ColorPicker.Setup.ShowPresets = false;
+            //m_ColorPicker.Setup.ShowAlpha = false;
+            //m_ColorPicker.Setup.ShowColorBox = false;
+            //m_ColorPicker.Setup.ShowColorSliderToggle = false;
+            //m_ColorPicker.Setup.ShowHeader = Assets.HSVPicker.ColorPickerSetup.ColorHeaderShowing.Hide;
+            //m_ColorPicker.Setup.ShowHsv = false;
+            //m_ColorPicker.Setup.ShowRgb = false;
+            //m_ColorPicker.Setup.ShowPresets = false;
 
-            m_ColorPicker.Setup.RgbSliders.Toggle(false);
-            m_ColorPicker.Setup.HsvSliders.Toggle(false);
-            m_ColorPicker.Setup.ColorToggleElement.Toggle(false);
-            m_ColorPicker.Setup.AlphaSlidiers.Toggle(false);
-            m_ColorPicker.Setup.ColorHeader.Toggle(false);
-            m_ColorPicker.Setup.ColorCode.Toggle(false);
-            m_ColorPicker.Setup.ColorPreview.Toggle(false);
-            m_ColorPicker.Setup.ColorBox.Toggle(false);
+            //m_ColorPicker.Setup.RgbSliders.Toggle(false);
+            //m_ColorPicker.Setup.HsvSliders.Toggle(false);
+            //m_ColorPicker.Setup.ColorToggleElement.Toggle(false);
+            //m_ColorPicker.Setup.AlphaSlidiers.Toggle(false);
+            //m_ColorPicker.Setup.ColorHeader.Toggle(false);
+            //m_ColorPicker.Setup.ColorCode.Toggle(false);
+            //m_ColorPicker.Setup.ColorPreview.Toggle(false);
+            //m_ColorPicker.Setup.ColorBox.Toggle(false);
             m_ColorPicker.Setup.Presets.Toggle(false);
             colorPickerShown = false;
         }
 
         public void ShowColorPicker() {
-            
-            Image handImage = currentHandButton.GetComponent<Image>();
-            m_ColorPicker.CurrentColor = handImage.color;
+            colorPickerShown = true;
+            colorPickerUpdateQueued = true;
+            updateCounter = 5;
 
             m_ColorPicker.Setup.ShowAlpha = true;
             m_ColorPicker.Setup.ShowColorBox = true;
@@ -1234,20 +1243,20 @@ namespace MiKu.NET {
             m_ColorPicker.Setup.ShowRgb = true;
             m_ColorPicker.Setup.ShowPresets = true;
 
-            m_ColorPicker.Setup.RgbSliders.Toggle(true);
-            m_ColorPicker.Setup.HsvSliders.Toggle(true);
-            m_ColorPicker.Setup.ColorToggleElement.Toggle(true);
-            m_ColorPicker.Setup.AlphaSlidiers.Toggle(true);
-            m_ColorPicker.Setup.ColorHeader.Toggle(true);
-            m_ColorPicker.Setup.ColorCode.Toggle(true);
-            m_ColorPicker.Setup.ColorPreview.Toggle(true);
-            m_ColorPicker.Setup.ColorBox.Toggle(true);
+            //m_ColorPicker.Setup.RgbSliders.Toggle(true);
+            //m_ColorPicker.Setup.HsvSliders.Toggle(true);
+            //m_ColorPicker.Setup.ColorToggleElement.Toggle(true);
+            //m_ColorPicker.Setup.AlphaSlidiers.Toggle(true);
+            //m_ColorPicker.Setup.ColorHeader.Toggle(true);
+            //m_ColorPicker.Setup.ColorCode.Toggle(true);
+            //m_ColorPicker.Setup.ColorPreview.Toggle(true);
+            //m_ColorPicker.Setup.ColorBox.Toggle(true);
             m_ColorPicker.Setup.Presets.Toggle(true);
-            colorPickerShown = true;
         }
 
-        void ToggleColorPicker() {
-            if(colorPickerShown) 
+        public void ToggleColorPicker() {
+            AssignButtonsForColorChanger(currentColorPickerHand);
+            if(colorPickerShown)
                 HideColorPicker();
             else
                 ShowColorPicker();
@@ -1310,7 +1319,8 @@ namespace MiKu.NET {
         }
 
         public void ColorChanged(Color color) {
-            ChangeNoteColor(color, currentColorPickerHand);
+            if(!colorPickerUpdateQueued)
+                ChangeNoteColor(color, currentColorPickerHand);
         }
 
         void OnEnable() {
@@ -1320,7 +1330,7 @@ namespace MiKu.NET {
 
                 HideColorPicker();
 
-                
+
 
                 gridIsActive = m_GridGuide.activeSelf;
                 // Toggle Grid on by default
@@ -1837,7 +1847,7 @@ namespace MiKu.NET {
                             ToggleNoteUsageType();
 
                         SetNoteMarkerType(GetNoteMarkerTypeIndex(EditorNote.NoteHandType.RightHanded));
-                        
+
                         if(isALTDown) {
                             s_instance.selectedUsageType = EditorNote.NoteUsageType.Line;
                         }
@@ -1855,7 +1865,7 @@ namespace MiKu.NET {
                         if(selectedNoteType == EditorNote.NoteHandType.OneHandSpecial)
                             ToggleNoteUsageType();
                         SetNoteMarkerType(GetNoteMarkerTypeIndex(EditorNote.NoteHandType.OneHandSpecial));
-                       
+
                         if(isALTDown) {
                             s_instance.selectedUsageType = EditorNote.NoteUsageType.Line;
                         }
@@ -1873,7 +1883,7 @@ namespace MiKu.NET {
                         if(selectedNoteType == EditorNote.NoteHandType.BothHandsSpecial)
                             ToggleNoteUsageType();
                         SetNoteMarkerType(GetNoteMarkerTypeIndex(EditorNote.NoteHandType.BothHandsSpecial));
-                        
+
                         if(isALTDown) {
                             s_instance.selectedUsageType = EditorNote.NoteUsageType.Line;
                         }
@@ -2004,7 +2014,7 @@ namespace MiKu.NET {
                     UpdateSelectionMarker();
                 }
             }
-            
+
             if(Input.GetAxis("Mouse ScrollWheel") < 0f && !IsPlaying && !PromtWindowOpen) // backwards
               {
                 bool cameraMoved = false;
@@ -2272,9 +2282,9 @@ namespace MiKu.NET {
 
 
 
-                // Directional Notes
+            // Directional Notes
 
-                if(isSHIFTDown && !promtWindowOpen && !isPlaying) {
+            if(isSHIFTDown && !promtWindowOpen && !isPlaying) {
                 if(Input.GetKeyDown(KeyCode.D)) {
                     ToggleNoteDirectionMarker(EditorNote.NoteDirection.Right);
                 } else if(Input.GetKeyDown(KeyCode.C)) {
@@ -2311,6 +2321,17 @@ namespace MiKu.NET {
                 previewAud.Pause();
                 previewAud.time = 0;
             }
+
+            // because setting color while element is not visible doesn't quite work fully on the element
+            // have to schedule and wait for it to be painted
+            if(colorPickerUpdateQueued && updateCounter == 0) {
+                colorPickerUpdateQueued = false;
+                Image handImage = currentHandButton.GetComponent<Image>();
+                m_ColorPicker.CurrentColor = handImage.color;
+                
+            }
+            if(updateCounter > 0)
+                updateCounter--;
         }
 
         void FixedUpdate() {
@@ -2786,7 +2807,7 @@ namespace MiKu.NET {
             switch(stepHolder.StepCycleMode) {
                 case StepDataHolder.StepSelectorCycleMode.Fours:
                     listToOperateOn = foursStepCycle;
-                break;
+                    break;
                 case StepDataHolder.StepSelectorCycleMode.Threes:
                     listToOperateOn = threesStepCycle;
                     break;
@@ -6979,7 +7000,11 @@ namespace MiKu.NET {
                     break;
             }
             currentColorPickerHand = selectedNoteType;
-            m_ColorPicker.CurrentColor = currentMaterial.color;
+            if(colorPickerShown) {
+                AssignButtonsForColorChanger(currentColorPickerHand);
+                colorPickerUpdateQueued = true;
+                updateCounter = 10;
+            }
         }
         /// <summary>
         /// Change the current scroll mode
@@ -8251,7 +8276,7 @@ namespace MiKu.NET {
 
         void SetColorIfNotEmpty(string color, Material mat) {
             //if(color == "")
-                return;
+            return;
             Color parsedColor;
             ColorUtility.TryParseHtmlString(color, out parsedColor);
 
@@ -8266,7 +8291,15 @@ namespace MiKu.NET {
             PlayerPrefs.SetFloat(name + ".a", color.a);
         }
 
-        void LoadColorFromSettings(string name, Material mat) {
+
+        void LoadColorToButtons(Color color, GameObject noteButton, GameObject lineButton) {
+            Image handImage = noteButton.GetComponent<Image>();
+            Image lineImage = lineButton.GetComponent<Image>();
+            handImage.color = color;
+            lineImage.color = color;
+        }
+
+        void LoadColorFromSettings(string name, Material mat, GameObject handButton, GameObject lineButton) {
             if(PlayerPrefs.GetFloat(name +".r", -1f) < 0) {
                 return;
             }
@@ -8279,9 +8312,33 @@ namespace MiKu.NET {
 
             mat.SetColor("_Color", color);
             mat.SetColor("_EmissionColor", color);
+
+            Image handImage = handButton.GetComponent<Image>();
+            Image lineImage = lineButton.GetComponent<Image>();
+            handImage.color = color;
+            lineImage.color = color;
+
             return;
         }
 
+        public void ResetNoteMaterials() {
+            LoadColorToButtons(defaultColorLeftHand, m_LeftHandNotePicker, m_LeftHandRailPicker);
+            LoadColorToButtons(defaultColorRightHand, m_RightHandNotePicker, m_RightHandRailPicker);
+            LoadColorToButtons(defaultColorOneHand, m_OneHandNotePicker, m_OneHandRailPicker);
+            LoadColorToButtons(defaultColorBothHand, m_BothHandNotePicker, m_BothHandRailPicker);
+
+            m_RightHandMaterial.SetColor("_Color" , defaultColorRightHand);
+            m_RightHandMaterial.SetColor("_EmissionColor", defaultColorRightHand);
+
+            m_LeftHandMaterial.SetColor("_Color", defaultColorLeftHand);
+            m_LeftHandMaterial.SetColor("_EmissionColor", defaultColorLeftHand);
+
+            m_OneHandMaterial.SetColor("_Color", defaultColorOneHand);
+            m_OneHandMaterial.SetColor("_EmissionColor", defaultColorOneHand);
+
+            m_BothHandMaterial.SetColor("_Color", defaultColorBothHand);
+            m_BothHandMaterial.SetColor("_EmissionColor", defaultColorBothHand);
+        }
 
         private void LoadEditorUserPrefs() {
             m_VolumeSlider.value = PlayerPrefs.GetFloat(MUSIC_VOLUME_PREF_KEY, 1f);
@@ -8335,10 +8392,15 @@ namespace MiKu.NET {
             DrawTrackLines();
             DrawTrackStepLines(GetDataForCurrentStepMode());
 
-            LoadColorFromSettings(LEFT_HAND_COLOR, m_LeftHandMaterial);
-            LoadColorFromSettings(RIGHT_HAND_COLOR, m_RightHandMaterial);
-            LoadColorFromSettings(ONE_HAND_COLOR, m_OneHandMaterial);
-            LoadColorFromSettings(BOTH_HAND_COLOR, m_BothHandMaterial);
+            defaultColorRightHand = m_LeftHandMaterial.color;
+            defaultColorLeftHand = m_RightHandMaterial.color;
+            defaultColorOneHand = m_OneHandMaterial.color;
+            defaultColorBothHand = m_BothHandMaterial.color;
+
+            LoadColorFromSettings(LEFT_HAND_COLOR, m_LeftHandMaterial, m_LeftHandNotePicker, m_LeftHandRailPicker);
+            LoadColorFromSettings(RIGHT_HAND_COLOR, m_RightHandMaterial, m_RightHandNotePicker, m_RightHandRailPicker);
+            LoadColorFromSettings(ONE_HAND_COLOR, m_OneHandMaterial, m_OneHandNotePicker, m_OneHandRailPicker);
+            LoadColorFromSettings(BOTH_HAND_COLOR, m_BothHandMaterial, m_BothHandNotePicker, m_BothHandRailPicker);
         }
 
         private void SaveEditorUserPrefs() {
