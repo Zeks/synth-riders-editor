@@ -256,6 +256,11 @@ namespace MiKu.NET {
             Peaks,
         }
 
+        public enum ClipboardMode {
+            Replace,
+            Add,
+        }
+
         public enum PlayStopMode {
             StepBack,
             Stay,
@@ -651,6 +656,9 @@ namespace MiKu.NET {
         private TMP_Dropdown m_ScrollSelector;
 
         [SerializeField]
+        private TMP_Dropdown m_ClipboardSelector;
+
+        [SerializeField]
         private TMP_Dropdown m_StopModeSelector;
 
         [SerializeField]
@@ -857,6 +865,7 @@ namespace MiKu.NET {
 
         // Current scroll mode selected
         private ScrollMode currentScrollMode = ScrollMode.Steps;
+        private ClipboardMode currentClipboardMode = ClipboardMode.Replace;
 
         // Flag to know when there is a heavy burden and not manipulate the data
         private bool isBusy = false;
@@ -1516,7 +1525,7 @@ namespace MiKu.NET {
                         CurrentSelection.StartTime = CurrentTime;
                         CurrentSelection.EndTime = CurrentTime;
                     }
-                    DeleteNotesAtTheCurrentTime();
+                    DeleteNotesForCurrentSelection();
                 }
             }
 
@@ -3332,10 +3341,11 @@ namespace MiKu.NET {
                 return;
             }
 
-
-            DeleteNotesAtTheCurrentTime();
-            // needs rails deleted too
-            RailHelper.RemoveRailsWithinRange(s_instance.GetCurrentRailListByDifficulty(), CurrentTime, CurrentTime + CurrentClipBoard.lenght, RailHelper.RailRangeBehaviour.Allow);
+            if(currentClipboardMode == ClipboardMode.Replace) {
+                DeleteNotesForCurrentSelection();
+                // needs rails deleted too
+                RailHelper.RemoveRailsWithinRange(s_instance.GetCurrentRailListByDifficulty(), CurrentTime, CurrentTime + CurrentClipBoard.lenght, RailHelper.RailRangeBehaviour.Allow);
+            }
             // this needs to CLONE all the rails in the clipboard before moving them
 
             List<Rail> newCLones = new List<Rail>();
@@ -5060,7 +5070,7 @@ namespace MiKu.NET {
         /// <summary>
         /// Remove the notes on the current time
         /// </summary>
-        void DeleteNotesAtTheCurrentTime() {
+        void DeleteNotesForCurrentSelection() {
             isBusy = true;
 
             Dictionary<TimeWrapper, List<EditorNote>> workingTrack = s_instance.GetCurrentTrackDifficulty();
@@ -6789,7 +6799,7 @@ namespace MiKu.NET {
         /// <summary>
         /// Change the current scroll mode
         /// </summary>
-        /// <param name="difficulty">The new mode"</param>
+        /// <param name="currentScrollMode">The new mode"</param>
         public void SetCurrentScrollMode(int mode) {
             switch(mode) {
                 case 0:
@@ -6809,6 +6819,23 @@ namespace MiKu.NET {
                     break;
                 default:
                     currentScrollMode = ScrollMode.Steps;
+                    break;
+            }
+        }
+        /// <summary>
+        /// Change the current clipboard mode
+        /// </summary>
+        /// <param name="currentClipboardMode">The new mode"</param>
+        public void SetCurrentClipboardMode(int mode) {
+            switch(mode) {
+                case 0:
+                    currentClipboardMode = ClipboardMode.Replace;
+                    break;
+                case 1:
+                    currentClipboardMode = ClipboardMode.Add;
+                    break;
+                default:
+                    currentClipboardMode = ClipboardMode.Replace;
                     break;
             }
         }
