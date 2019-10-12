@@ -46,6 +46,7 @@ namespace MiKu.NET.Charting {
         public EditorNote Clone() {
             EditorNote newNote = new EditorNote();
             newNote.timePoint = this.timePoint;
+            newNote.InitialTimePoint = this.InitialTimePoint ;
             newNote.ComboId = this.ComboId;
             newNote.HandType = this.HandType;
             newNote.UsageType = this.UsageType;
