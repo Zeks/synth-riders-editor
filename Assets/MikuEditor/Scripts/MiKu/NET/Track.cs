@@ -5794,7 +5794,7 @@ namespace MiKu.NET {
             List<TimeWrapper> filteredNoteTimes = keys.Where((time) => time > startTime && time < endTime).ToList();
 
             List<Rail> rails = s_instance.GetCurrentRailListByDifficulty();
-            List<Rail> filteredRails = rails.Where((rail) => rail.startTime > startTime && rail.startTime < endTime).ToList();
+            List<Rail> filteredRails = rails.Where((rail) => rail.startTime >= startTime && rail.startTime <= endTime && rail.railId != railId).ToList();
             bool hasInterruptions = false;
             foreach(TimeWrapper time in filteredNoteTimes.OrEmptyIfNull()) {
                 List<EditorNote> notesAtTime = notes[time];

@@ -284,7 +284,7 @@ namespace MiKu.NET {
             }
             if(!found)
                 return null;
-            // this rail must no have a breaker head
+            // this rail must no have a breaker tail
             if(foundRail.breakerTail != null) {
                 Trace.WriteLine("Potential candidate has a breaker head. Returning");
                 return null;
