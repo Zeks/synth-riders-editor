@@ -106,6 +106,29 @@ namespace MiKu.NET {
             return times.Count > 0 && notesByTime[times[0]] == Leader || notesByTime[times[0]] == GetLastNote();
         }
 
+        public RailNoteWrapper GetNoteWrapperAtPosition(TimeWrapper time)
+        {
+            Trace.WriteLine("Asked for note at time: " + time);
+            // need to get the closest forward match
+
+            List<TimeWrapper> times = notesByTime.Keys.ToList();
+            times.Sort();
+
+            times = times.Where(testedTIme => testedTIme >= time
+                    && testedTIme <= time).ToList();
+            times.Sort();
+
+            Trace.WriteLine("Rail has notes at: " + times);
+            // we act on the first relevant note
+            if (times.Count == 0)
+            {
+                Trace.WriteLine("No matching notes to move, returning");
+                return null;
+            }
+
+            return notesByTime[times[0]];
+        }
+
         public EditorNote GetNoteAtPosition(TimeWrapper time) {
             Trace.WriteLine("Asked for note at time: " + time);
             // need to get the closest forward match

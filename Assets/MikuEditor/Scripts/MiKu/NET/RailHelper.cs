@@ -770,9 +770,34 @@ namespace MiKu.NET {
             List<Rail> railsAtCurrentTime = RailHelper.GetListOfRailsInRange(rails, time, time, RailHelper.RailRangeBehaviour.Allow, RailHelper.RailFetchBehaviour.HasPointsAtCurrentTime);
 
             if(railsAtCurrentTime != null) {
-                bool breakerRemoved = false; 
-                foreach(Rail rail in railsAtCurrentTime.OrEmptyIfNull()) {
 
+                bool breakerRemoved = false;
+                List<Rail> railCheck = new List<Rail>();
+                // need to detect the case of conjoined rails with a breaker of the same color
+                foreach (Rail rail in railsAtCurrentTime.OrEmptyIfNull()) {
+                    if (rail.noteType != noteType) {
+                        continue;
+                    }
+                    railCheck.Add(rail);
+                }
+                railCheck.Sort((x, y) => x.startTime.CompareTo(y.startTime));
+                if (railCheck.Count == 2) {
+                    RailNoteWrapper tempFirstRailNote = railCheck[0].GetNoteWrapperAtPosition(time);
+                    RailNoteWrapper tempSecondRailNote = railCheck[1].GetNoteWrapperAtPosition(time);
+                    if (Track.PreviousTime < Track.CurrentTime && railCheck[1].notesByID.Count > 1)
+                    {
+                        railCheck[1].RemoveNote(tempSecondRailNote.thisNote.noteId);
+                        railCheck[1].FlipNoteTypeToLineWithoutMerging(railCheck[1].Leader.thisNote.noteId);
+                        railCheck[0].Merge(railCheck[1]);
+                    }
+                    else if (Track.PreviousTime >= Track.CurrentTime && railCheck[0].notesByID.Count > 1){
+                        RailNoteWrapper previous = tempFirstRailNote.GetPreviousNote();
+                        railCheck[0].RemoveNote(tempFirstRailNote.thisNote.noteId);
+                        railCheck[0].FlipNoteTypeToLineWithoutMerging(previous.thisNote.noteId);
+                        railCheck[1].FlipNoteTypeToLineWithoutMerging(tempSecondRailNote.thisNote.noteId);
+                        railCheck[0].Merge(railCheck[1]);
+                    }
+                    return;
                 }
 
                 foreach(Rail rail in railsAtCurrentTime.OrEmptyIfNull()) {
