@@ -4,13 +4,17 @@ using MiKu.NET.Charting;
 
 
 namespace MiKu.NET {
-    public sealed class TimeWrapper : IComparable, IEqualityComparer<TimeWrapper> {
+    public struct TimeWrapper : IComparable<TimeWrapper>, IEqualityComparer<TimeWrapper> {
         public TimeWrapper(float value) {
+            _value = 0;
+            _hash = -1;
+            _pureHash = 1;
+
             if(Divisor != 1)
                 Divisor = ((Track.BPM/60f)/64f)*50;
-            this.FloatValue = value;
+            FloatValue = value;
         }
-        public TimeWrapper() { }
+        
         public static TimeWrapper Create(float value) { return new TimeWrapper(value); }
 
         public float FloatValue
@@ -53,10 +57,10 @@ namespace MiKu.NET {
             }
         }
 
-        float _value = 0;
+        float _value;
         static float _divisor = 1;
-        int _hash = 1;
-        int _pureHash = 1;
+        int _hash;
+        int _pureHash;
 
         public void RegenerateHash() {
             Divisor = ((Track.BPM/60f)/64f)*50;
@@ -67,26 +71,28 @@ namespace MiKu.NET {
             return f.Hash;
             //Trace.WriteLine("Created hash source:" + result.whole + " divisor: " + divisor + " oroginal: " + f.FloatValue);
         }
-
-        public int CompareTo(object obj) {
-            TimeWrapper objectAsTimeWrapper = obj as TimeWrapper;
-            if(this.GetHashCode() == objectAsTimeWrapper.GetHashCode())
+        int IComparable<TimeWrapper>.CompareTo(TimeWrapper other) {
+            if(this.GetHashCode() == other.GetHashCode())
                 return 0;
-            if(this.FloatValue < objectAsTimeWrapper.FloatValue)
+            if(this.FloatValue < other.FloatValue)
                 return -1;
-            if(this.FloatValue > objectAsTimeWrapper.FloatValue)
+            if(this.FloatValue > other.FloatValue)
                 return 1;
             return -1;
         }
 
-        public override bool Equals(object obj) {
-            TimeWrapper objectAsTimeWrapper = obj as TimeWrapper;
+        public int CompareTo(TimeWrapper other) {
+            if(this.GetHashCode() == other.GetHashCode())
+                return 0;
+            if(this.FloatValue < other.FloatValue)
+                return -1;
+            if(this.FloatValue > other.FloatValue)
+                return 1;
+            return -1;
+        }
 
-            if(objectAsTimeWrapper == null) {
-                return false;
-            }
-
-            return this == objectAsTimeWrapper;
+        public bool Equals(TimeWrapper other) {
+            return this == other;
         }
 
         public bool Equals(TimeWrapper f1, TimeWrapper f2) {
@@ -107,18 +113,12 @@ namespace MiKu.NET {
             return value1 == value2;
         }
         public static bool operator ==(TimeWrapper a, TimeWrapper b) {
-            if(System.Object.ReferenceEquals(a, null) && System.Object.ReferenceEquals(b, null))
-                return true;
-            if(System.Object.ReferenceEquals(a, null) || System.Object.ReferenceEquals(b, null))
-                return false;
             return EqualsTo(a.FloatValue, b.FloatValue);
         }
         public static bool operator !=(TimeWrapper a, TimeWrapper b) {
             return !(a==b);
         }
         public static bool operator <=(TimeWrapper a, TimeWrapper b) {
-            if(System.Object.ReferenceEquals(a, null) || System.Object.ReferenceEquals(b, null))
-                return false;
             if(a == b)
                 return true;
             return a.FloatValue < b.FloatValue;
@@ -131,26 +131,18 @@ namespace MiKu.NET {
             return a.FloatValue > b.FloatValue;
         }
         public static TimeWrapper operator +(TimeWrapper a, TimeWrapper b) {
-            if(System.Object.ReferenceEquals(a, null) || System.Object.ReferenceEquals(b, null))
-                return null;
             return a.FloatValue+b.FloatValue;
         }
         public static TimeWrapper operator -(TimeWrapper a, TimeWrapper b) {
-            if(System.Object.ReferenceEquals(a, null) || System.Object.ReferenceEquals(b, null))
-                return null;
             return a.FloatValue-b.FloatValue;
         }
         public static bool operator <(TimeWrapper a, TimeWrapper b) {
-            if(System.Object.ReferenceEquals(a, null) || System.Object.ReferenceEquals(b, null))
-                return false;
             if(a == b)
                 return false;
             return a.FloatValue < b.FloatValue;
         }
 
         public static bool operator >(TimeWrapper a, TimeWrapper b) {
-            if(System.Object.ReferenceEquals(a, null) || System.Object.ReferenceEquals(b, null))
-                return false;
             if(a == b)
                 return false;
             return a.FloatValue > b.FloatValue;

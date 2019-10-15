@@ -1127,7 +1127,7 @@ namespace MiKu.NET {
 
             if(!workingTrack.ContainsKey(time)) {
                 Trace.WriteLine("Added");
-                workingTrack.Add(time.FloatValue, new List<EditorNote>());
+                workingTrack.Add(time, new List<EditorNote>());
             } else {
                 Trace.WriteLine("Already had this time");
             }
@@ -1372,31 +1372,31 @@ namespace MiKu.NET {
             HashSet<TimeWrapper> setOfTImes = new HashSet<TimeWrapper>();
             List<TimeWrapper> noteTimes = Track.s_instance.GetCurrentTrackDifficulty().Keys.ToList();
             foreach(TimeWrapper time in noteTimes.OrEmptyIfNull()) {
-                setOfTImes.Add(time.FloatValue);
+                setOfTImes.Add(time);
             }
             List<Rail> rails = Track.s_instance.GetCurrentRailListByDifficulty();
             if(collectRailSegments) {
                 foreach(Rail rail in rails.OrEmptyIfNull()) {
                     foreach(TimeWrapper time in rail.notesByTime.Keys.ToList().OrEmptyIfNull()) {
-                        setOfTImes.Add(time.FloatValue);
+                        setOfTImes.Add(time);
                     }
                 }
             } else {
                 foreach(Rail rail in rails.OrEmptyIfNull()) {
-                    setOfTImes.Add(rail.startTime.FloatValue);
-                    setOfTImes.Add(rail.endTime.FloatValue);
+                    setOfTImes.Add(rail.startTime);
+                    setOfTImes.Add(rail.endTime);
                 }
             }
 
 
             List<TimeWrapper> lights = Track.s_instance.GetCurrentLightsByDifficulty();
             foreach(TimeWrapper time in lights.OrEmptyIfNull()) {
-                setOfTImes.Add(time.FloatValue);
+                setOfTImes.Add(time);
             }
 
             List<EditorSlide> slides = Track.s_instance.GetCurrentMovementListByDifficulty();
             foreach(EditorSlide slide in slides.OrEmptyIfNull()) {
-                setOfTImes.Add(slide.time.FloatValue);
+                setOfTImes.Add(slide.time);
             }
 
             return setOfTImes;
@@ -1709,7 +1709,7 @@ namespace MiKu.NET {
                     DoClearNotePositions();
                 } else if(!IsPlaying) {
                     CloseSpecialSection();
-                    if(CurrentSelection.StartTime.FloatValue < -0.5f) {
+                    if(Math.Abs(CurrentSelection.EndTime.FloatValue - CurrentTime.FloatValue) > 0.1f) {
                         CurrentSelection.StartTime = CurrentTime;
                         CurrentSelection.EndTime = CurrentTime;
                     }
@@ -3526,6 +3526,8 @@ namespace MiKu.NET {
             isBusy = true;
             TimeWrapper backUpTime = CurrentTime;
 
+            TimeWrapper backupSelectionTime = CurrentSelection.StartTime;
+
             // this can be positive or negative
             TimeWrapper shiftLength = CurrentTime - CurrentClipBoard.startTime;
 
@@ -3588,7 +3590,7 @@ namespace MiKu.NET {
                     }
 
                     if(!workingTrack.ContainsKey(newTime))
-                        workingTrack.Add(newTime.FloatValue, copyList);
+                        workingTrack.Add(newTime, copyList);
                     else
                         workingTrack[newTime].AddRange(copyList);
 
@@ -3622,6 +3624,8 @@ namespace MiKu.NET {
             }
 
             CurrentTime = backUpTime;
+            CurrentSelection.StartTime = backupSelectionTime;
+            CurrentSelection.EndTime = backupSelectionTime + CurrentClipBoard.lenght;
             Miku_DialogManager.ShowDialog(Miku_DialogManager.DialogType.Info, StringVault.Info_NotePasteSuccess);
             isBusy = false;
         }
@@ -4115,7 +4119,7 @@ namespace MiKu.NET {
         /// <summary>
         /// <param name="forceClear">If true, the lines will be forcefull redrawed</param>
         public void DrawTrackStepLines(StepDataHolder stepHolder, bool forceClear = false) {
-            TimeWrapper currentTime = isPlaying ? _currentPlayTime.FloatValue : _currentTime.FloatValue;
+            TimeWrapper currentTime = isPlaying ? _currentPlayTime : _currentTime;
             TimeWrapper timeWithoutOffset = currentTime - StepOffset;
             if(stepHolder.BeatIncreasePerStep < 1) {
                 float stepLineDrawStartingPosition = 0;
@@ -4251,7 +4255,7 @@ namespace MiKu.NET {
             else
                 CurrentTime=(realStepsInt+2)*_msPerBeat*stepHolder.BeatIncreasePerStep;
             CurrentTime = Mathf.Min(_currentTime.FloatValue, (_songLengthInBeats - 1) * _msPerBeat) + StepOffset;
-            return MStoUnit(_currentTime.FloatValue);
+            return MStoUnit(_currentTime);
         }
 
         /// <summary>
@@ -4315,7 +4319,7 @@ namespace MiKu.NET {
             /*float targetSample = (StartOffset > 0) ? Mathf.Max(0, (_currentTime / MS) - (StartOffset / MS) ) : (_currentTime / MS);
             targetSample = (CurrentChart.AudioFrecuency * CurrentChart.AudioChannels) * (_currentTime + targetSample);
             audioSource.timeSamples = (int)targetSample;*/
-            _currentPlayTime = _currentTime.FloatValue;
+            _currentPlayTime = _currentTime;
 
             m_NotesDropArea.SetActive(false);
             m_MetaNotesColider.SetActive(true);
@@ -4446,12 +4450,12 @@ namespace MiKu.NET {
                 if(playStopMode == PlayStopMode.StepBack) {
                     float _CK = (_msPerBeat * GetDataForCurrentStepMode().BeatIncreasePerStep);
                     if((_currentPlayTime.FloatValue % _CK) / _CK >= 0.5f) {
-                        CurrentTime = GetCloseStepMeasure(_currentPlayTime).FloatValue;
+                        CurrentTime = GetCloseStepMeasure(_currentPlayTime);
                     } else {
-                        CurrentTime = GetCloseStepMeasure(_currentPlayTime, false).FloatValue;
+                        CurrentTime = GetCloseStepMeasure(_currentPlayTime, false);
                     }
                 } else
-                    CurrentTime = _currentPlayTime.FloatValue;
+                    CurrentTime = _currentPlayTime;
             }
 
             _currentPlayTime = 0;
@@ -4485,10 +4489,8 @@ namespace MiKu.NET {
         /// </summary>
         /// <param name="manual">If "true" <paramref name="moveTo"/> will be used to translate <see cref="m_CamerasHolder"/> otherwise <see cref="_currentPlayTime"/> will be use</param>
         /// <param name="moveTo">Position to be translate</param>
-        void MoveCamera(bool manual = false, TimeWrapper moveTo = null) {
+        void MoveCamera(bool manual = false, TimeWrapper moveTo = default(TimeWrapper)) {
             float zDest = 0f;
-            if(moveTo == null)
-                moveTo = new TimeWrapper();
             if(manual) {
 
                 zDest = moveTo.FloatValue;
@@ -6023,7 +6025,7 @@ namespace MiKu.NET {
                         if(!hasNotesWithinDeltaTime && !isIncorrectPlacement) {
                             if(!s_instance.isSHIFTDown) {
                                 Trace.WriteLine("Adding new time to track: " + CurrentTime);
-                                workingTrack.Add(CurrentTime.FloatValue, new List<EditorNote>());
+                                workingTrack.Add(CurrentTime, new List<EditorNote>());
                                 AddTimeToSFXList(CurrentTime);
                             } else {
                                 Miku_DialogManager.ShowDialog(Miku_DialogManager.DialogType.Alert, StringVault.Alert_NoRailToRecolorOrDeleteAtThisPoint);
@@ -6470,13 +6472,13 @@ namespace MiKu.NET {
         /// <param name="_ms">Millesconds of the current position to use on the formating</param>
         public static void AddTimeToSFXList(TimeWrapper _ms) {
             if(!s_instance.hitSFXSource.Contains(_ms)) {
-                s_instance.hitSFXSource.Add(_ms.FloatValue);
+                s_instance.hitSFXSource.Add(_ms);
             }
         }
 
         public static void RemoveTimeFromSFXList(TimeWrapper _ms) {
             if(s_instance.hitSFXSource.Contains(_ms)) {
-                s_instance.hitSFXSource.Remove(_ms.FloatValue);
+                s_instance.hitSFXSource.Remove(_ms);
             }
         }
 
@@ -6733,8 +6735,8 @@ namespace MiKu.NET {
                             return;
                         }
                     }
-                    workingEffects.Add(CurrentTime.FloatValue);
-                    s_instance.AddEffectGameObjectToScene(CurrentTime.FloatValue);
+                    workingEffects.Add(CurrentTime);
+                    s_instance.AddEffectGameObjectToScene(CurrentTime);
 
                     if(!isOverwrite) {
                         Miku_DialogManager.ShowDialog(Miku_DialogManager.DialogType.Info, StringVault.Info_FlashOn);
@@ -6840,8 +6842,8 @@ namespace MiKu.NET {
 
                     s_instance.RemoveMovementSectionFromChart(MoveTAG, CurrentTime);
 
-                    workingElementVert.Add(CurrentTime.FloatValue);
-                    s_instance.AddMovementGameObjectToScene(CurrentTime.FloatValue, MoveTAG);
+                    workingElementVert.Add(CurrentTime);
+                    s_instance.AddMovementGameObjectToScene(CurrentTime, MoveTAG);
 
                     if(!isOverwrite) {
                         Miku_DialogManager.ShowDialog(Miku_DialogManager.DialogType.Info, onText);
@@ -6892,7 +6894,7 @@ namespace MiKu.NET {
                     }
 
                     workingElementHorz.Add(slide);
-                    s_instance.AddMovementGameObjectToScene(CurrentTime.FloatValue, MoveTAG);
+                    s_instance.AddMovementGameObjectToScene(CurrentTime, MoveTAG);
                     if(!isOverwrite) {
                         Miku_DialogManager.ShowDialog(Miku_DialogManager.DialogType.Info, onText);
                     }
@@ -6933,7 +6935,7 @@ namespace MiKu.NET {
                         }
                     }
                     lights.Add(CurrentTime.FloatValue);
-                    s_instance.AddLightGameObjectToScene(CurrentTime.FloatValue);
+                    s_instance.AddLightGameObjectToScene(CurrentTime);
 
                     if(!isOverwrite) {
                         Miku_DialogManager.ShowDialog(

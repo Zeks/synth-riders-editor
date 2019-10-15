@@ -136,7 +136,7 @@ namespace MiKu.NET.Charting {
             }
             set
             {
-                timePoint = value.FloatValue; ;
+                timePoint = value;
             }
         }
         public TimeWrapper InitialTimePoint
@@ -147,11 +147,11 @@ namespace MiKu.NET.Charting {
             }
             set
             {
-                initialTimePoint = value.FloatValue; ;
+                initialTimePoint = value;
             }
         }
         public void SetTime(TimeWrapper time, float bpm) {
-            timePoint = time.FloatValue;
+            timePoint = time;
         }
 
 
