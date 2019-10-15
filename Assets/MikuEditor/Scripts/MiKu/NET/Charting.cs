@@ -46,7 +46,7 @@ namespace MiKu.NET.Charting {
         public EditorNote Clone() {
             EditorNote newNote = new EditorNote();
             newNote.timePoint = this.timePoint;
-            newNote.InitialTimePoint = this.InitialTimePoint ;
+            newNote.InitialTimePoint = this.InitialTimePoint;
             newNote.ComboId = this.ComboId;
             newNote.HandType = this.HandType;
             newNote.UsageType = this.UsageType;
@@ -136,7 +136,7 @@ namespace MiKu.NET.Charting {
             }
             set
             {
-                timePoint = value.FloatValue; ;
+                timePoint = value;
             }
         }
         public TimeWrapper InitialTimePoint
@@ -147,13 +147,17 @@ namespace MiKu.NET.Charting {
             }
             set
             {
-                initialTimePoint = value.FloatValue; ;
+                initialTimePoint = value;
             }
         }
         public void SetTime(TimeWrapper time, float bpm) {
-            timePoint = time.FloatValue;
+            timePoint = time;
         }
 
+        public void MatchInitialTimeToCurrent()
+        {
+            InitialTimePoint = TimePoint;
+        }
 
         public EditorNote(UnityEngine.Vector3 pos, float time = default(float), int idCmb = -1, NoteHandType t = NoteHandType.OneHandSpecial, NoteDirection d = NoteDirection.None) {
             noteId = noteCounter++;

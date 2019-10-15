@@ -197,8 +197,6 @@ namespace MiKu.NET.Charting {
                 editorDictionary = new Dictionary<TimeWrapper, List<EditorNote>>(new TimeWrapper());
             }
             foreach(KeyValuePair<float, List<Note>> entry in gameDictionary.OrEmptyIfNull()) {
-                
-
                 foreach(var gameNote in entry.Value.OrEmptyIfNull()) {
                     TimeWrapper key = entry.Key;
                     float msPerBeat = (1000 * 60)/bpm;

@@ -287,7 +287,7 @@ namespace MiKu.NET {
             if(IsBreakerNote(note.UsageType)) { 
                 added = AddBreakerNote(wrapper);
             } else
-                AddSimpleNote(wrapper);
+                added = AddSimpleNote(wrapper);
 
             if(!added)
                 return null;
@@ -305,7 +305,7 @@ namespace MiKu.NET {
             return wrapper;
         }
 
-        void AddSimpleNote(RailNoteWrapper wrapper) {
+        bool AddSimpleNote(RailNoteWrapper wrapper) {
 
             EditorNote note = wrapper.thisNote;
             RailNoteWrapper previous = GetPreviousNote(note.TimePoint);
@@ -345,6 +345,7 @@ namespace MiKu.NET {
                 wrapper.nextNote = originalNextNote;
                 wrapper.AssignPreviousNote(previous);
             }
+            return true;
         }
         public bool WillBeNewHead(TimeWrapper time) {
             if(notesByTime.Count == 0)
@@ -442,7 +443,7 @@ namespace MiKu.NET {
         public bool FlipNoteTypeToBreaker(int noteId) {
             Trace.WriteLine("Flipping the note on existing rail to breaker");
             RailNoteWrapper note = notesByID[noteId];
-            if(note == null || note.thisNote.UsageType == EditorNote.NoteUsageType.Breaker)
+            if(note == null)
                 return false;
 
             RailNoteWrapper previous = GetPreviousNote(note.thisNote.TimePoint);
@@ -694,9 +695,19 @@ namespace MiKu.NET {
             nextRail.DestroyLeaderGameObject();
 
             foreach(int noteId in nextRail.notesByID.Keys.ToList().OrEmptyIfNull()) {
-                AddNote(nextRail.notesByID[noteId].thisNote);
+                RailNoteWrapper movedNote = nextRail.notesByID[noteId];
+
                 nextRail.RemoveNote(noteId);
-           }
+                
+                RailNoteWrapper newNote = AddNote(movedNote.thisNote.Clone());
+                if(newNote == null)
+                    continue;
+
+                if(newNote.nextNote != null) {
+                    newNote.thisNote.UsageType = EditorNote.NoteUsageType.Line;
+                }
+                InstantiateNoteObject(newNote);
+            }
 
             Trace.WriteLine("Deleting the rail: " + nextRail.railId);
             List<Rail> tempRailList = Track.s_instance.GetCurrentRailListByDifficulty();
@@ -708,6 +719,7 @@ namespace MiKu.NET {
         public void MoveEveryPointOnTheTimeline(TimeWrapper shift, bool reinstantiate = false) {
             foreach(RailNoteWrapper note in notesByTime.Values.OrEmptyIfNull()) {
                 note.thisNote.SetTime(note.thisNote.TimePoint + shift, Track.BPM);
+                note.thisNote.MatchInitialTimeToCurrent();
                 note.thisNote.Position[2] = Track.MStoUnit(note.thisNote.TimePoint);
             }
             // need to recreate the time hash
