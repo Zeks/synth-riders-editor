@@ -825,7 +825,7 @@ namespace MiKu.NET {
                                     // for railEndTime and nextRailStartTIme we check if there are ANY notes not of the opposite type
                                     if(!Track.HasRailInterruptionsBetween(rail.railId, previousRail.railId, previousRailEndTime, rail.startTime, rail.noteType)) {
                                         // no interrupting notes or rails, can link this rail and the next one
-                                        if(previousRail.breakerTail == null && !breakerRemoved) {
+                                        if((previousRail.breakerTail == null || previousRail.notesByID.Count == 1 ) && !breakerRemoved) {
                                             Track.s_instance.DecreaseTotalDisplayedNotesCount();
                                             previousRail.Merge(rail);
                                         } else {
@@ -851,7 +851,7 @@ namespace MiKu.NET {
                                     if(!Track.HasRailInterruptionsBetween(rail.railId, nextRail.railId, railEndTime, nextRailStartTIme, rail.noteType)) {
                                         // no interrupting notes or rails, can link this rail and the next one
 
-                                        if(nextRail.breakerHead == null && !breakerRemoved) {
+                                        if((nextRail.breakerHead == null || nextRail.notesByID.Count == 1) && !breakerRemoved) {
                                             rail.Merge(nextRail);
                                             Track.s_instance.DecreaseTotalDisplayedNotesCount();
                                         } else {

@@ -719,6 +719,7 @@ namespace MiKu.NET {
         public void MoveEveryPointOnTheTimeline(TimeWrapper shift, bool reinstantiate = false) {
             foreach(RailNoteWrapper note in notesByTime.Values.OrEmptyIfNull()) {
                 note.thisNote.SetTime(note.thisNote.TimePoint + shift, Track.BPM);
+                note.thisNote.MatchInitialTimeToCurrent();
                 note.thisNote.Position[2] = Track.MStoUnit(note.thisNote.TimePoint);
             }
             // need to recreate the time hash

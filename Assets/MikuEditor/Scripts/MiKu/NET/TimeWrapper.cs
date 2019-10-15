@@ -95,6 +95,16 @@ namespace MiKu.NET {
             return this == other;
         }
 
+        public override bool Equals(object obj) {
+            if(!(obj is TimeWrapper))
+                return false;
+
+            TimeWrapper other = (TimeWrapper)obj;
+            bool success = this.FloatValue == other.FloatValue;
+            success = success  && (this.Hash == other.Hash);
+            return success;
+        }
+
         public bool Equals(TimeWrapper f1, TimeWrapper f2) {
             return GetPreciseInt(f1) == GetPreciseInt(f2);
         }

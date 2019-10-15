@@ -1709,7 +1709,7 @@ namespace MiKu.NET {
                     DoClearNotePositions();
                 } else if(!IsPlaying) {
                     CloseSpecialSection();
-                    if(Math.Abs(CurrentSelection.EndTime.FloatValue - CurrentTime.FloatValue) > 0.1f) {
+                    if(CurrentSelection.StartTime.FloatValue < -0.5f) {
                         CurrentSelection.StartTime = CurrentTime;
                         CurrentSelection.EndTime = CurrentTime;
                     }
@@ -2565,7 +2565,7 @@ namespace MiKu.NET {
         }
 
         void OnClipLoaded(AudioClip loadedClip) {
-            if(!Serializer.IsExtratingClip && Serializer.ClipExtratedComplete) {
+            if (!Serializer.IsExtratingClip && Serializer.ClipExtratedComplete) {
                 songClip = loadedClip;
                 StartOffset = CurrentChart.Offset;
                 audioSource.clip = songClip;
@@ -2577,22 +2577,22 @@ namespace MiKu.NET {
                 UpdateDisplayStartOffset(StartOffset);
                 SetNoteMarkerType();
                 DrawTrackLines();
-                if(CurrentChart.Track.Easy.Count > 0) {
+                if (CurrentChart.Track.Easy.Count > 0 || CurrentChart.Rails.Easy.Count > 0) {
                     SetCurrentTrackDifficulty(TrackDifficulty.Easy);
                     m_DifficultyDisplay.SetValueWithoutNotify(0);
-                } else if(CurrentChart.Track.Normal.Count > 0) {
+                } else if(CurrentChart.Track.Normal.Count > 0 || CurrentChart.Rails.Normal.Count > 0) {
                     SetCurrentTrackDifficulty(TrackDifficulty.Normal);
                     m_DifficultyDisplay.SetValueWithoutNotify(1);
-                } else if(CurrentChart.Track.Hard.Count > 0) {
+                } else if(CurrentChart.Track.Hard.Count > 0 || CurrentChart.Rails.Hard.Count > 0) {
                     SetCurrentTrackDifficulty(TrackDifficulty.Hard);
                     m_DifficultyDisplay.SetValueWithoutNotify(2);
-                } else if(CurrentChart.Track.Expert.Count > 0) {
+                } else if(CurrentChart.Track.Expert.Count > 0 || CurrentChart.Rails.Expert.Count > 0) {
                     SetCurrentTrackDifficulty(TrackDifficulty.Expert);
                     m_DifficultyDisplay.SetValueWithoutNotify(3);
-                } else if(CurrentChart.Track.Master.Count > 0) {
+                } else if(CurrentChart.Track.Master.Count > 0 || CurrentChart.Rails.Master.Count > 0) {
                     SetCurrentTrackDifficulty(TrackDifficulty.Master);
                     m_DifficultyDisplay.SetValueWithoutNotify(4);
-                } else if(CurrentChart.Track.Custom.Count > 0) {
+                } else if(CurrentChart.Track.Custom.Count > 0 || CurrentChart.Rails.Custom.Count > 0) {
                     SetCurrentTrackDifficulty(TrackDifficulty.Custom);
                     m_DifficultyDisplay.SetValueWithoutNotify(5);
                 }
@@ -4697,18 +4697,17 @@ namespace MiKu.NET {
                         AddTimeToSFXList(key); // todo, will need to restore it for rails
                     }
                 }
-                // need to also instantiate everything in the rails section
-                List<Rail> rails = GetCurrentRailListByDifficulty();
-                foreach(Rail rail in rails.OrEmptyIfNull()) {
-                    RailHelper.ReinstantiateRail(rail);
-                    RailHelper.ReinstantiateRailSegmentObjects(rail);
-                    s_instance.IncreaseTotalDisplayedNotesCount();
-                    AddTimeToSFXList(rail.startTime);
-                }
-
 
             }
-
+            // need to also instantiate everything in the rails section
+            List<Rail> rails = GetCurrentRailListByDifficulty();
+            foreach (Rail rail in rails.OrEmptyIfNull())
+            {
+                RailHelper.ReinstantiateRail(rail);
+                RailHelper.ReinstantiateRailSegmentObjects(rail);
+                s_instance.IncreaseTotalDisplayedNotesCount();
+                AddTimeToSFXList(rail.startTime);
+            }
             Track.LogMessage("Current Special ID: " + s_instance.currentSpecialSectionID);
 
             if(CurrentChart.Effects == null) {
@@ -5336,6 +5335,16 @@ namespace MiKu.NET {
                 foreach(RailNoteWrapper note in notes) {
                     rail.RemoveNote(note.thisNote.noteId);
                 }
+
+                if (rail.scheduleForDeletion)
+                {
+
+                    Trace.WriteLine("Deleting the rail: " + rail.railId);
+                    List<Rail> tempRailList = s_instance.GetCurrentRailListByDifficulty();
+                    tempRailList.Remove(rail);
+                    rail.DestroyLeaderGameObject();
+                    s_instance.DecreaseTotalDisplayedNotesCount();
+                }
             }
 
             for(int j = 0; j < keys_tofilter.Count; ++j) {
@@ -5938,6 +5947,7 @@ namespace MiKu.NET {
         /// </summary>
         public static void AddNoteToChart(GameObject noteFromNoteArea) {
             try {
+
                 Trace.WriteLine("AddNoteToChart called");
                 if(PromtWindowOpen || s_instance.isBusy) return;
 

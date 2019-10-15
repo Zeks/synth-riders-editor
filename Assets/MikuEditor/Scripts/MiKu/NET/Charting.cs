@@ -46,7 +46,7 @@ namespace MiKu.NET.Charting {
         public EditorNote Clone() {
             EditorNote newNote = new EditorNote();
             newNote.timePoint = this.timePoint;
-            newNote.InitialTimePoint = this.InitialTimePoint ;
+            newNote.InitialTimePoint = this.InitialTimePoint;
             newNote.ComboId = this.ComboId;
             newNote.HandType = this.HandType;
             newNote.UsageType = this.UsageType;
@@ -154,6 +154,10 @@ namespace MiKu.NET.Charting {
             timePoint = time;
         }
 
+        public void MatchInitialTimeToCurrent()
+        {
+            InitialTimePoint = TimePoint;
+        }
 
         public EditorNote(UnityEngine.Vector3 pos, float time = default(float), int idCmb = -1, NoteHandType t = NoteHandType.OneHandSpecial, NoteDirection d = NoteDirection.None) {
             noteId = noteCounter++;
