@@ -307,7 +307,7 @@ namespace MiKu.NET {
         public const int msInSecond = 1000;
 
         // ms in minute
-        public const int msInMinute = 60*1000;
+        public const int msInMinute = 60 * 1000;
 
         // A minute is 60 seconds
         public const int secondsInMinute = 60;
@@ -848,8 +848,8 @@ namespace MiKu.NET {
 
         public static StepDataHolder CreateStepData(StepDataHolder.CurrentStepMode stepMode = StepDataHolder.CurrentStepMode.Primary, int stepsInBeat = 1) {
             StepDataHolder stepHolder = new StepDataHolder();
-            stepHolder.BeatIncreasePerStep = 1f/stepsInBeat;
-            stepHolder.stepsInBeat= stepsInBeat;
+            stepHolder.BeatIncreasePerStep = 1f / stepsInBeat;
+            stepHolder.stepsInBeat = stepsInBeat;
             stepHolder.StepMode = stepMode;
             return stepHolder;
         }
@@ -1096,25 +1096,25 @@ namespace MiKu.NET {
         private float currentTimeSecs = 0f;
 
         public StepDataHolder GetDataForStepMode(StepDataHolder.CurrentStepMode mode) {
-            if(mode == StepDataHolder.CurrentStepMode.Primary)
+            if (mode == StepDataHolder.CurrentStepMode.Primary)
                 return stepHolderPrimary;
-            if(mode == StepDataHolder.CurrentStepMode.Secondary)
+            if (mode == StepDataHolder.CurrentStepMode.Secondary)
                 return stepHolderSecondary;
             return stepHolderPrecise;
         }
 
         public StepDataHolder GetDataForCurrentStepMode() {
-            if(StepMode == StepDataHolder.CurrentStepMode.Primary)
+            if (StepMode == StepDataHolder.CurrentStepMode.Primary)
                 return stepHolderPrimary;
-            if(StepMode == StepDataHolder.CurrentStepMode.Secondary)
+            if (StepMode == StepDataHolder.CurrentStepMode.Secondary)
                 return stepHolderSecondary;
             return stepHolderPrecise;
         }
 
         public StepDataHolder.CurrentStepMode GetNextStepMode(StepDataHolder.CurrentStepMode mode) {
-            if(mode == StepDataHolder.CurrentStepMode.Primary)
+            if (mode == StepDataHolder.CurrentStepMode.Primary)
                 return StepDataHolder.CurrentStepMode.Secondary;
-            if(mode == StepDataHolder.CurrentStepMode.Secondary)
+            if (mode == StepDataHolder.CurrentStepMode.Secondary)
                 return StepDataHolder.CurrentStepMode.Precise;
             return StepDataHolder.CurrentStepMode.Primary;
         }
@@ -1122,10 +1122,10 @@ namespace MiKu.NET {
         public bool AddTimeToCurrentTrack(TimeWrapper time) {
             Trace.WriteLine("Adding time to current track: " + time);
             Dictionary<TimeWrapper, List<EditorNote>> workingTrack = s_instance.GetCurrentTrackDifficulty();
-            if(workingTrack == null)
+            if (workingTrack == null)
                 return false;
 
-            if(!workingTrack.ContainsKey(time)) {
+            if (!workingTrack.ContainsKey(time)) {
                 Trace.WriteLine("Added");
                 workingTrack.Add(time, new List<EditorNote>());
             } else {
@@ -1137,7 +1137,7 @@ namespace MiKu.NET {
         // Use this for initialization
         void Awake() {
             s_instance = this;
-            if(newLaunch) {
+            if (newLaunch) {
                 File.Delete("editor.log");
                 Trace.Listeners.Add(new TextWriterTraceListener("editor.log"));
             }
@@ -1172,7 +1172,7 @@ namespace MiKu.NET {
 
             pointEightWait = new WaitForSeconds(0.8f);
 
-            if(!m_SpecialOneHandNoteMarker
+            if (!m_SpecialOneHandNoteMarker
                 || !m_LefthandNoteMarker
                 || !m_RighthandNoteMarker
                 || !m_SpecialBothHandsNoteMarker) {
@@ -1192,7 +1192,7 @@ namespace MiKu.NET {
         }
 
         void OnApplicationFocus(bool hasFocus) {
-            if(hasFocus) {
+            if (hasFocus) {
                 Cursor.lockState = currentLockeMode;
 
                 /* Miku_DialogManager.ShowDialog(Miku_DialogManager.DialogType.Alert, 
@@ -1203,7 +1203,7 @@ namespace MiKu.NET {
                 isCTRLDown = false;
                 isSHIFTDown = false;
             } else {
-                if(isPlaying) {
+                if (isPlaying) {
                     TogglePlay();
                 }
             }
@@ -1256,7 +1256,7 @@ namespace MiKu.NET {
 
         public void ToggleColorPicker() {
             AssignButtonsForColorChanger(currentColorPickerHand);
-            if(colorPickerShown)
+            if (colorPickerShown)
                 HideColorPicker();
             else
                 ShowColorPicker();
@@ -1284,7 +1284,7 @@ namespace MiKu.NET {
         }
 
         void AssignButtonsForColorChanger(EditorNote.NoteHandType noteHand) {
-            switch(noteHand) {
+            switch (noteHand) {
                 case EditorNote.NoteHandType.LeftHanded:
                     currentHandButton = m_LeftHandNotePicker;
                     currentLineButton = m_LeftHandRailPicker;
@@ -1319,7 +1319,7 @@ namespace MiKu.NET {
         }
 
         public void ColorChanged(Color color) {
-            if(!colorPickerUpdateQueued)
+            if (!colorPickerUpdateQueued)
                 ChangeNoteColor(color, currentColorPickerHand);
         }
 
@@ -1334,7 +1334,7 @@ namespace MiKu.NET {
 
                 gridIsActive = m_GridGuide.activeSelf;
                 // Toggle Grid on by default
-                if(!gridIsActive)
+                if (!gridIsActive)
                     ToggleGridGuide();
 
                 // After Enabled we proced to Init the Chart Data
@@ -1344,7 +1344,7 @@ namespace MiKu.NET {
 
                 CurrentSelection = new SelectionArea();
                 //
-                if(CurrentClipBoard == null) {
+                if (CurrentClipBoard == null) {
                     CurrentClipBoard = new ClipBoardStruct();
                     CurrentClipBoard.notes = new Dictionary<TimeWrapper, List<EditorNote>>(new TimeWrapper());
                     CurrentClipBoard.effects = new List<TimeWrapper>();
@@ -1357,12 +1357,12 @@ namespace MiKu.NET {
                     CurrentClipBoard.lenght = new TimeWrapper(0);
                 }
 
-                if(m_selectionMarker != null) {
+                if (m_selectionMarker != null) {
                     selectionStartPos = m_selectionMarker.GetPosition(0);
                     selectionEndPos = m_selectionMarker.GetPosition(1);
                 }
                 ClearSelectionMarker();
-            } catch(Exception e) {
+            } catch (Exception e) {
                 Serializer.WriteToLogFile("There was a error loading the Chart");
                 Serializer.WriteToLogFile(e.ToString());
             }
@@ -1371,18 +1371,18 @@ namespace MiKu.NET {
         public static HashSet<TimeWrapper> CollectOccupiedTimes(bool collectRailSegments = true) {
             HashSet<TimeWrapper> setOfTImes = new HashSet<TimeWrapper>();
             List<TimeWrapper> noteTimes = Track.s_instance.GetCurrentTrackDifficulty().Keys.ToList();
-            foreach(TimeWrapper time in noteTimes.OrEmptyIfNull()) {
+            foreach (TimeWrapper time in noteTimes.OrEmptyIfNull()) {
                 setOfTImes.Add(time);
             }
             List<Rail> rails = Track.s_instance.GetCurrentRailListByDifficulty();
-            if(collectRailSegments) {
-                foreach(Rail rail in rails.OrEmptyIfNull()) {
-                    foreach(TimeWrapper time in rail.notesByTime.Keys.ToList().OrEmptyIfNull()) {
+            if (collectRailSegments) {
+                foreach (Rail rail in rails.OrEmptyIfNull()) {
+                    foreach (TimeWrapper time in rail.notesByTime.Keys.ToList().OrEmptyIfNull()) {
                         setOfTImes.Add(time);
                     }
                 }
             } else {
-                foreach(Rail rail in rails.OrEmptyIfNull()) {
+                foreach (Rail rail in rails.OrEmptyIfNull()) {
                     setOfTImes.Add(rail.startTime);
                     setOfTImes.Add(rail.endTime);
                 }
@@ -1390,23 +1390,103 @@ namespace MiKu.NET {
 
 
             List<TimeWrapper> lights = Track.s_instance.GetCurrentLightsByDifficulty();
-            foreach(TimeWrapper time in lights.OrEmptyIfNull()) {
+            foreach (TimeWrapper time in lights.OrEmptyIfNull()) {
                 setOfTImes.Add(time);
             }
 
             List<EditorSlide> slides = Track.s_instance.GetCurrentMovementListByDifficulty();
-            foreach(EditorSlide slide in slides.OrEmptyIfNull()) {
+            foreach (EditorSlide slide in slides.OrEmptyIfNull()) {
                 setOfTImes.Add(slide.time);
             }
 
             return setOfTImes;
         }
-        
-            public enum SingleHandNoteColorSwao
+
+        public enum SingleHandNoteColorSwao
+        {
+            no_swap,
+            swap,
+        }
+
+
+        //switch(MoveTAG) {
+        //  case SLIDE_LEFT_TAG:
+        //    slide.slideType = EditorNote.NoteHandType.LeftHanded;
+        //  break;
+        //case SLIDE_RIGHT_TAG:
+        //  slide.slideType = EditorNote.NoteHandType.RightHanded;
+        //                            break;
+        //                      case SLIDE_LEFT_DIAG_TAG:
+        //                         slide.slideType = EditorNote.NoteHandType.SeparateHandSpecial;
+        //                       break;
+        //                 case SLIDE_RIGHT_DIAG_TAG:
+        //                   slide.slideType = EditorNote.NoteHandType.OneHandSpecial;
+        //           break;
+        //        default:
+        //             slide.slideType = EditorNote.NoteHandType.BothHandsSpecial;
+        //              break;
+        //}
+
+        public void FlipPattern(bool withColors = false){
+            string tag = "";
+            var workingTrack = Track.s_instance.GetCurrentTrackDifficulty();
+            List<TimeWrapper> noteTimes = Track.s_instance.GetCurrentTrackDifficulty().Keys.ToList();
+            foreach (TimeWrapper time in noteTimes.OrEmptyIfNull())
             {
-                no_swap,
-                swap,
+                List<EditorNote> list = workingTrack[time];
+                foreach (EditorNote note in list.OrEmptyIfNull())
+                {
+                    note.Position[0] *= -1;
+                    if(withColors)
+                        note.HandType = GetOppositeColor(note.HandType);
+                    DestroyImmediate(note.GameObject);
+                    AddNoteGameObjectToScene(note);
+                }
             }
+            List<Rail> rails = Track.s_instance.GetCurrentRailListByDifficulty();
+            foreach (Rail rail in rails.OrEmptyIfNull())
+            {
+                rail.SwitchHandTo(GetOppositeColor(rail.noteType));
+                rail.MirrorHands();
+                RailHelper.ReinstantiateRail(rail);
+            }
+
+            var workingElementHorz = s_instance.GetCurrentMovementListByDifficulty();
+            foreach (EditorSlide slide in workingElementHorz.OrEmptyIfNull()){
+                bool happened = false;
+                if (slide.slideType == EditorNote.NoteHandType.LeftHanded)
+                {
+                    slide.slideType = EditorNote.NoteHandType.RightHanded;
+                    tag = SLIDE_RIGHT_TAG;
+                    happened = true;
+                }
+                else if (slide.slideType == EditorNote.NoteHandType.RightHanded)
+                {
+                    slide.slideType = EditorNote.NoteHandType.LeftHanded;
+                    tag = SLIDE_LEFT_TAG;
+                    happened = true;
+                }
+                else if (slide.slideType == EditorNote.NoteHandType.OneHandSpecial)
+                {
+                    slide.slideType = EditorNote.NoteHandType.SeparateHandSpecial;
+                    tag = SLIDE_LEFT_DIAG_TAG;
+                    happened = true;
+                }
+                else if (slide.slideType == EditorNote.NoteHandType.SeparateHandSpecial)
+                {
+                    slide.slideType = EditorNote.NoteHandType.OneHandSpecial;
+                    tag = SLIDE_RIGHT_DIAG_TAG;
+                    happened = true;
+                }
+                 if (happened)
+                {
+                    DestroyImmediate(slide.gameObject);
+                    slide.gameObject = s_instance.AddMovementGameObjectToScene(slide.time, tag);
+                }
+                
+            }
+        }
+    
 
             public void DeleteNotesForSingleHand(EditorNote.NoteHandType handType, SingleHandNoteColorSwao withColorSwap = SingleHandNoteColorSwao.no_swap) {
             var workingTrack = Track.s_instance.GetCurrentTrackDifficulty();
@@ -2053,7 +2133,13 @@ namespace MiKu.NET {
             if(Input.GetButtonDown("Metronome") && !PromtWindowOpen) {
                 if(isSHIFTDown)
                     ToggleMetronome();
-                else {
+                if (isCTRLDown)
+                {
+                    bool flipColorsToo = isSHIFTDown;
+                    FlipPattern(flipColorsToo);
+                }
+                else
+                {
                     MirrorNotesAtTime(CurrentTime.FloatValue, Track.NoteMirrorStrategy.DiagonalLeftMirror);
                 }
             }
@@ -4840,7 +4926,7 @@ namespace MiKu.NET {
             List<EditorSlide> slides = GetCurrentMovementListByDifficulty();
             if(slides != null && slides.Count > 0) {
                 for(int i = 0; i < slides.Count; ++i) {
-                    AddMovementGameObjectToScene(slides[i].time, GetSlideTagByType(slides[i].slideType));
+                    slides[i].gameObject = AddMovementGameObjectToScene(slides[i].time, GetSlideTagByType(slides[i].slideType));
                 }
             }
 
@@ -6877,7 +6963,8 @@ namespace MiKu.NET {
         /// Toggle Jump for the current time
         /// </summary>
         public static void ToggleMovementSectionToChart(string MoveTAG, bool isOverwrite = false) {
-            if(PromtWindowOpen || IsPlaying) return;
+            if(PromtWindowOpen || IsPlaying)
+                return;
 
             if(CurrentTime < ALLOW_NOTES_AFTER_SECS * msInSecond) {
                 Miku_DialogManager.ShowDialog(
@@ -6995,7 +7082,7 @@ namespace MiKu.NET {
                     }
 
                     workingElementHorz.Add(slide);
-                    s_instance.AddMovementGameObjectToScene(CurrentTime, MoveTAG);
+                    slide.gameObject = s_instance.AddMovementGameObjectToScene(CurrentTime, MoveTAG);
                     if(!isOverwrite) {
                         Miku_DialogManager.ShowDialog(Miku_DialogManager.DialogType.Info, onText);
                     }

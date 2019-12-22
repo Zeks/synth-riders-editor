@@ -767,6 +767,14 @@ namespace MiKu.NET {
             }
         }
 
+        public void MirrorHands()
+        {
+            foreach (RailNoteWrapper note in notesByTime.Values.OrEmptyIfNull())
+            {
+                note.thisNote.Position[0] *= -1;
+            }
+        }
+
         public void ShiftEveryNoteBy(Vector2 vec) {
             foreach(RailNoteWrapper note in notesByTime.Values.OrEmptyIfNull()) {
                 note.thisNote.Position[0] += vec.x;

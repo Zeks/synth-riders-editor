@@ -469,6 +469,7 @@ namespace MiKu.NET.Charting {
         public EditorNote.NoteHandType slideType;
 
         public bool initialized;
+        public GameObject gameObject;
     }
 
     [Serializable]
