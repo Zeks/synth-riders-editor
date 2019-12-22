@@ -1448,6 +1448,7 @@ namespace MiKu.NET {
             {
                 rail.SwitchHandTo(GetOppositeColor(rail.noteType));
                 rail.MirrorHands();
+                RailHelper.CleanupRailObjects(rail);
                 RailHelper.ReinstantiateRail(rail);
             }
 
