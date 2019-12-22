@@ -1401,6 +1401,78 @@ namespace MiKu.NET {
 
             return setOfTImes;
         }
+        
+            public enum SingleHandNoteColorSwao
+            {
+                no_swap,
+                swap,
+            }
+
+            public void DeleteNotesForSingleHand(EditorNote.NoteHandType handType, SingleHandNoteColorSwao withColorSwap = SingleHandNoteColorSwao.no_swap) {
+            var workingTrack = Track.s_instance.GetCurrentTrackDifficulty();
+            List<TimeWrapper> noteTimes = Track.s_instance.GetCurrentTrackDifficulty().Keys.ToList();
+
+            Dictionary<TimeWrapper, int> notesCountsForTime = new Dictionary<TimeWrapper, int>();
+            foreach (TimeWrapper time in noteTimes.OrEmptyIfNull()) {
+                List<EditorNote> list = workingTrack[time];
+                foreach (EditorNote note in list.OrEmptyIfNull())
+                {
+                    if (!notesCountsForTime.Keys.ToList().Contains(note.TimePoint))
+                    {
+                        notesCountsForTime.Add(note.TimePoint, 1);
+                    }
+                    else
+                        notesCountsForTime[note.TimePoint]++;
+                }
+            }
+            List<Rail> rails = Track.s_instance.GetCurrentRailListByDifficulty();
+            foreach (Rail rail in rails.OrEmptyIfNull())
+            {
+                if (!notesCountsForTime.Keys.ToList().Contains(rail.startTime)) {
+                    notesCountsForTime.Add(rail.startTime, 1);
+                }
+                else
+                    notesCountsForTime[rail.startTime]++;
+            }
+
+
+            foreach (TimeWrapper time in noteTimes.OrEmptyIfNull())
+            {
+                List<EditorNote> list = workingTrack[time];
+                List<int> notesToDelete = new List<int>();
+                foreach (EditorNote note in list.OrEmptyIfNull()) {
+                    if (note.HandType == handType && (notesCountsForTime[note.TimePoint] == 1 && withColorSwap == SingleHandNoteColorSwao.swap))
+                    {
+                        note.HandType = GetOppositeColor(note.HandType);
+                        DestroyImmediate(note.GameObject);
+                        AddNoteGameObjectToScene(note);
+                    }
+                    else if(note.HandType == handType)
+                    {
+                        DestroyImmediate(note.GameObject);
+                        notesToDelete.Add(note.noteId);
+                    }
+                }
+                list.RemoveAll(note => notesToDelete.Contains(note.noteId));
+            }
+            
+            List<Rail> toDeleteRails = new List<Rail>();
+            foreach (Rail rail in rails.OrEmptyIfNull()) {
+                if (rail.noteType == handType && (notesCountsForTime[rail.startTime] == 1 && withColorSwap == SingleHandNoteColorSwao.swap))
+                {
+                    rail.SwitchHandTo(GetOppositeColor(rail.noteType));
+                    RailHelper.ReinstantiateRail(rail);
+                }
+                else if (rail.noteType == handType)
+                {
+                    toDeleteRails.Add(rail);
+                }
+            }
+            foreach (Rail rail in toDeleteRails.OrEmptyIfNull())
+            {
+                RailHelper.DestroyRail(rail);
+            }
+        }
 
         public enum TimeFindPolicy {
             Everything = 0,
@@ -1781,7 +1853,26 @@ namespace MiKu.NET {
                 }
             }
 
-            if(Input.GetKeyDown(KeyCode.T) && !PromtWindowOpen) {
+
+            // Save Action
+            if (Input.GetKeyDown(KeyCode.LeftBracket) && !PromtWindowOpen)
+            {
+                SingleHandNoteColorSwao colorSwapMode = SingleHandNoteColorSwao.no_swap;
+                if (isSHIFTDown)
+                    colorSwapMode = SingleHandNoteColorSwao.swap;
+                DeleteNotesForSingleHand(EditorNote.NoteHandType.LeftHanded, colorSwapMode);
+            }
+
+            // Save Action
+            if (Input.GetKeyDown(KeyCode.RightBracket) && !PromtWindowOpen)
+            {
+                SingleHandNoteColorSwao colorSwapMode = SingleHandNoteColorSwao.no_swap;
+                if (isSHIFTDown)
+                    colorSwapMode = SingleHandNoteColorSwao.swap;
+                DeleteNotesForSingleHand(EditorNote.NoteHandType.RightHanded, colorSwapMode);
+            }
+
+            if (Input.GetKeyDown(KeyCode.T) && !PromtWindowOpen) {
                 StepMode = GetNextStepMode(StepMode);
                 StepDataHolder stepHolder = GetDataForStepMode(StepMode);
                 DrawTrackStepLines(stepHolder, true);
