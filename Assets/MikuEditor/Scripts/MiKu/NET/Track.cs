@@ -1486,9 +1486,35 @@ namespace MiKu.NET {
                 
             }
         }
-    
 
-            public void DeleteNotesForSingleHand(EditorNote.NoteHandType handType, SingleHandNoteColorSwao withColorSwap = SingleHandNoteColorSwao.no_swap) {
+        public bool IntervalContainsNotesOfThisColor(TimeWrapper startTime, TimeWrapper endTime, EditorNote.NoteHandType handType) {
+            var workingTrack = Track.s_instance.GetCurrentTrackDifficulty();
+            List<TimeWrapper> noteTimes = Track.s_instance.GetCurrentTrackDifficulty().Keys.ToList();
+            foreach (TimeWrapper time in noteTimes.OrEmptyIfNull())
+            {
+                List<EditorNote> list = workingTrack[time];
+                List<int> notesToDelete = new List<int>();
+                foreach (EditorNote note in list.OrEmptyIfNull())
+                {
+                    if (note.HandType == handType)
+                        return true;
+                }
+            }
+            return false;
+        }
+
+        public bool TimeContainsRailsOfThisColor(TimeWrapper startTime, EditorNote.NoteHandType handType) {
+            List<Rail> rails = Track.s_instance.GetCurrentRailListByDifficulty();
+            List<Rail> railsInrange = RailHelper.GetListOfRailsInRange(rails, startTime, startTime, RailHelper.RailRangeBehaviour.Allow, RailHelper.RailFetchBehaviour.All);
+            foreach (Rail rail in railsInrange.OrEmptyIfNull()) {
+                if (rail.noteType == handType)
+                    return true;
+            }
+            return false;
+        }
+
+
+        public void DeleteNotesForSingleHand(EditorNote.NoteHandType handType, SingleHandNoteColorSwao withColorSwap = SingleHandNoteColorSwao.no_swap) {
             var workingTrack = Track.s_instance.GetCurrentTrackDifficulty();
             List<TimeWrapper> noteTimes = Track.s_instance.GetCurrentTrackDifficulty().Keys.ToList();
 
@@ -1506,8 +1532,15 @@ namespace MiKu.NET {
                 }
             }
             List<Rail> rails = Track.s_instance.GetCurrentRailListByDifficulty();
+
+            List<Rail> toDeleteRails = new List<Rail>();
             foreach (Rail rail in rails.OrEmptyIfNull())
             {
+                bool needsDeletion = IntervalContainsNotesOfThisColor(rail.startTime, rail.endTime, GetOppositeColor(handType)) && rail.noteType == handType;
+                if (needsDeletion) {
+                    toDeleteRails.Add(rail);
+                    continue;
+                }
                 if (!notesCountsForTime.Keys.ToList().Contains(rail.startTime)) {
                     notesCountsForTime.Add(rail.startTime, 1);
                 }
@@ -1515,13 +1548,19 @@ namespace MiKu.NET {
                     notesCountsForTime[rail.startTime]++;
             }
 
+            foreach (Rail rail in toDeleteRails.OrEmptyIfNull())
+            {
+                RailHelper.DestroyRail(rail);
+            }
 
             foreach (TimeWrapper time in noteTimes.OrEmptyIfNull())
             {
                 List<EditorNote> list = workingTrack[time];
                 List<int> notesToDelete = new List<int>();
                 foreach (EditorNote note in list.OrEmptyIfNull()) {
-                    if (note.HandType == handType && (notesCountsForTime[note.TimePoint] == 1 && withColorSwap == SingleHandNoteColorSwao.swap))
+                    bool hasRailsOfValidColor = TimeContainsRailsOfThisColor(note.TimePoint, GetOppositeColor(handType));
+                    
+                    if (note.HandType == handType && (notesCountsForTime[note.TimePoint] == 1 && withColorSwap == SingleHandNoteColorSwao.swap && !hasRailsOfValidColor))
                     {
                         note.HandType = GetOppositeColor(note.HandType);
                         DestroyImmediate(note.GameObject);
@@ -1535,11 +1574,13 @@ namespace MiKu.NET {
                 }
                 list.RemoveAll(note => notesToDelete.Contains(note.noteId));
             }
-            
-            List<Rail> toDeleteRails = new List<Rail>();
+
+            toDeleteRails.Clear();
             foreach (Rail rail in rails.OrEmptyIfNull()) {
                 if (rail.noteType == handType && (notesCountsForTime[rail.startTime] == 1 && withColorSwap == SingleHandNoteColorSwao.swap))
                 {
+                    // I only need to switch rail if there will be no notes of valid color during its duration
+
                     rail.SwitchHandTo(GetOppositeColor(rail.noteType));
                     RailHelper.ReinstantiateRail(rail);
                 }
