@@ -385,10 +385,7 @@ namespace MiKu.NET.Charting {
                 gameChart.AudioData = editorChart.AudioData;
             gameChart.UsingBeatMeasure = editorChart.UsingBeatMeasure;
             if (editorChart.AudioName != null)
-            {
-                if(!editorChart.AudioName.Contains("[One hand]"))
-                    gameChart.AudioName = "[One hand] " + editorChart.AudioName;
-            }
+                gameChart.AudioName = editorChart.AudioName;
             if (editorChart.Author != null)
                 gameChart.Author = editorChart.Author;
             if(editorChart.Beatmapper != null)
@@ -402,10 +399,7 @@ namespace MiKu.NET.Charting {
             if(editorChart.FilePath != null)
                 gameChart.FilePath = editorChart.FilePath;
             if(editorChart.Name != null)
-            {
-                if (!editorChart.Name.Contains("[One hand]"))
-                    gameChart.Name = "[One hand] " + editorChart.Name;
-            }
+                gameChart.Name = editorChart.Name;
             
             // can't be null
             gameChart.Offset = editorChart.Offset.FloatValue;
