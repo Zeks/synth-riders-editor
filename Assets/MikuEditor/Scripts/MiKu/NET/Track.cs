@@ -1137,16 +1137,13 @@ namespace MiKu.NET {
         // Use this for initialization
         void Awake() {
             s_instance = this;
-            if (newLaunch) {
-                File.Delete("editor.log");
-                Trace.Listeners.Add(new TextWriterTraceListener("editor.log"));
-            }
+
             //bpmPrecise = InternalBPM.PreciseBPM();
             //bpmPrimary= InternalBPM.InstantiateBPM(CurrentStepMode.Primary);
             //bpmSecondary = InternalBPM.InstantiateBPM(CurrentStepMode.Secondary);
 
             newLaunch = false;
-            Trace.AutoFlush = true;
+            
             // Initilization of the Game Object to use for the line drawing
             beatLineObjects = new List<GameObject>();
             stepLineDrawData.stepLineObjects = new List<GameObject>();
@@ -2625,6 +2622,13 @@ namespace MiKu.NET {
         /// Init The chart metadata
         /// </summary>
         private void InitChart() {
+            if (newLaunch)
+            {
+                File.Delete("editor.log");
+                Trace.Listeners.Add(new TextWriterTraceListener("editor.log"));
+                newLaunch = false;
+            }
+            Trace.AutoFlush = true;
             bool contains = false;
             if(Serializer.Initialized) {
                 // reading the currently available data from converter into the Track
@@ -3490,6 +3494,7 @@ namespace MiKu.NET {
         public void SaveChartAction() {
             CurrentChart.BPM = BPM;
             CurrentChart.Offset = StartOffset;
+            //CurrentChart.UsingBeatMeasure = StartOffset;
             // converting the current chart data into the structs readable by the game
             // for subsequent serialization into files
             ChartConverter converter = new ChartConverter();
@@ -4435,6 +4440,17 @@ namespace MiKu.NET {
         /// <returns>Returns <typeparamref name="float"/></returns>
         public static float MStoUnit(TimeWrapper _ms) {
             return (_ms.FloatValue / msInSecond) * unitsPerSecond;
+        }
+
+
+        public static float GetTimeByMeasure(float _ms)
+        {
+            return (((_ms * secondsInMinute) / BPM) / 64) * msInSecond;
+        }
+
+        public static float GetBeatMeasureByTime(float _ms)
+        {
+            return (((_ms / msInSecond) * 64) * BPM) / secondsInMinute;
         }
 
         /// <summary>

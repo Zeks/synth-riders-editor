@@ -424,6 +424,8 @@ namespace MiKu.NET.Charting {
 		/// </value>
         public float BPM { get; set; }
 
+        public bool UsingBeatMeasure { get; set; }
+
         /// <value>
         /// Offset on seconds befor the Song start playing
         /// </value>

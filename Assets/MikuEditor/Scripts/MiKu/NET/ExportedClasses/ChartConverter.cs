@@ -83,20 +83,23 @@ namespace MiKu.NET.Charting {
         }
 
         // Adds EditorSlide instance to a list of game's slides
-        void PassEditorSlideDataToGame(EditorSlide editorSlide, List<Slide> slides) {
+        void PassEditorSlideDataToGame(bool usesSteapMeasure, EditorSlide editorSlide, List<Slide> slides) {
             if(slides == null)
                 return;
+            float time = editorSlide.initialTime.FloatValue;
+            if (usesSteapMeasure)
+                time = Track.GetBeatMeasureByTime(time);
             Slide slide = new Slide()
             {
                 initialized = editorSlide.initialized,
                 slideType = (Note.NoteType)editorSlide.slideType,
-                time = editorSlide.initialTime.FloatValue
+                time = time
             };
             slides.Add(slide);
         }
 
         // Fully passes the Editor's single difficulty note data to game's note data
-        void PassEditorNoteDataToGame(Dictionary<TimeWrapper, List<EditorNote>> editorDictionary, Dictionary<float, List<Note>> exportValue) {
+        void PassEditorNoteDataToGame(bool usesSteapMeasure, Dictionary<TimeWrapper, List<EditorNote>> editorDictionary, Dictionary<float, List<Note>> exportValue) {
             if(editorDictionary == null)
                 return;
             if(exportValue == null) {
@@ -109,21 +112,28 @@ namespace MiKu.NET.Charting {
             keys.Sort();
 
             foreach(TimeWrapper key in keys.OrEmptyIfNull()) {
+                TimeWrapper actualValue = key;
+                if (usesSteapMeasure)
+                    actualValue = Track.GetBeatMeasureByTime(actualValue.FloatValue);
                 List<EditorNote> listAtCurrentTime = editorDictionary[key];
                 // will need to create note's name in the format that game understands
                 foreach(var editorNote in listAtCurrentTime.OrEmptyIfNull()) {
-                    if(!exportValue.ContainsKey(editorNote.InitialTimePoint.FloatValue))
-                        exportValue.Add(editorNote.InitialTimePoint.FloatValue, new List<Note>());
+                    float initialTimePoint = editorNote.InitialTimePoint.FloatValue;
+                    if (usesSteapMeasure) {
+                        initialTimePoint = Track.GetBeatMeasureByTime(initialTimePoint);
+                    }
+                    if (!exportValue.ContainsKey(initialTimePoint))
+                        exportValue.Add(initialTimePoint, new List<Note>());
 
                     Note exportNote = new Note(new UnityEngine.Vector3 { x = editorNote.Position[0], y = editorNote.Position[1], z = Track.MStoUnit(editorNote.InitialTimePoint) },
                         editorNote.name, editorNote.ComboId, ConvertEditorNoteTypeToGameNoteType(editorNote.HandType));
                     exportNote.Segments = editorNote.Segments;
-                    exportValue[editorNote.InitialTimePoint.FloatValue].Add(exportNote);
+                    exportValue[initialTimePoint].Add(exportNote);
                 }
             }
         }
 
-        void PassEditorRailDataToGame(List<Rail> rails, Dictionary<float, List<Note>> exportValue) {
+        void PassEditorRailDataToGame(bool usesSteapMeasure, List<Rail> rails, Dictionary<float, List<Note>> exportValue) {
             if(rails == null)
                 return;
 
@@ -132,8 +142,11 @@ namespace MiKu.NET.Charting {
             }
             foreach(Rail rail in rails.OrEmptyIfNull()) {
                 EditorNote leaderNote = rail.Leader.thisNote; // !!!
-                if(!exportValue.ContainsKey(leaderNote.InitialTimePoint.FloatValue)) {
-                    exportValue.Add(leaderNote.InitialTimePoint.FloatValue, new List<Note>());
+                float leaderTime = leaderNote.InitialTimePoint.FloatValue;
+                if (usesSteapMeasure)
+                    leaderTime = Track.GetBeatMeasureByTime(leaderTime);
+                if (!exportValue.ContainsKey(leaderTime)) {
+                    exportValue.Add(leaderTime, new List<Note>());
                 }
                 // first we create a note to pass to the game, theb go over the rail assigning the segments
                 Vector3 pos = new Vector3(leaderNote.Position[0], leaderNote.Position[1], leaderNote.Position[2]);
@@ -141,6 +154,7 @@ namespace MiKu.NET.Charting {
                 gameNote.Segments = new float[rail.notesByTime.Count-1, 3];
                 int i = 0;
                 foreach(TimeWrapper time in rail.notesByTime.Keys.OrEmptyIfNull()) {
+                    
                     if(leaderNote.TimePoint == time)
                         continue;
                     EditorNote  segmentNote = rail.notesByTime[time].thisNote;
@@ -149,7 +163,7 @@ namespace MiKu.NET.Charting {
                     gameNote.Segments[i, 2] = segmentNote.Position[2];
                     i++;
                 }
-                exportValue[leaderNote.InitialTimePoint.FloatValue].Add(gameNote);
+                exportValue[leaderTime].Add(gameNote);
             }
         }
 
@@ -190,7 +204,7 @@ namespace MiKu.NET.Charting {
         }
 
         // Fully passes the Game's single difficulty note data to Editor's note data
-        void PassGameNoteDataToEditor(float bpm, Dictionary<float, List<Note>> gameDictionary, Dictionary<TimeWrapper, List<EditorNote>> editorDictionary, List<Rail> listOfRails) {
+        void PassGameNoteDataToEditor(bool usingBeatMeasure, float bpm, Dictionary<float, List<Note>> gameDictionary, Dictionary<TimeWrapper, List<EditorNote>> editorDictionary, List<Rail> listOfRails) {
             if(gameDictionary == null)
                 return;
             if(editorDictionary == null) {
@@ -198,7 +212,10 @@ namespace MiKu.NET.Charting {
             }
             foreach(KeyValuePair<float, List<Note>> entry in gameDictionary.OrEmptyIfNull()) {
                 foreach(var gameNote in entry.Value.OrEmptyIfNull()) {
+                    
                     TimeWrapper key = entry.Key;
+                    if (usingBeatMeasure)
+                        key = Track.GetTimeByMeasure(entry.Key);
                     float msPerBeat = (1000 * 60)/bpm;
                     float step = 1/64f;
 
@@ -366,7 +383,8 @@ namespace MiKu.NET.Charting {
                 gameChart.ArtworkBytes = editorChart.ArtworkBytes;
             if(editorChart.AudioData != null)
                 gameChart.AudioData = editorChart.AudioData;
-            if(editorChart.AudioName != null)
+            gameChart.UsingBeatMeasure = editorChart.UsingBeatMeasure;
+            if (editorChart.AudioName != null)
             {
                 if(!editorChart.AudioName.Contains("[One hand]"))
                     gameChart.AudioName = "[One hand] " + editorChart.AudioName;
@@ -402,10 +420,13 @@ namespace MiKu.NET.Charting {
             if(editorChart.Bookmarks != null && editorChart.Bookmarks.BookmarksList != null) {
                 int size = editorChart.Bookmarks.BookmarksList.Count;
                 foreach(var editorBookmark in editorChart.Bookmarks.BookmarksList.OrEmptyIfNull()) {
+                    var time = editorBookmark.time;
+                    if (editorChart.UsingBeatMeasure)
+                        time = Track.GetBeatMeasureByTime(time.FloatValue);
                     Bookmark exportBookmark = new Bookmark
                     {
                         name = editorBookmark.name,
-                        time= editorBookmark.time.FloatValue
+                        time= time.FloatValue
                     };
                     gameChart.Bookmarks.BookmarksList.Add(exportBookmark);
                 }
@@ -415,88 +436,88 @@ namespace MiKu.NET.Charting {
             // strictly speaking _exported_ difficulties shouldn't be nulls 
             // but it's better to have mirror code to the importer and still check
             if(editorChart.Crouchs.Easy != null)
-                 gameChart.Crouchs.Easy = TimeWrapper.Convert(editorChart.Crouchs.Easy);
+                 gameChart.Crouchs.Easy = TimeWrapper.ConvertToMeasure(editorChart.Crouchs.Easy, editorChart.UsingBeatMeasure);
             if(editorChart.Crouchs.Expert != null)
-                gameChart.Crouchs.Expert = TimeWrapper.Convert(editorChart.Crouchs.Expert);
+                gameChart.Crouchs.Expert = TimeWrapper.ConvertToMeasure(editorChart.Crouchs.Expert, editorChart.UsingBeatMeasure);
             if(editorChart.Crouchs.Hard != null)
-                gameChart.Crouchs.Hard = TimeWrapper.Convert(editorChart.Crouchs.Hard);
+                gameChart.Crouchs.Hard = TimeWrapper.ConvertToMeasure(editorChart.Crouchs.Hard, editorChart.UsingBeatMeasure);
             if(editorChart.Crouchs.Master != null)
-                gameChart.Crouchs.Master = TimeWrapper.Convert(editorChart.Crouchs.Master);
+                gameChart.Crouchs.Master = TimeWrapper.ConvertToMeasure(editorChart.Crouchs.Master, editorChart.UsingBeatMeasure);
             if(editorChart.Crouchs.Normal != null)
-                gameChart.Crouchs.Normal = TimeWrapper.Convert(editorChart.Crouchs.Normal);
+                gameChart.Crouchs.Normal = TimeWrapper.ConvertToMeasure(editorChart.Crouchs.Normal, editorChart.UsingBeatMeasure);
             if(editorChart.Crouchs.Custom != null)
-                gameChart.Crouchs.Custom = TimeWrapper.Convert(editorChart.Crouchs.Custom);
+                gameChart.Crouchs.Custom = TimeWrapper.ConvertToMeasure(editorChart.Crouchs.Custom, editorChart.UsingBeatMeasure);
 
 
             if(editorChart.Effects.Easy != null)
-                gameChart.Effects.Easy = TimeWrapper.Convert(editorChart.Effects.Easy);
+                gameChart.Effects.Easy = TimeWrapper.ConvertToMeasure(editorChart.Effects.Easy, editorChart.UsingBeatMeasure);
             if(editorChart.Effects.Expert != null)
-                gameChart.Effects.Expert = TimeWrapper.Convert(editorChart.Effects.Expert);
+                gameChart.Effects.Expert = TimeWrapper.ConvertToMeasure(editorChart.Effects.Expert, editorChart.UsingBeatMeasure);
             if(editorChart.Effects.Hard != null)
-                gameChart.Effects.Hard = TimeWrapper.Convert(editorChart.Effects.Hard);
+                gameChart.Effects.Hard = TimeWrapper.ConvertToMeasure(editorChart.Effects.Hard, editorChart.UsingBeatMeasure);
             if(editorChart.Effects.Master != null)
-                gameChart.Effects.Master = TimeWrapper.Convert(editorChart.Effects.Master);
+                gameChart.Effects.Master = TimeWrapper.ConvertToMeasure(editorChart.Effects.Master, editorChart.UsingBeatMeasure);
             if(editorChart.Effects.Normal != null)
-                gameChart.Effects.Normal = TimeWrapper.Convert(editorChart.Effects.Normal);
+                gameChart.Effects.Normal = TimeWrapper.ConvertToMeasure(editorChart.Effects.Normal, editorChart.UsingBeatMeasure);
             if(editorChart.Effects.Custom != null)
-                gameChart.Effects.Custom = TimeWrapper.Convert(editorChart.Effects.Custom);
+                gameChart.Effects.Custom = TimeWrapper.ConvertToMeasure(editorChart.Effects.Custom, editorChart.UsingBeatMeasure);
 
             if(editorChart.Jumps.Easy != null)
-                gameChart.Jumps.Easy = TimeWrapper.Convert(editorChart.Jumps.Easy);
+                gameChart.Jumps.Easy = TimeWrapper.ConvertToMeasure(editorChart.Jumps.Easy, editorChart.UsingBeatMeasure);
             if(editorChart.Jumps.Expert != null)
-                gameChart.Jumps.Expert = TimeWrapper.Convert(editorChart.Jumps.Expert);
+                gameChart.Jumps.Expert = TimeWrapper.ConvertToMeasure(editorChart.Jumps.Expert, editorChart.UsingBeatMeasure);
             if(editorChart.Jumps.Hard != null)
-                gameChart.Jumps.Hard = TimeWrapper.Convert(editorChart.Jumps.Hard);
+                gameChart.Jumps.Hard = TimeWrapper.ConvertToMeasure(editorChart.Jumps.Hard, editorChart.UsingBeatMeasure);
             if(editorChart.Jumps.Master != null)
-                gameChart.Jumps.Master = TimeWrapper.Convert(editorChart.Jumps.Master);
+                gameChart.Jumps.Master = TimeWrapper.ConvertToMeasure(editorChart.Jumps.Master, editorChart.UsingBeatMeasure);
             if(editorChart.Jumps.Normal != null)
-                gameChart.Jumps.Custom = TimeWrapper.Convert(editorChart.Jumps.Normal);
+                gameChart.Jumps.Custom = TimeWrapper.ConvertToMeasure(editorChart.Jumps.Normal, editorChart.UsingBeatMeasure);
             if(editorChart.Jumps.Easy != null)
-                gameChart.Jumps.Custom = TimeWrapper.Convert(editorChart.Jumps.Custom);
+                gameChart.Jumps.Custom = TimeWrapper.ConvertToMeasure(editorChart.Jumps.Custom, editorChart.UsingBeatMeasure);
 
             // Lights holder may itself be null, needs a check
             if(editorChart.Lights != null) {
                 if(editorChart.Lights.Easy != null)
-                    gameChart.Lights.Easy = TimeWrapper.Convert(editorChart.Lights.Easy);
+                    gameChart.Lights.Easy = TimeWrapper.ConvertToMeasure(editorChart.Lights.Easy, editorChart.UsingBeatMeasure);
                 if(editorChart.Lights.Expert != null)
-                    gameChart.Lights.Expert = TimeWrapper.Convert(editorChart.Lights.Expert);
+                    gameChart.Lights.Expert = TimeWrapper.ConvertToMeasure(editorChart.Lights.Expert, editorChart.UsingBeatMeasure);
                 if(editorChart.Lights.Hard != null)
-                    gameChart.Lights.Hard = TimeWrapper.Convert(editorChart.Lights.Hard);
+                    gameChart.Lights.Hard = TimeWrapper.ConvertToMeasure(editorChart.Lights.Hard, editorChart.UsingBeatMeasure);
                 if(editorChart.Lights.Master != null)
-                    gameChart.Lights.Master = TimeWrapper.Convert(editorChart.Lights.Master);
+                    gameChart.Lights.Master = TimeWrapper.ConvertToMeasure(editorChart.Lights.Master, editorChart.UsingBeatMeasure);
                 if(editorChart.Lights.Normal != null)
-                    gameChart.Lights.Normal = TimeWrapper.Convert(editorChart.Lights.Normal);
+                    gameChart.Lights.Normal = TimeWrapper.ConvertToMeasure(editorChart.Lights.Normal, editorChart.UsingBeatMeasure);
                 if(editorChart.Lights.Custom != null)
-                    gameChart.Lights.Custom = TimeWrapper.Convert(editorChart.Lights.Custom);
+                    gameChart.Lights.Custom = TimeWrapper.ConvertToMeasure(editorChart.Lights.Custom, editorChart.UsingBeatMeasure);
             }
 
             // slides holder may itself be null, checking
             var slides = editorChart.Slides;
             if(slides != null) {
                 foreach(var editorValue in slides.Custom.OrEmptyIfNull()) {
-                    PassEditorSlideDataToGame(editorValue, gameChart.Slides.Custom);
+                    PassEditorSlideDataToGame(editorChart.UsingBeatMeasure, editorValue, gameChart.Slides.Custom);
                 }
                 foreach(var editorValue in slides.Easy.OrEmptyIfNull()) {
-                    PassEditorSlideDataToGame(editorValue, gameChart.Slides.Easy);
+                    PassEditorSlideDataToGame(editorChart.UsingBeatMeasure, editorValue, gameChart.Slides.Easy);
                 }
                 foreach(var editorValue in slides.Normal.OrEmptyIfNull()) {
-                    PassEditorSlideDataToGame(editorValue, gameChart.Slides.Normal);
+                    PassEditorSlideDataToGame(editorChart.UsingBeatMeasure, editorValue, gameChart.Slides.Normal);
                 }
                 foreach(var editorValue in slides.Hard.OrEmptyIfNull()) {
-                    PassEditorSlideDataToGame(editorValue, gameChart.Slides.Hard);
+                    PassEditorSlideDataToGame(editorChart.UsingBeatMeasure, editorValue, gameChart.Slides.Hard);
                 }
                 foreach(var editorValue in slides.Expert.OrEmptyIfNull()) {
-                    PassEditorSlideDataToGame(editorValue, gameChart.Slides.Expert);
+                    PassEditorSlideDataToGame(editorChart.UsingBeatMeasure, editorValue, gameChart.Slides.Expert);
                 }
                 foreach(var editorValue in slides.Master.OrEmptyIfNull()) {
-                    PassEditorSlideDataToGame(editorValue, gameChart.Slides.Master);
+                    PassEditorSlideDataToGame(editorChart.UsingBeatMeasure, editorValue, gameChart.Slides.Master);
                 }
             }
 
             // passing one dictionary of notes into another 
             if(editorChart.Track.Custom != null) {
-                PassEditorNoteDataToGame(editorChart.Track.Custom, gameChart.Track.Custom);
-                PassEditorRailDataToGame(editorChart.Rails.Custom, gameChart.Track.Custom);
+                PassEditorNoteDataToGame(editorChart.UsingBeatMeasure, editorChart.Track.Custom, gameChart.Track.Custom);
+                PassEditorRailDataToGame(editorChart.UsingBeatMeasure, editorChart.Rails.Custom, gameChart.Track.Custom);
                 // when everything is passed we need to create special combo ids
                 // for that we fish within the notes for uninterrupted special color segments (green and gold)
 
@@ -504,28 +525,28 @@ namespace MiKu.NET.Charting {
 
             int idBase = 0;
             if(editorChart.Track.Easy != null) {
-                PassEditorNoteDataToGame(editorChart.Track.Easy, gameChart.Track.Easy);
-                PassEditorRailDataToGame(editorChart.Rails.Easy, gameChart.Track.Easy);
+                PassEditorNoteDataToGame(editorChart.UsingBeatMeasure, editorChart.Track.Easy, gameChart.Track.Easy);
+                PassEditorRailDataToGame(editorChart.UsingBeatMeasure, editorChart.Rails.Easy, gameChart.Track.Easy);
                 ReinstantiateComboIDs(idBase, gameChart.Track.Easy);
             }
             if(editorChart.Track.Normal != null) {
-                PassEditorNoteDataToGame(editorChart.Track.Normal, gameChart.Track.Normal);
-                PassEditorRailDataToGame(editorChart.Rails.Normal, gameChart.Track.Normal);
+                PassEditorNoteDataToGame(editorChart.UsingBeatMeasure, editorChart.Track.Normal, gameChart.Track.Normal);
+                PassEditorRailDataToGame(editorChart.UsingBeatMeasure, editorChart.Rails.Normal, gameChart.Track.Normal);
                 ReinstantiateComboIDs(idBase, gameChart.Track.Normal);
             }
             if(editorChart.Track.Hard != null) {
-                PassEditorNoteDataToGame(editorChart.Track.Hard, gameChart.Track.Hard);
-                PassEditorRailDataToGame(editorChart.Rails.Hard, gameChart.Track.Hard);
+                PassEditorNoteDataToGame(editorChart.UsingBeatMeasure, editorChart.Track.Hard, gameChart.Track.Hard);
+                PassEditorRailDataToGame(editorChart.UsingBeatMeasure, editorChart.Rails.Hard, gameChart.Track.Hard);
                 ReinstantiateComboIDs(idBase, gameChart.Track.Hard);
             }
             if(editorChart.Track.Expert != null) {
-                PassEditorNoteDataToGame(editorChart.Track.Expert, gameChart.Track.Expert);
-                PassEditorRailDataToGame(editorChart.Rails.Expert, gameChart.Track.Expert);
+                PassEditorNoteDataToGame(editorChart.UsingBeatMeasure, editorChart.Track.Expert, gameChart.Track.Expert);
+                PassEditorRailDataToGame(editorChart.UsingBeatMeasure, editorChart.Rails.Expert, gameChart.Track.Expert);
                 ReinstantiateComboIDs(idBase, gameChart.Track.Expert);
             }
             if(editorChart.Track.Master != null) {
-                PassEditorNoteDataToGame(editorChart.Track.Master, gameChart.Track.Master);
-                PassEditorRailDataToGame(editorChart.Rails.Master, gameChart.Track.Master);
+                PassEditorNoteDataToGame(editorChart.UsingBeatMeasure, editorChart.Track.Master, gameChart.Track.Master);
+                PassEditorRailDataToGame(editorChart.UsingBeatMeasure, editorChart.Rails.Master, gameChart.Track.Master);
                 ReinstantiateComboIDs(idBase, gameChart.Track.Master);
             }
 
@@ -637,9 +658,11 @@ namespace MiKu.NET.Charting {
         }
 
         // Adds Slide instance to a list of editor's slides
-        void PassGameSlideDataToEditor(Slide editorSlide, List<EditorSlide> slides) {
+        void PassGameSlideDataToEditor(bool usingBeatMeasure, Slide editorSlide, List<EditorSlide> slides) {
             if(slides == null)
                 return;
+            if (usingBeatMeasure)
+                editorSlide.time = Track.GetTimeByMeasure(editorSlide.time);
             EditorSlide slide = new EditorSlide()
             {
                 initialized = editorSlide.initialized,
@@ -678,7 +701,8 @@ namespace MiKu.NET.Charting {
                 editorChart.AudioData = gameChart.AudioData;
             if(gameChart.AudioName != null)
                 editorChart.AudioName = gameChart.AudioName;
-            if(gameChart.Author != null)
+            editorChart.UsingBeatMeasure = gameChart.UsingBeatMeasure;
+            if (gameChart.Author != null)
                 editorChart.Author = gameChart.Author;
             if(gameChart.Beatmapper != null)
                 editorChart.Beatmapper = gameChart.Beatmapper;
@@ -706,11 +730,16 @@ namespace MiKu.NET.Charting {
             if(gameChart.Bookmarks != null && gameChart.Bookmarks.BookmarksList != null) {
                 int size = gameChart.Bookmarks.BookmarksList.Count;
                 foreach(var gameBookmark in gameChart.Bookmarks.BookmarksList.OrEmptyIfNull()) {
+                    
+                    float time = gameBookmark.time;
+                    if (editorChart.UsingBeatMeasure) {
+                        time = Track.GetTimeByMeasure(gameBookmark.time);
+                    }
                     EditorBookmark exportBookmark = new EditorBookmark
                     {
                         name = gameBookmark.name,
-                        time = gameBookmark.time,
-                        initialTime = gameBookmark.time
+                        time = time,
+                        initialTime = time
                     };
                     editorChart.Bookmarks.BookmarksList.Add(exportBookmark);
                 }
@@ -721,58 +750,58 @@ namespace MiKu.NET.Charting {
             // this needs a separate check each time 
 
             if(gameChart.Crouchs.Easy != null)
-                editorChart.Crouchs.Easy = TimeWrapper.Convert(gameChart.Crouchs.Easy);
+                editorChart.Crouchs.Easy = TimeWrapper.Convert(gameChart.Crouchs.Easy, editorChart.UsingBeatMeasure);
             if(gameChart.Crouchs.Expert != null)
-                editorChart.Crouchs.Expert = TimeWrapper.Convert(gameChart.Crouchs.Expert);
+                editorChart.Crouchs.Expert = TimeWrapper.Convert(gameChart.Crouchs.Expert, editorChart.UsingBeatMeasure);
             if(gameChart.Crouchs.Hard != null)
-                editorChart.Crouchs.Hard = TimeWrapper.Convert(gameChart.Crouchs.Hard);
+                editorChart.Crouchs.Hard = TimeWrapper.Convert(gameChart.Crouchs.Hard, editorChart.UsingBeatMeasure);
             if(gameChart.Crouchs.Master != null)
-                editorChart.Crouchs.Master = TimeWrapper.Convert(gameChart.Crouchs.Master);
+                editorChart.Crouchs.Master = TimeWrapper.Convert(gameChart.Crouchs.Master, editorChart.UsingBeatMeasure);
             if(gameChart.Crouchs.Normal != null)
-                editorChart.Crouchs.Normal = TimeWrapper.Convert(gameChart.Crouchs.Normal);
+                editorChart.Crouchs.Normal = TimeWrapper.Convert(gameChart.Crouchs.Normal, editorChart.UsingBeatMeasure);
             if(gameChart.Crouchs.Custom != null)
-                editorChart.Crouchs.Custom = TimeWrapper.Convert(gameChart.Crouchs.Custom);
+                editorChart.Crouchs.Custom = TimeWrapper.Convert(gameChart.Crouchs.Custom, editorChart.UsingBeatMeasure);
 
             if(gameChart.Effects.Easy != null)
-                editorChart.Effects.Easy = TimeWrapper.Convert(gameChart.Effects.Easy);
+                editorChart.Effects.Easy = TimeWrapper.Convert(gameChart.Effects.Easy, editorChart.UsingBeatMeasure);
             if(gameChart.Effects.Expert != null)
-                editorChart.Effects.Expert = TimeWrapper.Convert(gameChart.Effects.Expert);
+                editorChart.Effects.Expert = TimeWrapper.Convert(gameChart.Effects.Expert, editorChart.UsingBeatMeasure);
             if(gameChart.Effects.Hard != null)
-                editorChart.Effects.Hard = TimeWrapper.Convert(gameChart.Effects.Hard);
+                editorChart.Effects.Hard = TimeWrapper.Convert(gameChart.Effects.Hard, editorChart.UsingBeatMeasure);
             if(gameChart.Effects.Master != null)
-                editorChart.Effects.Master = TimeWrapper.Convert(gameChart.Effects.Master);
+                editorChart.Effects.Master = TimeWrapper.Convert(gameChart.Effects.Master, editorChart.UsingBeatMeasure);
             if(gameChart.Effects.Normal != null)
-                editorChart.Effects.Normal = TimeWrapper.Convert(gameChart.Effects.Normal);
+                editorChart.Effects.Normal = TimeWrapper.Convert(gameChart.Effects.Normal, editorChart.UsingBeatMeasure);
             if(gameChart.Effects.Custom != null)
-                editorChart.Effects.Custom = TimeWrapper.Convert(gameChart.Effects.Custom);
+                editorChart.Effects.Custom = TimeWrapper.Convert(gameChart.Effects.Custom, editorChart.UsingBeatMeasure);
 
             if(gameChart.Jumps.Easy != null)
-                editorChart.Jumps.Easy = TimeWrapper.Convert(gameChart.Jumps.Easy);
+                editorChart.Jumps.Easy = TimeWrapper.Convert(gameChart.Jumps.Easy, editorChart.UsingBeatMeasure);
             if(gameChart.Jumps.Expert != null)
-                editorChart.Jumps.Expert = TimeWrapper.Convert(gameChart.Jumps.Expert);
+                editorChart.Jumps.Expert = TimeWrapper.Convert(gameChart.Jumps.Expert, editorChart.UsingBeatMeasure);
             if(gameChart.Jumps.Hard != null)
-                editorChart.Jumps.Hard = TimeWrapper.Convert(gameChart.Jumps.Hard);
+                editorChart.Jumps.Hard = TimeWrapper.Convert(gameChart.Jumps.Hard, editorChart.UsingBeatMeasure);
             if(gameChart.Jumps.Master != null)
-                editorChart.Jumps.Master = TimeWrapper.Convert(gameChart.Jumps.Master);
+                editorChart.Jumps.Master = TimeWrapper.Convert(gameChart.Jumps.Master, editorChart.UsingBeatMeasure);
             if(gameChart.Jumps.Normal != null)
-                editorChart.Jumps.Custom = TimeWrapper.Convert(gameChart.Jumps.Normal);
+                editorChart.Jumps.Custom = TimeWrapper.Convert(gameChart.Jumps.Normal, editorChart.UsingBeatMeasure);
             if(gameChart.Jumps.Easy != null)
-                editorChart.Jumps.Custom = TimeWrapper.Convert(gameChart.Jumps.Custom);
+                editorChart.Jumps.Custom = TimeWrapper.Convert(gameChart.Jumps.Custom, editorChart.UsingBeatMeasure);
 
             // Lights holder may itself be null, needs a check
             if(gameChart.Lights != null) {
                 if(gameChart.Lights.Easy != null)
-                    editorChart.Lights.Easy = TimeWrapper.Convert(gameChart.Lights.Easy);
+                    editorChart.Lights.Easy = TimeWrapper.Convert(gameChart.Lights.Easy, editorChart.UsingBeatMeasure);
                 if(gameChart.Lights.Expert != null)
-                    editorChart.Lights.Expert = TimeWrapper.Convert(gameChart.Lights.Expert);
+                    editorChart.Lights.Expert = TimeWrapper.Convert(gameChart.Lights.Expert, editorChart.UsingBeatMeasure);
                 if(gameChart.Lights.Hard != null)
-                    editorChart.Lights.Hard = TimeWrapper.Convert(gameChart.Lights.Hard);
+                    editorChart.Lights.Hard = TimeWrapper.Convert(gameChart.Lights.Hard, editorChart.UsingBeatMeasure);
                 if(gameChart.Lights.Master != null)
-                    editorChart.Lights.Master = TimeWrapper.Convert(gameChart.Lights.Master);
+                    editorChart.Lights.Master = TimeWrapper.Convert(gameChart.Lights.Master, editorChart.UsingBeatMeasure);
                 if(gameChart.Lights.Normal != null)
-                    editorChart.Lights.Normal = TimeWrapper.Convert(gameChart.Lights.Normal);
+                    editorChart.Lights.Normal = TimeWrapper.Convert(gameChart.Lights.Normal, editorChart.UsingBeatMeasure);
                 if(gameChart.Lights.Custom != null)
-                    editorChart.Lights.Custom = TimeWrapper.Convert(gameChart.Lights.Custom);
+                    editorChart.Lights.Custom = TimeWrapper.Convert(gameChart.Lights.Custom, editorChart.UsingBeatMeasure);
             }
 
             // Slides holder may itself be null, needs a check
@@ -781,39 +810,39 @@ namespace MiKu.NET.Charting {
             } else {
                 var slides = gameChart.Slides;
                 foreach(var editorValue in slides.Custom.OrEmptyIfNull()) {
-                    PassGameSlideDataToEditor(editorValue, editorChart.Slides.Custom);
+                    PassGameSlideDataToEditor(editorChart.UsingBeatMeasure, editorValue, editorChart.Slides.Custom);
                 }
                 foreach(var editorValue in slides.Easy.OrEmptyIfNull()) {
-                    PassGameSlideDataToEditor(editorValue, editorChart.Slides.Easy);
+                    PassGameSlideDataToEditor(editorChart.UsingBeatMeasure, editorValue, editorChart.Slides.Easy);
                 }
                 foreach(var editorValue in slides.Normal.OrEmptyIfNull()) {
-                    PassGameSlideDataToEditor(editorValue, editorChart.Slides.Normal);
+                    PassGameSlideDataToEditor(editorChart.UsingBeatMeasure, editorValue, editorChart.Slides.Normal);
                 }
                 foreach(var editorValue in slides.Hard.OrEmptyIfNull()) {
-                    PassGameSlideDataToEditor(editorValue, editorChart.Slides.Hard);
+                    PassGameSlideDataToEditor(editorChart.UsingBeatMeasure, editorValue, editorChart.Slides.Hard);
                 }
                 foreach(var editorValue in slides.Expert.OrEmptyIfNull()) {
-                    PassGameSlideDataToEditor(editorValue, editorChart.Slides.Expert);
+                    PassGameSlideDataToEditor(editorChart.UsingBeatMeasure, editorValue, editorChart.Slides.Expert);
                 }
                 foreach(var editorValue in slides.Master.OrEmptyIfNull()) {
-                    PassGameSlideDataToEditor(editorValue, editorChart.Slides.Master);
+                    PassGameSlideDataToEditor(editorChart.UsingBeatMeasure, editorValue, editorChart.Slides.Master);
                 }
 
             }
 
             // passing one dictionary of notes into another 
             if(gameChart.Track.Custom != null)
-                PassGameNoteDataToEditor(editorChart.BPM, gameChart.Track.Custom, editorChart.Track.Custom, editorChart.Rails.Custom);
+                PassGameNoteDataToEditor(editorChart.UsingBeatMeasure, editorChart.BPM, gameChart.Track.Custom, editorChart.Track.Custom, editorChart.Rails.Custom);
             if(gameChart.Track.Easy != null)
-                PassGameNoteDataToEditor(editorChart.BPM, gameChart.Track.Easy, editorChart.Track.Easy, editorChart.Rails.Easy);
+                PassGameNoteDataToEditor(editorChart.UsingBeatMeasure, editorChart.BPM, gameChart.Track.Easy, editorChart.Track.Easy, editorChart.Rails.Easy);
             if(gameChart.Track.Normal != null)
-                PassGameNoteDataToEditor(editorChart.BPM, gameChart.Track.Normal, editorChart.Track.Normal, editorChart.Rails.Normal);
+                PassGameNoteDataToEditor(editorChart.UsingBeatMeasure, editorChart.BPM, gameChart.Track.Normal, editorChart.Track.Normal, editorChart.Rails.Normal);
             if(gameChart.Track.Hard != null)
-                PassGameNoteDataToEditor(editorChart.BPM, gameChart.Track.Hard, editorChart.Track.Hard, editorChart.Rails.Hard);
+                PassGameNoteDataToEditor(editorChart.UsingBeatMeasure, editorChart.BPM, gameChart.Track.Hard, editorChart.Track.Hard, editorChart.Rails.Hard);
             if(gameChart.Track.Expert != null)
-                PassGameNoteDataToEditor(editorChart.BPM, gameChart.Track.Expert, editorChart.Track.Expert, editorChart.Rails.Expert);
+                PassGameNoteDataToEditor(editorChart.UsingBeatMeasure, editorChart.BPM, gameChart.Track.Expert, editorChart.Track.Expert, editorChart.Rails.Expert);
             if(gameChart.Track.Master != null)
-                PassGameNoteDataToEditor(editorChart.BPM, gameChart.Track.Master, editorChart.Track.Master, editorChart.Rails.Master);
+                PassGameNoteDataToEditor(editorChart.UsingBeatMeasure, editorChart.BPM, gameChart.Track.Master, editorChart.Track.Master, editorChart.Rails.Master);
             return true;
         }
     };

@@ -562,6 +562,8 @@ namespace MiKu.NET.Charting {
 		/// </value>
         public string Name { get; set; }
 
+        public bool UsingBeatMeasure { get; set; }
+
         /// <value>
 		/// Author of the chart/song
 		/// </value>

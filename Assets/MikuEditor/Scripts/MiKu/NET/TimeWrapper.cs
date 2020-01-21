@@ -159,16 +159,54 @@ namespace MiKu.NET {
         }
         public static implicit operator TimeWrapper(float value) { return Create(value); }
 
-        public static List<float> Convert(List<TimeWrapper> wrappers) {
+        public static List<float> Convert(List<TimeWrapper> wrappers, bool usingBeatMeasure = false) {
             List<float> list = new List<float>();
-            foreach(var time in wrappers.OrEmptyIfNull())
-                list.Add(time.FloatValue);
+            foreach (var time in wrappers.OrEmptyIfNull())
+            {
+                if (usingBeatMeasure)
+                    list.Add(Track.GetTimeByMeasure(time.FloatValue));
+                else
+                    list.Add(time.FloatValue);
+            }
             return list;
         }
-        public static List<TimeWrapper> Convert(List<float> wrappers) {
+        public static List<float> ConvertToMeasure(List<TimeWrapper> wrappers, bool usingBeatMeasure = false)
+        {
+            List<float> list = new List<float>();
+            foreach (var time in wrappers.OrEmptyIfNull())
+            {
+                if (usingBeatMeasure)
+                    list.Add(Track.GetBeatMeasureByTime(time.FloatValue));
+                else
+                    list.Add(time.FloatValue);
+            }
+            return list;
+        }
+        public static List<TimeWrapper> Convert(List<float> wrappers, bool usingBeatMeasure = false) {
             List<TimeWrapper> list = new List<TimeWrapper>();
-            foreach(var time in wrappers.OrEmptyIfNull())
-                list.Add(time);
+            foreach (var time in wrappers.OrEmptyIfNull())
+            {
+                if (usingBeatMeasure)
+                    list.Add(Track.GetTimeByMeasure(time));
+                else
+                    list.Add(time);
+
+            }
+
+            return list;
+        }
+        public static List<TimeWrapper> ConvertToMeasure(List<float> wrappers, bool usingBeatMeasure = false)
+        {
+            List<TimeWrapper> list = new List<TimeWrapper>();
+            foreach (var time in wrappers.OrEmptyIfNull())
+            {
+                if (usingBeatMeasure)
+                    list.Add(Track.GetBeatMeasureByTime(time));
+                else
+                    list.Add(time);
+
+            }
+
             return list;
         }
     }
